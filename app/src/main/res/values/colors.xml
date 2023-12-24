@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="cred">#b72f33</color>
+    <color name="edittext">#561416</color>
+    <color name="base_logo">#f4d3ce</color>
+</resources>

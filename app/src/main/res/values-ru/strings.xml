@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JoJack</string>
+    <string name="login">Логин</string>
+    <string name="password">Пароль</string>
+    <string name="enter_button">Регистрация / Вход</string>
+    <string name="welcome">Добро пожаловать Домой!</string>
+    <string name="going_on">Что проиходит? Кто мы?</string>
+</resources>
