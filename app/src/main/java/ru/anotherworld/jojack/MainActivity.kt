@@ -4,7 +4,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.TransitionDrawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.NetworkInfo
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.animation.AlphaAnimation
 import android.view.animation.AnimationSet
@@ -14,11 +18,11 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.asLiveData
+import androidx.core.content.ContextCompat.getSystemService
 import ru.anotherworld.jojack.database.DatabaseHelper
-import ru.anotherworld.jojack.database.Item
-import ru.anotherworld.jojack.database.MainDB
+
 
 var dbHandler: DatabaseHelper? = null
 class MainActivity : AppCompatActivity() {
@@ -26,6 +30,12 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+//        Thread{
+//            val clientHandler = ClientHandler(Socket("127.0.0.1", 8080))
+//            clientHandler.write("Hello World!")
+//        }.start()
+
+
         dbHandler = DatabaseHelper(this)
 
         val layout = findViewById<LinearLayout>(R.id.layout)
@@ -47,6 +57,7 @@ class MainActivity : AppCompatActivity() {
             if (true){ //Check internet connection
 
             }
+            else Toast.makeText(this, getText(R.string.no_internet), Toast.LENGTH_SHORT).show()
         }
     }
 }
@@ -66,4 +77,5 @@ fun startAnimation(layout: LinearLayout, logo: ImageView){
     animation.addAnimation(fadeIn)
     logo.animation = animation
 }
+
 
