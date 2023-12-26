@@ -1,12 +1,12 @@
 package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.TransitionDrawable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.NetworkInfo
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,16 +20,19 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.getSystemService
 import ru.anotherworld.jojack.database.DatabaseHelper
 
 
 var dbHandler: DatabaseHelper? = null
+var home: String? = null
 class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        home = getText(R.string.home).toString()
 //        Thread{
 //            val clientHandler = ClientHandler(Socket("127.0.0.1", 8080))
 //            clientHandler.write("Hello World!")
@@ -55,7 +58,10 @@ class MainActivity : AppCompatActivity() {
         val enter = findViewById<Button>(R.id.enter)
         enter.setOnClickListener {
             if (true){ //Check internet connection
-
+            //Connect to server, communication
+            //Create Database
+                val mContext = this@MainActivity
+                mContext.startActivity(Intent(mContext, MainApp::class.java))
             }
             else Toast.makeText(this, getText(R.string.no_internet), Toast.LENGTH_SHORT).show()
         }

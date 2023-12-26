@@ -6,4 +6,6 @@
     <string name="welcome">Welcome Home!</string>
     <string name="going_on">What is going on? Who are we?</string>
     <string name="no_internet">No internet connection!</string>
+    <string name="title_activity_main_app">MainApp</string>
+    <string name="home">Home</string>
 </resources>

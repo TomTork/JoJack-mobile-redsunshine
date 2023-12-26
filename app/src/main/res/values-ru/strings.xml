@@ -7,4 +7,6 @@
     <string name="welcome">Добро пожаловать Домой!</string>
     <string name="going_on">Что проиходит? Кто мы?</string>
     <string name="no_internet">Нет подключения к интернету!</string>
+    <string name="title_activity_main_app">MainApp</string>
+    <string name="home">Главная</string>
 </resources>

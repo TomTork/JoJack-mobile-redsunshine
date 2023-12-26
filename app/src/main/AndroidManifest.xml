@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name = "android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.LOCAL_MAC_ADDRESS"
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission
+        android:name="android.permission.LOCAL_MAC_ADDRESS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
@@ -18,6 +20,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.JoJack"
         tools:targetApi="31">
+        <activity
+            android:name=".MainApp"
+            android:exported="false"
+            android:label="@string/title_activity_main_app"
+            android:theme="@style/Theme.JoJack" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
