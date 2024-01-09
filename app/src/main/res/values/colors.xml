@@ -5,4 +5,5 @@
     <color name="cred">#b72f33</color>
     <color name="edittext">#561416</color>
     <color name="base_logo">#f4d3ce</color>
+    <color name="background_element">#232323</color>
 </resources>

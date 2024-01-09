@@ -9,4 +9,16 @@
     <string name="no_internet">Нет подключения к интернету!</string>
     <string name="title_activity_main_app">MainApp</string>
     <string name="home">Главная</string>
+    <string name="news">Новости</string>
+    <string name="message">Сообщения</string>
+    <string name="account">Аккаунт</string>
+    <string name="job">Должность: </string>
+    <string name="CK">Центральный комитет</string>
+    <string name="jojack">ЖоЖек</string>
+    <string name="ID">ID: </string>
+    <string name="terminal">Терминал</string>
+    <string name="appeal">Обращение к ЦК</string>
+    <string name="change_password">Изменить пароль</string>
+    <string name="theme">Тема</string>
+    <string name="exit">Выход</string>
 </resources>

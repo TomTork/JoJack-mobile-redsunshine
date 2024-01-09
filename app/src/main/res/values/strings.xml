@@ -8,4 +8,16 @@
     <string name="no_internet">No internet connection!</string>
     <string name="title_activity_main_app">MainApp</string>
     <string name="home">Home</string>
+    <string name="news">News</string>
+    <string name="message">Messenger</string>
+    <string name="account">Account</string>
+    <string name="job">Job Title: </string>
+    <string name="CK">Central Committee</string>
+    <string name="jojack">JoJack</string>
+    <string name="ID">ID: </string>
+    <string name="terminal">Terminal</string>
+    <string name="appeal">Appeal to the Central Com.</string>
+    <string name="change_password">Change password</string>
+    <string name="theme">Theme</string>
+    <string name="exit">Exit</string>
 </resources>
