@@ -23,23 +23,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat.getSystemService
 import ru.anotherworld.jojack.database.DatabaseHelper
+import ru.anotherworld.jojack.database.MainDatabase
 
 
-var dbHandler: DatabaseHelper? = null
-var home: String? = null
+val database = MainDatabase()
 class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        home = getText(R.string.home).toString()
-//        Thread{
-//            val clientHandler = ClientHandler(Socket("127.0.0.1", 8080))
-//            clientHandler.write("Hello World!")
-//        }.start()
-
-
-        dbHandler = DatabaseHelper(this)
 
         val layout = findViewById<LinearLayout>(R.id.layout)
         val logo = findViewById<ImageView>(R.id.logo)

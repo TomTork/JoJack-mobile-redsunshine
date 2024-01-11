@@ -41,8 +41,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -61,6 +63,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.modifier.modifierLocalConsumer
@@ -131,8 +134,7 @@ fun Content(){
                     .background(colorResource(id = R.color.cred))
                     .width(Dp.Infinity)) {
                     Row(modifier = Modifier
-                        .width(Dp.Infinity)
-                        .background(Color.Black)) {
+                        .width(Dp.Infinity)) {
                         Text(text = topText, fontSize = 35.sp,
                             modifier = Modifier
                                 .padding(horizontal = 10.dp)
@@ -152,7 +154,7 @@ fun Content(){
                     horizontalArrangement = Arrangement.SpaceAround,
                     modifier = Modifier
                         .fillMaxWidth(1f)
-                        .background(Color.Black)
+                        .background(colorResource(id = R.color.black))
                         .padding(0.dp)) {
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -161,7 +163,7 @@ fun Content(){
                             Icon(painterResource(id = R.drawable.newspaper), null)
                         }
                         Text(text = stringResource(id = R.string.news),
-                            Modifier.clickable { contentManager = 0 },
+                            Modifier.clickable { contentManager = 0 }.shadow(2.dp),
                             fontWeight = boldNews(contentManager))
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
@@ -308,7 +310,7 @@ private fun Account(){
                 .align(Alignment.CenterVertically)
                 .padding(start = 10.dp),
                 fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Switch(checked = checked.value, onCheckedChange = { checked.value = it },
+            Switch(checked = checked.value, onCheckedChange = { checked.value = it; },
                 modifier = Modifier.weight(0.2f))
         }
         Row (modifier = Modifier
@@ -350,7 +352,9 @@ private fun Account(){
                 .padding(start = 10.dp),
                 fontWeight = FontWeight.Bold, fontSize = 20.sp)
         }
-        Row(modifier = Modifier.align(Alignment.End).padding(top = 30.dp, end = 30.dp)) {
+        Row(modifier = Modifier
+            .align(Alignment.End)
+            .padding(top = 30.dp, end = 30.dp)) {
             Button(onClick = { /*TODO*/ }) {
                 Text(text = stringResource(id = R.string.exit), fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
@@ -364,3 +368,7 @@ private fun Account(){
 
 }
 
+private fun updateTheme(value: Boolean){
+    if(value) dbHandler!!.updateTheme(1)
+    else dbHandler!!.updateTheme(0)
+}

@@ -21,15 +21,12 @@ class DatabaseHelper(context: Context): SQLiteOpenHelper(context, DB_NAME, null,
         private const val CONTROL_SUM = "control_sum"
         private const val KEY = "key"
         private const val INFO = "info"
+        private const val THEME = "theme"
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
-        val CREATE_TABLE = "CREATE TABLE IF NOT EXISTS $TABLE_NAME(" +
-                "$ID INTEGER PRIMARY KEY, $LOGIN TEXT," +
-                " $HASH_PASSWORD TEXT, $SERVER_ID INTEGER," +
-                "$LEVEL INTEGER, $TRUST_LEVEL INTEGER," +
-                "$DEVICE TEXT, $CONTROL_SUM TEXT, $KEY TEXT," +
-                "$INFO TEXT);"
+        val CREATE_TABLE =
+            "CREATE TABLE IF NOT EXISTS $TABLE_NAME($ID INTEGER PRIMARY KEY, $LOGIN TEXT, $HASH_PASSWORD TEXT, $SERVER_ID INTEGER,$LEVEL INTEGER, $TRUST_LEVEL INTEGER, $DEVICE TEXT, $CONTROL_SUM TEXT, $KEY TEXT, $INFO TEXT, $THEME INTEGER);"
         db?.execSQL(CREATE_TABLE)
         if(getAll().isEmpty()){
             addAll(DatabaseModel())
@@ -60,6 +57,7 @@ class DatabaseHelper(context: Context): SQLiteOpenHelper(context, DB_NAME, null,
                     databaseM.controlSum = cursor.getString(cursor.getColumnIndex(CONTROL_SUM))
                     databaseM.key = cursor.getString(cursor.getColumnIndex(KEY))
                     databaseM.info = cursor.getString(cursor.getColumnIndex(INFO))
+                    databaseM.theme = cursor.getString(cursor.getColumnIndex(THEME)).toInt()
                     databaseModel.add(databaseM)
                 }while (cursor.moveToNext())
             }
@@ -79,6 +77,7 @@ class DatabaseHelper(context: Context): SQLiteOpenHelper(context, DB_NAME, null,
         values.put(CONTROL_SUM, model.controlSum)
         values.put(KEY, model.key)
         values.put(INFO, model.info)
+        values.put(THEME, model.theme)
         val _success = db.insert(TABLE_NAME, null, values)
         db.close()
         return (Integer.parseInt("$_success") != -1)
@@ -100,6 +99,7 @@ class DatabaseHelper(context: Context): SQLiteOpenHelper(context, DB_NAME, null,
         databaseM.controlSum = cursor.getString(cursor.getColumnIndex(CONTROL_SUM))
         databaseM.key = cursor.getString(cursor.getColumnIndex(KEY))
         databaseM.info = cursor.getString(cursor.getColumnIndex(INFO))
+        databaseM.theme = cursor.getString(cursor.getColumnIndex(THEME)).toInt()
         cursor.close()
         return databaseM
     }
@@ -121,6 +121,7 @@ class DatabaseHelper(context: Context): SQLiteOpenHelper(context, DB_NAME, null,
         values.put(CONTROL_SUM, model.controlSum)
         values.put(KEY, model.key)
         values.put(INFO, model.info)
+        values.put(THEME, model.theme)
         val _success = db.update(TABLE_NAME, values, ID + "=?", arrayOf(model.id.toString())).toLong()
         db.close()
         return Integer.parseInt("$_success") != -1
@@ -139,6 +140,12 @@ class DatabaseHelper(context: Context): SQLiteOpenHelper(context, DB_NAME, null,
     }
     fun updateServerId(serverId: Int){
         val query = "update $TABLE_NAME set $SERVER_ID=$serverId where $ID=0"
+        val db = this.writableDatabase
+        db?.execSQL(query)
+        db.close()
+    }
+    fun updateTheme(theme: Int){
+        val query = "update $TABLE_NAME set $THEME=$theme where $ID=0"
         val db = this.writableDatabase
         db?.execSQL(query)
         db.close()

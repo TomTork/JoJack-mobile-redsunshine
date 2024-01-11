@@ -4,7 +4,7 @@ class DatabaseModel(id: Int? = null, login: String? = null,
     hashPassword: String? = null, serverId: Int? = null,
     level: Int? = null, trustLevel: Int? = null,
     device: String? = null, controlSum: String? = null,
-    key: String? = null, info: String? = null) {
+    key: String? = null, info: String? = null, theme: Int? = null) {
     var id: Int = 0
     var login: String = ""
     var hashPassword: String = ""
@@ -15,6 +15,7 @@ class DatabaseModel(id: Int? = null, login: String? = null,
     var controlSum: String = ""
     var key: String = ""
     var info: String = ""
+    var theme = 0
     init {
         if (id != null)this.id = id
         if (login != null)this.login = login
@@ -26,5 +27,6 @@ class DatabaseModel(id: Int? = null, login: String? = null,
         if (controlSum != null)this.controlSum = controlSum
         if (key != null)this.key = key
         if (info != null)this.info = info
+        if (theme != null)this.theme = theme
     }
 }
