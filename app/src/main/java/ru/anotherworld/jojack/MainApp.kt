@@ -367,8 +367,3 @@ private fun Account(){
 
 
 }
-
-private fun updateTheme(value: Boolean){
-    if(value) dbHandler!!.updateTheme(1)
-    else dbHandler!!.updateTheme(0)
-}
