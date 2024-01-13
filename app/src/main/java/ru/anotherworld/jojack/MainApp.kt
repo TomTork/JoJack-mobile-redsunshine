@@ -366,7 +366,7 @@ private fun Account(){
         Row(modifier = Modifier
             .align(Alignment.End)
             .padding(top = 30.dp, end = 30.dp)) {
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = { mDatabase.collapseDatabase(); context.startActivity(Intent(context, MainActivity::class.java)) }) {
                 Text(text = stringResource(id = R.string.exit), fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
