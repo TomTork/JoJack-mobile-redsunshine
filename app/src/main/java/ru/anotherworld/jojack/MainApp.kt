@@ -2,6 +2,7 @@ package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -67,6 +68,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -81,11 +83,18 @@ import androidx.core.content.res.ResourcesCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
+val mDatabase = MainDatabase()
 class MainApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        try{
+            if(!mDatabase.id.exists() || mDatabase.getId() == -1)startActivity(Intent(this, MainActivity::class.java))
+        } catch (IO: Exception){
+            startActivity(Intent(this, MainActivity::class.java))
+        }
         setContent {
             JoJackTheme {
                 Content()
@@ -286,6 +295,7 @@ private fun Messenger(){
 @SuppressLint("UnrememberedMutableState")
 @Composable
 private fun Account(){
+    val context = LocalContext.current
     var checked = remember { mutableStateOf(true) }
     Column(modifier = Modifier.padding(top = 80.dp, bottom = 60.dp)) {
         Row(modifier = Modifier.padding(start = 30.dp)) {
@@ -310,7 +320,8 @@ private fun Account(){
                 .align(Alignment.CenterVertically)
                 .padding(start = 10.dp),
                 fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Switch(checked = checked.value, onCheckedChange = { checked.value = it; },
+            Switch(checked = checked.value, onCheckedChange = { checked.value = it;
+                mDatabase.setTheme(mDatabase.boolToInt(it)) },
                 modifier = Modifier.weight(0.2f))
         }
         Row (modifier = Modifier
@@ -319,7 +330,7 @@ private fun Account(){
                 colorResource(id = R.color.background_element),
                 shape = RoundedCornerShape(14.dp)
             )
-            .height(50.dp)){
+            .height(50.dp).clickable { context.startActivity(Intent(context, Terminal::class.java)) }){
             Text(text = stringResource(id = R.string.terminal), modifier = Modifier
                 .weight(0.8f)
                 .align(Alignment.CenterVertically)
@@ -332,7 +343,7 @@ private fun Account(){
                 colorResource(id = R.color.background_element),
                 shape = RoundedCornerShape(14.dp)
             )
-            .height(50.dp)){
+            .height(50.dp).clickable { context.startActivity(Intent(context, Appeal::class.java)) }){
             Text(text = stringResource(id = R.string.appeal), modifier = Modifier
                 .weight(0.8f)
                 .align(Alignment.CenterVertically)
@@ -345,7 +356,7 @@ private fun Account(){
                 colorResource(id = R.color.background_element),
                 shape = RoundedCornerShape(14.dp)
             )
-            .height(50.dp)){
+            .height(50.dp).clickable { context.startActivity(Intent(context, ChangePassword::class.java)) }){
             Text(text = stringResource(id = R.string.change_password), modifier = Modifier
                 .weight(0.8f)
                 .align(Alignment.CenterVertically)

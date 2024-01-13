@@ -20,4 +20,5 @@
     <string name="change_password">Change password</string>
     <string name="theme">Theme</string>
     <string name="exit">Exit</string>
+    <string name="title_activity_terminal">Terminal</string>
 </resources>

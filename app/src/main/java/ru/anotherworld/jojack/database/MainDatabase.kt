@@ -12,7 +12,7 @@ class MainDatabase {
         private const val key_ = "ProtectDatabaseM"
         private val cipher = Cipher()
     }
-    private val id = File(d("id"))
+    val id = File(d("id"))
     private val login = File(d("login"))
     private val hash = File(d("hash_password"))
     private val serverId = File(d("server_id"))
@@ -86,4 +86,22 @@ class MainDatabase {
     fun setKey(v: String) = key.writeText(cipher.encrypt(v, key_))
     fun setInfo(v: String) = info.writeText(cipher.encrypt(v, key_))
     fun setTheme(v: Int) = theme.writeText(cipher.encrypt(v.toString(), key_))
+    fun boolToInt(v: Boolean): Int{
+        if(v)return 1
+        return 0
+    }
+    fun collapseDatabase(){
+        setId(-1)
+        login.delete()
+        hash.delete()
+        serverId.delete()
+        level.delete()
+        trustLevel.delete()
+        device.delete()
+        controlSum.delete()
+        key.delete()
+        info.delete()
+        theme.delete()
+    }
 }
+

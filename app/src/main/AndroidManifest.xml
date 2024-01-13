@@ -9,7 +9,7 @@
         android:name="android.permission.LOCAL_MAC_ADDRESS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -22,18 +22,30 @@
         android:theme="@style/Theme.JoJack"
         tools:targetApi="31">
         <activity
-            android:name=".MainApp"
+            android:name=".ChangePassword"
+            android:exported="false" />
+        <activity
+            android:name=".Appeal"
+            android:exported="false" />
+        <activity
+            android:name=".Terminal"
             android:exported="false"
-            android:label="@string/title_activity_main_app"
+            android:label="@string/title_activity_terminal"
             android:theme="@style/Theme.JoJack" />
         <activity
-            android:name=".MainActivity"
-            android:exported="true">
+            android:name=".MainApp"
+            android:exported="true"
+            android:label="@string/title_activity_main_app"
+            android:theme="@style/Theme.JoJack">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="false">
+
         </activity>
     </application>
 

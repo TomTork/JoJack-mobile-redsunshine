@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
             if (true){ //Check internet connection
             //Connect to server, communication
             //Create Database
+                database.setId(0)
                 val mContext = this@MainActivity
                 mContext.startActivity(Intent(mContext, MainApp::class.java))
             }
