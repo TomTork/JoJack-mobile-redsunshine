@@ -35,7 +35,7 @@
         <activity
             android:name=".MainApp"
             android:exported="true"
-            android:label="@string/title_activity_main_app"
+            android:label="@string/app_name"
             android:theme="@style/Theme.JoJack">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

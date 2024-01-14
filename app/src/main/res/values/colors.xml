@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#FF000000</color>
+    <color name="grey">#4D4C4C</color>
     <color name="white">#FFFFFFFF</color>
     <color name="cred">#b72f33</color>
     <color name="edittext">#561416</color>

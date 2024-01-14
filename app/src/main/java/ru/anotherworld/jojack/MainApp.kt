@@ -172,7 +172,9 @@ fun Content(){
                             Icon(painterResource(id = R.drawable.newspaper), null)
                         }
                         Text(text = stringResource(id = R.string.news),
-                            Modifier.clickable { contentManager = 0 }.shadow(2.dp),
+                            Modifier
+                                .clickable { contentManager = 0 }
+                                .shadow(2.dp),
                             fontWeight = boldNews(contentManager))
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
@@ -296,81 +298,88 @@ private fun Messenger(){
 @Composable
 private fun Account(){
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
     var checked = remember { mutableStateOf(true) }
     Column(modifier = Modifier.padding(top = 80.dp, bottom = 60.dp)) {
         Row(modifier = Modifier.padding(start = 30.dp)) {
             Icon(painterResource(id = R.drawable.account_circle), null,
                 modifier = Modifier.size(70.dp))
             Column {
-                Text(text = stringResource(id = R.string.login))
+                Text(text = stringResource(id = R.string.login) + ": ")
                 Text(text = stringResource(id = R.string.job) + " " + stringResource(id = R.string.jojack))
                 Text(text = stringResource(id = R.string.ID))
             }
         }
         Spacer(modifier = Modifier.size(20.dp))
-        Row(modifier = Modifier
-            .padding(30.dp)
-            .background(
-                colorResource(id = R.color.background_element),
-                shape = RoundedCornerShape(14.dp)
-            )
-            .height(50.dp)) {
-            Text(text = stringResource(id = R.string.theme), modifier = Modifier
-                .weight(0.8f)
-                .align(Alignment.CenterVertically)
-                .padding(start = 10.dp),
-                fontWeight = FontWeight.Bold, fontSize = 20.sp)
-            Switch(checked = checked.value, onCheckedChange = { checked.value = it;
-                mDatabase.setTheme(mDatabase.boolToInt(it)) },
-                modifier = Modifier.weight(0.2f))
-        }
-        Row (modifier = Modifier
-            .padding(start = 30.dp, end = 30.dp)
-            .background(
-                colorResource(id = R.color.background_element),
-                shape = RoundedCornerShape(14.dp)
-            )
-            .height(50.dp).clickable { context.startActivity(Intent(context, Terminal::class.java)) }){
-            Text(text = stringResource(id = R.string.terminal), modifier = Modifier
-                .weight(0.8f)
-                .align(Alignment.CenterVertically)
-                .padding(start = 10.dp),
-                fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        }
-        Row (modifier = Modifier
-            .padding(start = 30.dp, end = 30.dp, top = 30.dp)
-            .background(
-                colorResource(id = R.color.background_element),
-                shape = RoundedCornerShape(14.dp)
-            )
-            .height(50.dp).clickable { context.startActivity(Intent(context, Appeal::class.java)) }){
-            Text(text = stringResource(id = R.string.appeal), modifier = Modifier
-                .weight(0.8f)
-                .align(Alignment.CenterVertically)
-                .padding(start = 10.dp),
-                fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        }
-        Row (modifier = Modifier
-            .padding(start = 30.dp, end = 30.dp, top = 30.dp)
-            .background(
-                colorResource(id = R.color.background_element),
-                shape = RoundedCornerShape(14.dp)
-            )
-            .height(50.dp).clickable { context.startActivity(Intent(context, ChangePassword::class.java)) }){
-            Text(text = stringResource(id = R.string.change_password), modifier = Modifier
-                .weight(0.8f)
-                .align(Alignment.CenterVertically)
-                .padding(start = 10.dp),
-                fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        }
-        Row(modifier = Modifier
-            .align(Alignment.End)
-            .padding(top = 30.dp, end = 30.dp)) {
-            Button(onClick = { mDatabase.collapseDatabase(); context.startActivity(Intent(context, MainActivity::class.java)) }) {
-                Text(text = stringResource(id = R.string.exit), fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+        Column(Modifier.verticalScroll(scrollState)) {
+            Row(modifier = Modifier
+                .padding(start = 30.dp, end = 30.dp)
+                .background(
+                    colorResource(id = R.color.background_element),
+                    shape = RoundedCornerShape(14.dp)
                 )
+                .height(50.dp)) {
+                Text(text = stringResource(id = R.string.theme), modifier = Modifier
+                    .weight(0.8f)
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 10.dp),
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Switch(checked = checked.value, onCheckedChange = { checked.value = it;
+                    mDatabase.setTheme(mDatabase.boolToInt(it)) },
+                    modifier = Modifier.weight(0.2f))
             }
+            Row (modifier = Modifier
+                .padding(start = 30.dp, end = 30.dp, top = 10.dp)
+                .background(
+                    colorResource(id = R.color.background_element),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                .height(50.dp)
+                .clickable { context.startActivity(Intent(context, Terminal::class.java)) }){
+                Text(text = stringResource(id = R.string.terminal), modifier = Modifier
+                    .weight(0.8f)
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 10.dp),
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            }
+            Row (modifier = Modifier
+                .padding(start = 30.dp, end = 30.dp, top = 10.dp)
+                .background(
+                    colorResource(id = R.color.background_element),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                .height(50.dp)
+                .clickable { context.startActivity(Intent(context, Appeal::class.java)) }){
+                Text(text = stringResource(id = R.string.appeal), modifier = Modifier
+                    .weight(0.8f)
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 10.dp),
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            }
+            Row (modifier = Modifier
+                .padding(start = 30.dp, end = 30.dp, top = 10.dp)
+                .background(
+                    colorResource(id = R.color.background_element),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                .height(50.dp)
+                .clickable { context.startActivity(Intent(context, ChangePassword::class.java)) }){
+                Text(text = stringResource(id = R.string.change_password), modifier = Modifier
+                    .weight(0.8f)
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 10.dp),
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            }
+            Row(modifier = Modifier
+                .align(Alignment.End)
+                .padding(top = 10.dp, end = 30.dp)) {
+                Button(onClick = { mDatabase.collapseDatabase(); context.startActivity(Intent(context, MainActivity::class.java)) }) {
+                    Text(text = stringResource(id = R.string.exit), fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp
+                    )
+                }
+            }
+
         }
 
 

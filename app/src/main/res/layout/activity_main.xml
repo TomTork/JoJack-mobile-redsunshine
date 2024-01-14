@@ -30,25 +30,47 @@
 
 <!--    </LinearLayout>-->
 
-
-    <ImageView
-        android:layout_width="245dp"
-        android:layout_height="245dp"
-        android:id="@+id/logo"
-        android:layout_gravity="center_horizontal|center_vertical"
-        android:layout_marginTop="70dp"
-        android:src="@drawable/jojacks_fixed_optimized"/>
-
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/welcome"
-        android:layout_marginTop="10dp"
+        android:layout_gravity="center"
         android:gravity="center"
-        android:fontFamily="@font/base_font"
-        android:textSize="16sp"
-        android:textColor="@color/white"
-        />
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:layout_marginTop="10dp"
+            android:layout_gravity="center"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:foregroundGravity="center"/>
+
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:id="@+id/logo"
+        android:foregroundGravity="center_horizontal"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="10dp"
+        android:src="@drawable/jojacks_fixed_optimized"/>
+
+
+<!--    <TextView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="@string/welcome"-->
+<!--        android:layout_marginTop="10dp"-->
+<!--        android:gravity="center"-->
+<!--        android:fontFamily="@font/base_font"-->
+<!--        android:textSize="16sp"-->
+<!--        android:textColor="@color/white"-->
+<!--        />-->
 
     <EditText
         android:layout_width="match_parent"
@@ -56,13 +78,14 @@
         android:textColorHint="@color/white"
         android:textColor="@color/white"
         android:maxLines="1"
-        android:layout_marginTop="15dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginRight="50dp"
+        android:layout_marginTop="100dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
         android:padding="5dip"
         android:layout_gravity="center"
         android:id="@+id/login"
         android:hint="@string/login"
+        android:textSize="20sp"
         android:background="@drawable/round_edit_text"/>
 
     <EditText
@@ -71,11 +94,12 @@
         android:maxLines="1"
         android:textColorHint="@color/white"
         android:textColor="@color/white"
-        android:layout_marginTop="20dp"
-        android:layout_marginLeft="50dp"
-        android:layout_marginRight="50dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
         android:hint="@string/password"
         android:padding="5dip"
+        android:textSize="20sp"
         android:layout_gravity="center"
         android:id="@+id/password"
         android:background="@drawable/round_edit_text"/>
@@ -84,7 +108,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/enter"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="20dp"
         android:layout_gravity="center"
         android:textColor="@color/white"
         android:textSize="20sp"
