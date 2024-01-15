@@ -1,26 +1,38 @@
 package ru.anotherworld.jojack
 
-import java.io.OutputStream
-import java.net.ServerSocket
-import java.net.Socket
-import java.nio.charset.Charset
-import java.util.Scanner
+import io.ktor.network.selector.*
+import io.ktor.network.sockets.*
+import io.ktor.utils.io.*
+import kotlinx.coroutines.*
 
-class MServer(){
-    fun sendMessage(client: Socket, message: String){
-        client.outputStream.write(message.toByteArray())
-        client.close()
-    }
-    fun waitAnswer(){
-        val server = ServerSocket(8080)
-        println("Server running on port ${server.localPort}")
-        val client = server.accept()
-        println("Client connected : ${client.inetAddress.hostAddress}")
-        val scanner = Scanner(client.inputStream)
-        while (scanner.hasNextLine()) {
-            println(scanner.nextLine())
-            break
+
+class MyClient {
+    fun main(){
+        runBlocking {
+            val selectorManager = SelectorManager(Dispatchers.IO)
+            val socket = aSocket(selectorManager).tcp().connect("192.168.0.148", 8080)
+
+            val receiveChannel = socket.openReadChannel()
+            //val sendChannel = socket.openWriteChannel(autoFlush = true)
+
+            launch(Dispatchers.IO){
+                while (true){  //Ожидаем строчку от сервера
+                    val greeting = receiveChannel.readUTF8Line()  //Получить строчку от сервера
+                    if (greeting != null){
+                        println(greeting)
+                    }
+                }
+            }
         }
-        server.close()
+    }
+    fun sendToServer(text: String){
+        runBlocking {
+            val selectorManager = SelectorManager(Dispatchers.IO)
+            val socket = aSocket(selectorManager).tcp().connect("192.168.0.148", 8080)
+            val sendChannel = socket.openWriteChannel(autoFlush = true)
+            launch(Dispatchers.IO) {
+                sendChannel.writeStringUtf8(text)
+            }
+        }
     }
 }

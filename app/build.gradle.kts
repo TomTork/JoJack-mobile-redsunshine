@@ -89,5 +89,10 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-rxjava2")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
+    //Ktor
+    implementation("io.ktor:ktor-network:2.3.7")
+    implementation("io.ktor:ktor-client-core:2.3.7")
+    implementation("io.ktor:ktor-client-core-jvm:2.3.7")
+    implementation("io.ktor:ktor-server-core-jvm:2.3.7")
 
 }
