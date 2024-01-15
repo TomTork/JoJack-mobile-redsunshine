@@ -84,7 +84,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.database.MainDatabase
+import ru.anotherworld.jojack.elements.ChatMessage
+import ru.anotherworld.jojack.elements.PostBase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
+import java.net.Socket
 
 val mDatabase = MainDatabase()
 class MainApp : ComponentActivity() {
@@ -253,7 +256,7 @@ private fun NewsPaper(){
     val scrollState = rememberScrollState()
     Column (modifier = Modifier
         .verticalScroll(scrollState)
-        .padding(top = 30.dp, bottom = 60.dp)
+        .padding(top = 50.dp, bottom = 60.dp)
         .clip(
             RoundedCornerShape(
                 topStart = 30.dp,
@@ -263,10 +266,11 @@ private fun NewsPaper(){
             )
         ), verticalArrangement = Arrangement.Center) {
         for(i in 1..50){
-            Text("$i", fontSize = 24.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp))
+            PostBase(idPost = i, text = "SIMPLE TEXT")
+//            Text("$i", fontSize = 24.sp, fontWeight = FontWeight.Bold,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(vertical = 12.dp))
         }
     }
 }
@@ -276,7 +280,7 @@ private fun Messenger(){
     val scrollState = rememberScrollState()
     Column (modifier = Modifier
         .verticalScroll(scrollState)
-        .padding(top = 30.dp, bottom = 60.dp)
+        .padding(top = 50.dp, bottom = 60.dp)
         .clip(
             RoundedCornerShape(
                 topStart = 30.dp,
@@ -286,10 +290,11 @@ private fun Messenger(){
             )
         ), verticalArrangement = Arrangement.Center) {
         for(i in 1..50){
-            Text("Chat $i", fontSize = 24.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp))
+            ChatMessage(name = "CHAT $i", previewMessage = "Как дела?", username = "Вы")
+//            Text("Chat $i", fontSize = 24.sp, fontWeight = FontWeight.Bold,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(vertical = 12.dp))
         }
     }
 }
@@ -335,7 +340,9 @@ private fun Account(){
                     shape = RoundedCornerShape(14.dp)
                 )
                 .height(50.dp)
-                .clickable { context.startActivity(Intent(context, Terminal::class.java)) }){
+                .clickable {
+                    context.startActivity(Intent(context, Terminal::class.java))
+                }){
                 Text(text = stringResource(id = R.string.terminal), modifier = Modifier
                     .weight(0.8f)
                     .align(Alignment.CenterVertically)
