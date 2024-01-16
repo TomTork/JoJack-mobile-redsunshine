@@ -37,7 +37,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 //        val client = Socket("192.168.0.148", 8080)
-        val mServer = MServer()
         setContentView(R.layout.activity_main)
 
         val layout = findViewById<LinearLayout>(R.id.layout)

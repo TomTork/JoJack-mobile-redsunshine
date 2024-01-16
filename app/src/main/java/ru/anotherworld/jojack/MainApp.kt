@@ -1,11 +1,15 @@
 package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
+import android.content.res.Resources
+import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -14,80 +18,62 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absolutePadding
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import androidx.core.view.WindowCompat
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
-import java.net.Socket
 
 val mDatabase = MainDatabase()
 class MainApp : ComponentActivity() {
@@ -124,16 +110,7 @@ fun Content(){
                 + shrinkHorizontally() + fadeOut(tween(durationMillis = 3000)),
     ) {
         Scaffold(
-            modifier = Modifier
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 30.dp,
-                        topEnd = 30.dp,
-                        bottomEnd = 0.dp,
-                        bottomStart = 0.dp
-                    )
-                )
-                .background(colorResource(id = R.color.cred)),
+            modifier = Modifier.background(Color.White),
             topBar = {
                 var topText by mutableStateOf(stringResource(id = R.string.home))
                 topText = when(contentManager){
@@ -143,20 +120,23 @@ fun Content(){
                     else -> stringResource(id = R.string.home)
                 }
                 Surface(modifier = Modifier
-                    .background(colorResource(id = R.color.cred))
+                    .background(Color.White)
                     .width(Dp.Infinity)) {
                     Row(modifier = Modifier
-                        .width(Dp.Infinity)) {
+                        .width(Dp.Infinity)
+                        .padding(start = 10.dp)) {
                         Text(text = topText, fontSize = 35.sp,
                             modifier = Modifier
                                 .padding(horizontal = 10.dp)
                                 .weight(2f),
-                            fontWeight = FontWeight.SemiBold)
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold)
                         IconButton(onClick = { /*TODO*/ },
                             modifier = Modifier
                                 .weight(0.3f)
                                 .size(50.dp)) {
-                            Icon(imageVector = Icons.Filled.Search, null)
+                            Icon(imageVector = Icons.Filled.Search, null,
+                                modifier = Modifier.padding(end=10.dp))
                         }
                     }
                 }
@@ -254,6 +234,7 @@ fun ShowAnimatedText(
 @Composable
 private fun NewsPaper(){
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
     Column (modifier = Modifier
         .verticalScroll(scrollState)
         .padding(top = 50.dp, bottom = 60.dp)
@@ -265,8 +246,11 @@ private fun NewsPaper(){
                 bottomStart = 0.dp
             )
         ), verticalArrangement = Arrangement.Center) {
-        for(i in 1..50){
-            PostBase(idPost = i, text = "SIMPLE TEXT")
+        val text = "Это длинный и осмысленный текст, таких текстов много, но этот длинный и осмысленный текст - один!"
+        for(i in 1..20){
+            PostBase(
+                idPost = i, text = text, existsImage = true,
+                image = ImageBitmap.imageResource(R.drawable.error))
 //            Text("$i", fontSize = 24.sp, fontWeight = FontWeight.Bold,
 //                modifier = Modifier
 //                    .fillMaxWidth()
@@ -309,10 +293,15 @@ private fun Account(){
         Row(modifier = Modifier.padding(start = 30.dp)) {
             Icon(painterResource(id = R.drawable.account_circle), null,
                 modifier = Modifier.size(70.dp))
-            Column {
-                Text(text = stringResource(id = R.string.login) + ": ")
-                Text(text = stringResource(id = R.string.job) + " " + stringResource(id = R.string.jojack))
-                Text(text = stringResource(id = R.string.ID))
+            Column(modifier= Modifier
+                .padding(start = 5.dp)
+                .align(Alignment.CenterVertically)) {
+                Text(text = stringResource(id = R.string.login) + ": ",
+                    style=MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(id = R.string.job) + " " + stringResource(id = R.string.jojack),
+                    style=MaterialTheme.typography.labelLarge)
+                Text(text = stringResource(id = R.string.ID),
+                    style=MaterialTheme.typography.labelLarge)
             }
         }
         Spacer(modifier = Modifier.size(20.dp))
@@ -328,10 +317,13 @@ private fun Account(){
                     .weight(0.8f)
                     .align(Alignment.CenterVertically)
                     .padding(start = 10.dp),
-                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp,
+                    style=MaterialTheme.typography.bodyLarge)
                 Switch(checked = checked.value, onCheckedChange = { checked.value = it;
                     mDatabase.setTheme(mDatabase.boolToInt(it)) },
-                    modifier = Modifier.weight(0.2f))
+                    modifier = Modifier.weight(0.2f), colors=SwitchDefaults.colors(
+                        checkedThumbColor = colorResource(id = R.color.cred)
+                    ))
             }
             Row (modifier = Modifier
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
@@ -347,7 +339,8 @@ private fun Account(){
                     .weight(0.8f)
                     .align(Alignment.CenterVertically)
                     .padding(start = 10.dp),
-                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp,
+                    style=MaterialTheme.typography.bodyLarge)
             }
             Row (modifier = Modifier
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
@@ -361,7 +354,8 @@ private fun Account(){
                     .weight(0.8f)
                     .align(Alignment.CenterVertically)
                     .padding(start = 10.dp),
-                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp,
+                    style=MaterialTheme.typography.bodyLarge)
             }
             Row (modifier = Modifier
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
@@ -375,15 +369,16 @@ private fun Account(){
                     .weight(0.8f)
                     .align(Alignment.CenterVertically)
                     .padding(start = 10.dp),
-                    fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                    fontWeight = FontWeight.Bold, fontSize = 20.sp,
+                    style=MaterialTheme.typography.bodyLarge)
             }
             Row(modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = 10.dp, end = 30.dp)) {
                 Button(onClick = { mDatabase.collapseDatabase(); context.startActivity(Intent(context, MainActivity::class.java)) }) {
                     Text(text = stringResource(id = R.string.exit), fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    )
+                        fontSize = 20.sp, style=MaterialTheme.typography.bodyLarge,
+                        color=colorResource(id=R.color.cred))
                 }
             }
 

@@ -11,4 +11,5 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val Black = Color(0xFF000000)
+val BackBlack = Color(0xFF111111)
 val CRed = Color(0xffb72f33)

@@ -2,6 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="grey">#4D4C4C</color>
+    <color name="dark">#3F0707</color>
     <color name="white">#FFFFFFFF</color>
     <color name="cred">#b72f33</color>
     <color name="edittext">#561416</color>
