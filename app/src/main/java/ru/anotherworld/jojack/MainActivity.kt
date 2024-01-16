@@ -1,15 +1,11 @@
 package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.TransitionDrawable
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
+import android.view.WindowManager
 import android.view.animation.AlphaAnimation
 import android.view.animation.AnimationSet
 import android.view.animation.DecelerateInterpolator
@@ -20,15 +16,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat.getSystemService
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import ru.anotherworld.jojack.database.DatabaseHelper
 import ru.anotherworld.jojack.database.MainDatabase
-import java.net.Socket
-import kotlin.concurrent.thread
 
 
 val database = MainDatabase()
@@ -36,7 +24,8 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val client = Socket("192.168.0.148", 8080)
+        window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
         setContentView(R.layout.activity_main)
 
         val layout = findViewById<LinearLayout>(R.id.layout)

@@ -47,8 +47,6 @@
             android:name=".MainActivity"
             android:screenOrientation="portrait"
             android:exported="false">
-
         </activity>
     </application>
-
 </manifest>

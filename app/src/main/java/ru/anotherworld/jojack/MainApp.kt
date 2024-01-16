@@ -2,14 +2,9 @@ package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.res.Resources
-import android.graphics.BitmapFactory
-import android.os.Build
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -30,6 +25,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -42,15 +40,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,7 +55,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
@@ -68,8 +64,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase
@@ -81,7 +75,7 @@ class MainApp : ComponentActivity() {
         super.onCreate(savedInstanceState)
         try{
             if(!mDatabase.id.exists() || mDatabase.getId() == -1)startActivity(Intent(this, MainActivity::class.java))
-        } catch (IO: Exception){
+        } catch (io: Exception){
             startActivity(Intent(this, MainActivity::class.java))
         }
         setContent {
@@ -234,7 +228,6 @@ fun ShowAnimatedText(
 @Composable
 private fun NewsPaper(){
     val scrollState = rememberScrollState()
-    val context = LocalContext.current
     Column (modifier = Modifier
         .verticalScroll(scrollState)
         .padding(top = 50.dp, bottom = 60.dp)
@@ -251,19 +244,14 @@ private fun NewsPaper(){
             PostBase(
                 idPost = i, text = text, existsImage = true,
                 image = ImageBitmap.imageResource(R.drawable.error))
-//            Text("$i", fontSize = 24.sp, fontWeight = FontWeight.Bold,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(vertical = 12.dp))
         }
     }
 }
 
 @Composable
 private fun Messenger(){
-    val scrollState = rememberScrollState()
+//    val scrollState = rememberScrollState()
     Column (modifier = Modifier
-        .verticalScroll(scrollState)
         .padding(top = 50.dp, bottom = 60.dp)
         .clip(
             RoundedCornerShape(
@@ -273,12 +261,11 @@ private fun Messenger(){
                 bottomStart = 0.dp
             )
         ), verticalArrangement = Arrangement.Center) {
-        for(i in 1..50){
-            ChatMessage(name = "CHAT $i", previewMessage = "Как дела?", username = "Вы")
-//            Text("Chat $i", fontSize = 24.sp, fontWeight = FontWeight.Bold,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(vertical = 12.dp))
+        val listSize = 20
+        LazyColumn{
+            items(20){
+                ChatMessage(name = "CHAT", previewMessage = "Как дела?", username = "Вы")
+            }
         }
     }
 }
@@ -289,13 +276,11 @@ private fun Account(){
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     var checked = remember { mutableStateOf(true) }
-    Column(modifier = Modifier.padding(top = 80.dp, bottom = 60.dp)) {
-        Row(modifier = Modifier.padding(start = 30.dp)) {
+    Column(modifier = Modifier.padding(top = 50.dp, bottom = 60.dp)) {
+        Column(modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Icon(painterResource(id = R.drawable.account_circle), null,
-                modifier = Modifier.size(70.dp))
-            Column(modifier= Modifier
-                .padding(start = 5.dp)
-                .align(Alignment.CenterVertically)) {
+                modifier = Modifier.size(150.dp))
+            Column(modifier= Modifier.align(Alignment.CenterHorizontally)) {
                 Text(text = stringResource(id = R.string.login) + ": ",
                     style=MaterialTheme.typography.labelLarge)
                 Text(text = stringResource(id = R.string.job) + " " + stringResource(id = R.string.jojack),
@@ -320,7 +305,7 @@ private fun Account(){
                     fontWeight = FontWeight.Bold, fontSize = 20.sp,
                     style=MaterialTheme.typography.bodyLarge)
                 Switch(checked = checked.value, onCheckedChange = { checked.value = it;
-                    mDatabase.setTheme(mDatabase.boolToInt(it)) },
+                    mDatabase.setTheme(mDatabase.boolToInt(it)); changeTheme(it) },
                     modifier = Modifier.weight(0.2f), colors=SwitchDefaults.colors(
                         checkedThumbColor = colorResource(id = R.color.cred)
                     ))
@@ -381,11 +366,58 @@ private fun Account(){
                         color=colorResource(id=R.color.cred))
                 }
             }
-
         }
+    }
+}
 
+private fun changeTheme(value: Boolean){
+    if(value){
 
     }
-
-
 }
+
+
+
+//private val SaveMap = mutableMapOf<String, MutableList<KeyParams>>()
+//
+//private val lastScreenName: String?
+//    get() = ""
+//
+//private class KeyParams(
+//    // Это ключ для вложенного списка.
+//    // Если на экране будет только один скроллящийся элемент
+//    // это поле будет пустым
+//    val params: String,
+//    val index: Int,
+//    val scrollOffset: Int,
+//)
+//@Composable
+//private fun rememberForeverLazyListState(
+//    params: String = "",
+//): LazyListState {
+//    val key = lastScreenName ?: return rememberLazyListState()
+//    val scrollState = rememberSaveable(saver = LazyListState.Saver) {
+//        val savedValue = getSavedValue(key, params)
+//        LazyListState(
+//            savedValue?.index.orDefault(),
+//            savedValue?.scrollOffset.orDefault()
+//        )
+//    }
+//    DisposableEffect(params) {
+//        onDispose {
+//            val lastIndex = scrollState.firstVisibleItemIndex
+//            val lastOffset = scrollState.firstVisibleItemScrollOffset
+//            addNewValue(key, KeyParams(params, lastIndex, lastOffset))
+//        }
+//    }
+//    return scrollState
+//}
+//
+////@Composable
+////fun DynamicThemeToggler() {
+////    var isDarkTheme by remember { mutableStateOf(false) }
+////    Switch(checked=isDarkTheme, onCheckedChange = { isDarkTheme = it } )
+////    MaterialTheme(colors=if (isDarkTheme) DarkColorPalette else LightColorPalette) {
+////    // Your app's screen content goes here }}
+////    }
+////}
