@@ -18,4 +18,6 @@
     <color name="blue_shadow">#2cd9d0</color>
     <color name="register_button">#4cb34c</color>
     <color name="background_text_field">#3c3c40</color>
+    <color name="under_line">#0000ff</color>
+    <color name="ul2">#6793c0</color>
 </resources>

@@ -20,10 +20,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.add
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -34,15 +42,21 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,16 +66,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.anotherworld.jojack.database.MainDatabase
@@ -92,7 +112,11 @@ class MainApp : ComponentActivity() {
 @Composable
 fun Content(){
     val coroutine = rememberCoroutineScope()
+    val context = LocalContext.current
+    var isVisible by remember { mutableStateOf(true) }
+    var check by remember { mutableStateOf(0) }
     var contentManager by mutableStateOf(0)
+    val stableInsetsHolder = remember { StableStatusBarsInsetsHolder()}
     var visible by remember {
         mutableStateOf(true)
     }
@@ -104,11 +128,11 @@ fun Content(){
                 + shrinkHorizontally() + fadeOut(tween(durationMillis = 3000)),
     ) {
         Scaffold(
+            contentWindowInsets = stableInsetsHolder.stableStatusBars,
             modifier = Modifier.background(Color.White),
             topBar = {
                 var topText by mutableStateOf(stringResource(id = R.string.home))
                 topText = when(contentManager){
-                    0 -> stringResource(id = R.string.news)
                     1 -> stringResource(id = R.string.message)
                     2 -> stringResource(id = R.string.account)
                     else -> stringResource(id = R.string.home)
@@ -116,23 +140,71 @@ fun Content(){
                 Surface(modifier = Modifier
                     .background(Color.White)
                     .width(Dp.Infinity)) {
-                    Row(modifier = Modifier
-                        .width(Dp.Infinity)
-                        .padding(start = 10.dp)) {
-                        Text(text = topText, fontSize = 35.sp,
-                            modifier = Modifier
-                                .padding(horizontal = 10.dp)
-                                .weight(2f),
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold)
-                        IconButton(onClick = { /*TODO*/ },
-                            modifier = Modifier
-                                .weight(0.3f)
-                                .size(50.dp)) {
-                            Icon(imageVector = Icons.Filled.Search, null,
-                                modifier = Modifier.padding(end=10.dp))
+                    Column {
+                        Row(modifier = Modifier
+                            .width(Dp.Infinity)
+                            .padding(start = 10.dp)) {
+                            Text(text = topText, fontSize = 35.sp,
+                                modifier = Modifier
+                                    .padding(horizontal = 10.dp)
+                                    .weight(2f),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold)
+                            IconButton(onClick = { /*TODO*/ },
+                                modifier = Modifier
+                                    .weight(0.3f)
+                                    .size(50.dp)) {
+                                Icon(imageVector = Icons.Filled.Search, null,
+                                    modifier = Modifier.padding(end=10.dp))
+                            }
+                        }
+                        if(isVisible){
+                            Row(horizontalArrangement = Arrangement.Absolute.Center,
+                                modifier = Modifier.fillMaxWidth(1f)) {
+                                Button(onClick = { check = 0 }, colors = ButtonDefaults
+                                    .buttonColors(containerColor = Color.Transparent)) {
+                                    Text(text = stringResource(id = R.string.news),
+                                        color = Color.White,
+                                        fontWeight = if(check == 0) FontWeight.Bold else FontWeight.Normal,
+                                        modifier = Modifier
+                                            .align(Alignment.CenterVertically)
+                                            .drawBehind {
+                                                if (check == 0) {
+                                                    val strokeWidthPx = 2.dp.toPx()
+                                                    val verticalOffset = size.height - 2.sp.toPx()
+                                                    drawLine(
+                                                        color = Color(0xff6793c0),
+                                                        strokeWidth = strokeWidthPx,
+                                                        start = Offset(0f, verticalOffset),
+                                                        end = Offset(size.width, verticalOffset)
+                                                    )
+                                                }
+                                            })
+                                }
+                                Button(onClick = { check = 1 }, colors = ButtonDefaults
+                                    .buttonColors(containerColor = Color.Transparent)) {
+                                    Text(text = stringResource(id = R.string.meeting),
+                                        color = Color.White,
+                                        fontWeight = if(check == 1) FontWeight.Bold else FontWeight.Normal,
+                                        modifier = Modifier
+                                            .align(Alignment.CenterVertically)
+                                            .drawBehind {
+                                                if (check == 1) {
+                                                    val strokeWidthPx = 2.dp.toPx()
+                                                    val verticalOffset = size.height - 2.sp.toPx()
+                                                    drawLine(
+                                                        color = Color(0xff6793c0),
+                                                        strokeWidth = strokeWidthPx,
+                                                        start = Offset(0f, verticalOffset),
+                                                        end = Offset(size.width, verticalOffset)
+                                                    )
+                                                }
+                                            })
+                                }
+                            }
                         }
                     }
+
                 }
             },
             bottomBar = {
@@ -181,9 +253,16 @@ fun Content(){
             }
         ) {
             when(contentManager){
-                0 -> NewsPaper()
-                1 -> Messenger()
-                2 -> Account()
+                0 -> {
+                    isVisible = true
+                    when(check){
+                        0 -> NewsPaper()
+                        1 -> Meetings()
+                    }
+
+                }
+                1 -> {Messenger(); isVisible = false}
+                2 -> {Account(); isVisible = false}
             }
         }
     }
@@ -223,6 +302,11 @@ fun ShowAnimatedText(
             }
         }
     }
+}
+
+@Composable
+private fun Meetings(){
+
 }
 
 @Composable
@@ -421,3 +505,32 @@ private fun changeTheme(value: Boolean){
 ////    // Your app's screen content goes here }}
 ////    }
 ////}
+
+class StableStatusBarsInsetsHolder {
+    private var stableStatusBarsInsets: WindowInsets = WindowInsets(0.dp)
+    val stableStatusBars: WindowInsets
+        @Composable
+        get() {
+            val density = LocalDensity.current
+            val layoutDirection = LocalLayoutDirection.current
+            val statusBars = WindowInsets.statusBars
+            return remember {
+                derivedStateOf {
+                    if (statusBars.exclude(stableStatusBarsInsets).getTop(density) > 0) {
+                        stableStatusBarsInsets = statusBars.deepCopy(density, layoutDirection)
+                    }
+                    stableStatusBarsInsets
+                }
+            }.value
+        }
+
+}
+
+private fun WindowInsets.deepCopy(density: Density, layoutDirection: LayoutDirection): WindowInsets {
+    return WindowInsets(
+        left = getLeft(density, layoutDirection),
+        top = getTop(density),
+        right = getRight(density, layoutDirection),
+        bottom = getBottom(density)
+    )
+}

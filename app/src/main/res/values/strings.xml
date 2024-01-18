@@ -30,4 +30,6 @@
     <string name="enter">Enter</string>
     <string name="to_enter">Already have an account? Sign in.</string>
     <string name="to_register">No account? Sign up.</string>
+    <string name="empty_fields">Input fields cannot be empty.</string>
+    <string name="meeting">Meeting</string>
 </resources>
