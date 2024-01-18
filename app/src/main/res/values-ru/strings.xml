@@ -5,7 +5,7 @@
     <string name="password">Пароль</string>
     <string name="enter_button">Регистрация / Вход</string>
     <string name="welcome">Добро пожаловать Домой!</string>
-    <string name="going_on">Что проиходит? Кто мы?</string>
+    <string name="going_on">Кто такие Жожеки?</string>
     <string name="no_internet">Нет подключения к интернету!</string>
     <string name="title_activity_main_app">MainApp</string>
     <string name="home">Главная</string>
@@ -22,4 +22,13 @@
     <string name="theme">Тема</string>
     <string name="exit">Выход</string>
     <string name="title_activity_terminal">Терминал</string>
+    <string name="error_enter">Логин занят или в пароле ошибка</string>
+    <string name="error">Что-то пошло не так...</string>
+    <integer name="com_vk_sdk_AppId">51833987</integer>
+    <string name="title_activity_registration">RegistrationActivity</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="register">Зарегистрироваться</string>
+    <string name="enter">Войти</string>
+    <string name="to_enter">Уже есть аккаунт? Войти.</string>
+    <string name="to_register">Нет аккаунта? Зарегистрироваться.</string>
 </resources>

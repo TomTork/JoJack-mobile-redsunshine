@@ -21,4 +21,13 @@
     <string name="theme">Theme</string>
     <string name="exit">Exit</string>
     <string name="title_activity_terminal">Terminal</string>
+    <string name="error_enter">Login busy or password error</string>
+    <string name="error">Something went wrong...</string>
+    <integer name="com_vk_sdk_AppId">51833987</integer>
+    <string name="title_activity_registration">RegistrationActivity</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="register">Register</string>
+    <string name="enter">Enter</string>
+    <string name="to_enter">Already have an account? Sign in.</string>
+    <string name="to_register">No account? Sign up.</string>
 </resources>
