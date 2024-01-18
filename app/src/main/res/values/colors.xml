@@ -8,4 +8,14 @@
     <color name="edittext">#561416</color>
     <color name="base_logo">#f4d3ce</color>
     <color name="background_element">#232323</color>
+    <color name="ghost_white">#1a1c1d</color>
+    <color name="light_blue">#70a1dc</color>
+    <color name="purple">#e27ec4</color>
+    <color name="ocen_blue">#00bfff</color>
+    <color name="electric_crimson">#ff003f</color>
+    <color name="sea_green">#20b2aa</color>
+    <color name="sea_grren2">#2071b2</color>
+    <color name="blue_shadow">#2cd9d0</color>
+    <color name="register_button">#4cb34c</color>
+    <color name="background_text_field">#3c3c40</color>
 </resources>
