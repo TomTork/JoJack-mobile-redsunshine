@@ -45,8 +45,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
@@ -134,7 +136,7 @@ fun Content(){
                 var topText by mutableStateOf(stringResource(id = R.string.home))
                 topText = when(contentManager){
                     1 -> stringResource(id = R.string.message)
-                    2 -> stringResource(id = R.string.account)
+                    2 -> stringResource(id = R.string.settings)
                     else -> stringResource(id = R.string.home)
                 }
                 Surface(modifier = Modifier
@@ -143,13 +145,24 @@ fun Content(){
                     Column {
                         Row(modifier = Modifier
                             .width(Dp.Infinity)
-                            .padding(start = 10.dp)) {
+                            .padding(start = 10.dp)
+                            .background(colorResource(id = R.color.black))) {
                             Text(text = topText, fontSize = 35.sp,
                                 modifier = Modifier
                                     .padding(horizontal = 10.dp)
                                     .weight(2f),
                                 style = MaterialTheme.typography.headlineLarge,
                                 fontWeight = FontWeight.Bold)
+                            if(isVisible){
+                                FilledIconButton(onClick = { check = if(check == 0) 1 else 0 }) {
+                                    if(check == 0) Icon(painterResource(id = R.drawable.newspaper),
+                                        null, tint=Color.White,
+                                        modifier = Modifier.size(30.dp))
+                                    else Icon(painterResource(id = R.drawable.handshake),
+                                        null, tint=Color.White,
+                                        modifier = Modifier.size(30.dp))
+                                }
+                            }
                             IconButton(onClick = { /*TODO*/ },
                                 modifier = Modifier
                                     .weight(0.3f)
@@ -158,93 +171,59 @@ fun Content(){
                                     modifier = Modifier.padding(end=10.dp))
                             }
                         }
-                        if(isVisible){
-                            Row(horizontalArrangement = Arrangement.Absolute.Center,
-                                modifier = Modifier.fillMaxWidth(1f)) {
-                                Button(onClick = { check = 0 }, colors = ButtonDefaults
-                                    .buttonColors(containerColor = Color.Transparent)) {
-                                    Text(text = stringResource(id = R.string.news),
-                                        color = Color.White,
-                                        fontWeight = if(check == 0) FontWeight.Bold else FontWeight.Normal,
-                                        modifier = Modifier
-                                            .align(Alignment.CenterVertically)
-                                            .drawBehind {
-                                                if (check == 0) {
-                                                    val strokeWidthPx = 2.dp.toPx()
-                                                    val verticalOffset = size.height - 2.sp.toPx()
-                                                    drawLine(
-                                                        color = Color(0xff6793c0),
-                                                        strokeWidth = strokeWidthPx,
-                                                        start = Offset(0f, verticalOffset),
-                                                        end = Offset(size.width, verticalOffset)
-                                                    )
-                                                }
-                                            })
-                                }
-                                Button(onClick = { check = 1 }, colors = ButtonDefaults
-                                    .buttonColors(containerColor = Color.Transparent)) {
-                                    Text(text = stringResource(id = R.string.meeting),
-                                        color = Color.White,
-                                        fontWeight = if(check == 1) FontWeight.Bold else FontWeight.Normal,
-                                        modifier = Modifier
-                                            .align(Alignment.CenterVertically)
-                                            .drawBehind {
-                                                if (check == 1) {
-                                                    val strokeWidthPx = 2.dp.toPx()
-                                                    val verticalOffset = size.height - 2.sp.toPx()
-                                                    drawLine(
-                                                        color = Color(0xff6793c0),
-                                                        strokeWidth = strokeWidthPx,
-                                                        start = Offset(0f, verticalOffset),
-                                                        end = Offset(size.width, verticalOffset)
-                                                    )
-                                                }
-                                            })
-                                }
-                            }
-                        }
+
                     }
 
                 }
             },
             bottomBar = {
                 Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceAround,
+                    horizontalArrangement = Arrangement.Absolute.SpaceAround,
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .background(colorResource(id = R.color.black))
                         .padding(0.dp)) {
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { contentManager = 0 }) {
+                        modifier = Modifier.clickable { contentManager = 0 }.weight(0.33f)) {
                         IconButton(onClick = { contentManager = 0 }) {
-                            Icon(painterResource(id = R.drawable.newspaper), null)
+                            Icon(painterResource(id = R.drawable.baseline_home), null,
+                                modifier = Modifier.align(Alignment.CenterHorizontally))
                         }
-                        Text(text = stringResource(id = R.string.news),
+                        Text(text = stringResource(id = R.string.home),
                             Modifier
                                 .clickable { contentManager = 0 }
-                                .shadow(2.dp),
+                                .shadow(2.dp)
+                                .align(Alignment.CenterHorizontally),
                             fontWeight = boldNews(contentManager))
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { contentManager = 1 }) {
+                        modifier = Modifier.clickable { contentManager = 1 }.weight(0.33f)) {
                         IconButton(onClick = { contentManager = 1 }) {
-                            Icon(painterResource(id = R.drawable.message), null)
+                            Icon(painterResource(id = R.drawable.message), null,
+                                modifier = Modifier.align(Alignment.CenterHorizontally))
                         }
                         Text(text = stringResource(id = R.string.message),
-                            Modifier.clickable { contentManager = 1 },
+                            Modifier
+                                .clickable { contentManager = 1 }
+                                .shadow(2.dp)
+                                .align(Alignment.CenterHorizontally),
                             fontWeight = boldMessenger(contentManager)
                         )
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { contentManager = 2 }) {
+                        modifier = Modifier.clickable { contentManager = 2 }.weight(0.33f)) {
                         IconButton(onClick = { contentManager = 2 }) {
-                            Icon(painterResource(id = R.drawable.account_circle), null)
+                            Icon(painterResource(id = R.drawable.baseline_settings), null,
+                                modifier = Modifier.align(Alignment.CenterHorizontally))
                         }
-                        Text(text = stringResource(id = R.string.account),
-                            Modifier.clickable { contentManager = 2 },
+                        Text(text = stringResource(id = R.string.settings),
+                            Modifier
+                                .clickable { contentManager = 2 }
+                                .shadow(2.dp)
+                                .align(Alignment.CenterHorizontally),
                             fontWeight = boldAccount(contentManager)
                         )
                     }

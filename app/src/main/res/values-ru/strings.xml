@@ -33,4 +33,5 @@
     <string name="to_register">Нет аккаунта? Зарегистрироваться.</string>
     <string name="empty_fields">Поля ввода не могут быть пусты.</string>
     <string name="meeting">Роение</string>
+    <string name="settings">Настройки</string>
 </resources>
