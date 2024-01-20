@@ -2,6 +2,7 @@ package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +15,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,8 +27,10 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -69,6 +73,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -80,6 +85,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -89,6 +96,7 @@ import androidx.compose.ui.unit.sp
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase
+import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
 val mDatabase = MainDatabase()
@@ -102,25 +110,25 @@ class MainApp : ComponentActivity() {
         }
         setContent {
             JoJackTheme {
-                Content2()
-//                Content()
+                Content()
             }
         }
     }
-}
-
-@Composable
-private fun Content2(){
-
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
     "UnrememberedMutableState"
 )
 @Composable
-fun Content(){
+private fun Content(){
     val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
+    val interFamily = FontFamily(
+        Font(R.font.inter600, FontWeight.W600),
+    )
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_semibold600, FontWeight.W600)
+    )
     var isVisible by remember { mutableStateOf(true) }
     var check by remember { mutableStateOf(0) }
     var contentManager by mutableStateOf(0)
@@ -128,136 +136,182 @@ fun Content(){
     var visible by remember {
         mutableStateOf(true)
     }
-    AnimatedVisibility(visible = visible,
-        enter = slideInHorizontally(tween(durationMillis = 3000,
-            easing = LinearEasing)) + expandHorizontally(expandFrom = Alignment.End) + fadeIn(tween(durationMillis = 3000,
-            easing = LinearEasing)),
-        exit = slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth })
-                + shrinkHorizontally() + fadeOut(tween(durationMillis = 3000)),
-    ) {
-        Scaffold(
-            contentWindowInsets = stableInsetsHolder.stableStatusBars,
-            modifier = Modifier.background(Color.White),
-            topBar = {
-                var topText by mutableStateOf(stringResource(id = R.string.home))
-                topText = when(contentManager){
-                    1 -> stringResource(id = R.string.message)
-                    2 -> stringResource(id = R.string.settings)
-                    else -> stringResource(id = R.string.home)
-                }
-                Surface(modifier = Modifier
-                    .background(Color.White)
-                    .width(Dp.Infinity)) {
-                    Column {
-                        Row(modifier = Modifier
-                            .width(Dp.Infinity)
-                            .padding(start = 10.dp)
-                            .background(colorResource(id = R.color.black))) {
-                            Text(text = topText, fontSize = 35.sp,
-                                modifier = Modifier
-                                    .padding(horizontal = 10.dp)
-                                    .weight(2f),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold)
-                            if(isVisible){
-                                FilledIconButton(onClick = { check = if(check == 0) 1 else 0 }) {
-                                    if(check == 0) Icon(painterResource(id = R.drawable.newspaper),
-                                        null, tint=Color.White,
-                                        modifier = Modifier.size(30.dp))
-                                    else Icon(painterResource(id = R.drawable.handshake),
-                                        null, tint=Color.White,
-                                        modifier = Modifier.size(30.dp))
+    Scaffold(
+        contentWindowInsets = stableInsetsHolder.stableStatusBars,
+        modifier = Modifier.background(Color.White),
+        topBar = {
+            var topText by mutableStateOf(stringResource(id = R.string.home))
+            topText = when(contentManager){
+                1 -> stringResource(id = R.string.message)
+                2 -> stringResource(id = R.string.settings)
+                else -> stringResource(id = R.string.home)
+            }
+            Surface(modifier = Modifier
+                .background(Color.White)
+                .fillMaxWidth(1f)) {
+                Column(modifier = Modifier.fillMaxWidth(1f)) {
+                    Row(modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .background(colorResource(id = R.color.background2))) {
+
+                        Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
+                        null, modifier= Modifier
+                                .size(65.dp)
+                                .align(Alignment.CenterVertically)
+                                .padding(start = 20.dp, end = 5.dp))
+
+                        Text(text = stringResource(id = R.string.app_name),
+                            fontFamily = interFamily, fontWeight = FontWeight.W600,
+                            fontSize = 30.sp, modifier = Modifier
+                                .align(Alignment.CenterVertically))
+                        Spacer(modifier = Modifier.padding(bottom=20.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Absolute.Right,
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .fillMaxWidth(1f)
+                                .padding(end = 20.dp)) {
+                            IconButton(onClick = { /*TODO*/ }) {
+                                Column(modifier = Modifier
+                                    .padding(end = 15.dp)
+                                    .align(Alignment.CenterVertically)
+                                    .offset(y = 3.dp)) {
+                                    Image(painterResource(id = R.drawable.notificate1),
+                                        null,
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
+                                            .size(25.dp))
+                                    Image(painterResource(id = R.drawable.notificate2),
+                                        null,
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
+                                            .size(9.dp)
+                                            .offset(y = (-3).dp))
                                 }
                             }
-                            IconButton(onClick = { /*TODO*/ },
-                                modifier = Modifier
-                                    .weight(0.3f)
-                                    .size(50.dp)) {
-                                Icon(imageVector = Icons.Filled.Search, null,
-                                    modifier = Modifier.padding(end=10.dp))
-                            }
-                        }
 
+                            Image(painterResource(id = R.drawable.search2),
+                                null, modifier = Modifier.size(25.dp))
+                        }
+                        //DEPRECATED
+//                            Text(text = topText, fontSize = 35.sp,
+//                                modifier = Modifier
+//                                    .padding(horizontal = 10.dp)
+//                                    .weight(2f),
+//                                style = MaterialTheme.typography.headlineLarge,
+//                                fontWeight = FontWeight.Bold)
+//                            if(isVisible){
+//                                FilledIconButton(onClick = { check = if(check == 0) 1 else 0 }) {
+//                                    if(check == 0) Icon(painterResource(id = R.drawable.newspaper),
+//                                        null, tint=Color.White,
+//                                        modifier = Modifier.size(30.dp))
+//                                    else Icon(painterResource(id = R.drawable.handshake),
+//                                        null, tint=Color.White,
+//                                        modifier = Modifier.size(30.dp))
+//                                }
+//                            }
+//                            IconButton(onClick = { /*TODO*/ },
+//                                modifier = Modifier
+//                                    .weight(0.3f)
+//                                    .size(50.dp)) {
+//                                Icon(imageVector = Icons.Filled.Search, null,
+//                                    modifier = Modifier.padding(end=10.dp))
+//                            }
                     }
 
                 }
-            },
-            bottomBar = {
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Absolute.SpaceAround,
-                    modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .background(colorResource(id = R.color.black))
-                        .padding(0.dp)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clickable { contentManager = 0 }
-                            .weight(0.33f)) {
-                        IconButton(onClick = { contentManager = 0 }) {
-                            Icon(painterResource(id = R.drawable.baseline_home), null,
-                                modifier = Modifier.align(Alignment.CenterHorizontally))
-                        }
-                        Text(text = stringResource(id = R.string.home),
-                            Modifier
-                                .clickable { contentManager = 0 }
-                                .shadow(2.dp)
-                                .align(Alignment.CenterHorizontally),
-                            fontWeight = boldNews(contentManager))
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clickable { contentManager = 1 }
-                            .weight(0.33f)) {
-                        IconButton(onClick = { contentManager = 1 }) {
-                            Icon(painterResource(id = R.drawable.message), null,
-                                modifier = Modifier.align(Alignment.CenterHorizontally))
-                        }
-                        Text(text = stringResource(id = R.string.message),
-                            Modifier
-                                .clickable { contentManager = 1 }
-                                .shadow(2.dp)
-                                .align(Alignment.CenterHorizontally),
-                            fontWeight = boldMessenger(contentManager)
-                        )
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clickable { contentManager = 2 }
-                            .weight(0.33f)) {
-                        IconButton(onClick = { contentManager = 2 }) {
-                            Icon(painterResource(id = R.drawable.baseline_settings), null,
-                                modifier = Modifier.align(Alignment.CenterHorizontally))
-                        }
-                        Text(text = stringResource(id = R.string.settings),
-                            Modifier
-                                .clickable { contentManager = 2 }
-                                .shadow(2.dp)
-                                .align(Alignment.CenterHorizontally),
-                            fontWeight = boldAccount(contentManager)
-                        )
-                    }
-                    
-                }
+
             }
-        ) {
-            when(contentManager){
-                0 -> {
-                    isVisible = true
-                    when(check){
-                        0 -> NewsPaper()
-                        1 -> Meetings()
-                    }
+        },
+        bottomBar = {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Absolute.SpaceAround,
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .background(colorResource(id = R.color.black2))
+                    .padding(0.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { contentManager = 0 }
+                        .weight(0.33f)) {
+                    IconButton(onClick = { contentManager = 0 },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                        Column(modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .offset(y = 3.dp)) {
+                            Icon(painterResource(id = R.drawable.home21), null,
+                                tint = colorResource(id = R.color.text_color),
+                                modifier = Modifier.align(Alignment.CenterHorizontally))
+                            Icon(painterResource(id = R.drawable.home22), null,
+                                tint = colorResource(id = R.color.text_color),
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .offset(y = (-6).dp)
+                                    .scale(scaleX = 1.5f, scaleY = 1f))
+                        }
 
+                    }
+                    Text(text = stringResource(id = R.string.home),
+                        Modifier
+                            .clickable { contentManager = 0 }
+                            .shadow(2.dp)
+                            .align(Alignment.CenterHorizontally),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        color = colorResource(id = R.color.text_color))
                 }
-                1 -> {Messenger(); isVisible = false}
-                2 -> {Account(); isVisible = false}
+                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { contentManager = 1 }
+                        .weight(0.33f)) {
+                    IconButton(onClick = { contentManager = 1 }) {
+                        Icon(painterResource(id = R.drawable.comments2), null,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            tint = colorResource(id = R.color.text_color))
+                    }
+                    Text(text = stringResource(id = R.string.message),
+                        Modifier
+                            .clickable { contentManager = 1 }
+                            .shadow(2.dp)
+                            .align(Alignment.CenterHorizontally),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        color = colorResource(id = R.color.text_color))
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { contentManager = 2 }
+                        .weight(0.33f)) {
+                    IconButton(onClick = { contentManager = 2 }) {
+                        Icon(painterResource(id = R.drawable.settings2), null,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            tint = colorResource(id = R.color.text_color))
+                    }
+                    Text(text = stringResource(id = R.string.settings),
+                        Modifier
+                            .clickable { contentManager = 2 }
+                            .shadow(2.dp)
+                            .align(Alignment.CenterHorizontally),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        color = colorResource(id = R.color.text_color))
+                }
             }
         }
-    }
+    ) {
+        when(contentManager){
+            0 -> {
+                isVisible = true
+                when(check){
+                    0 -> NewsPaper()
+                    1 -> Meetings()
+                }
 
+            }
+            1 -> {Messenger(); isVisible = false}
+            2 -> {Account(); isVisible = false}
+        }
+    }
 }
 
 private fun boldNews(contentManager: Int): FontWeight{
@@ -303,22 +357,20 @@ private fun Meetings(){
 @Composable
 private fun NewsPaper(){
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
     Column (modifier = Modifier
         .verticalScroll(scrollState)
         .padding(top = 50.dp, bottom = 60.dp)
-        .clip(
-            RoundedCornerShape(
-                topStart = 30.dp,
-                topEnd = 30.dp,
-                bottomEnd = 0.dp,
-                bottomStart = 0.dp
-            )
-        ), verticalArrangement = Arrangement.Center) {
+        .fillMaxWidth(1f)
+        .background(color = colorResource(id = R.color.background2)),
+        verticalArrangement = Arrangement.Center) {
         val text = "Это длинный и осмысленный текст, таких текстов много, но этот длинный и осмысленный текст - один!"
         for(i in 1..20){
-            PostBase(
-                idPost = i, text = text, existsImage = true,
-                image = ImageBitmap.imageResource(R.drawable.error))
+            PostBase2(idPost=i, text=text, nameGroup="Стас Ай, Как Просто",
+                iconGroup=painterResource(id = R.drawable.group),
+                typeGroup="Паблик", existsImages = false,
+                images = listOf(painterResource(id = R.drawable.preview))
+            )
         }
     }
 }

@@ -14,3 +14,5 @@ val Black = Color(0xFF000000)
 val BackBlack = Color(0xFF111111)
 val CRed = Color(0xffb72f33)
 val GhostWhite = Color(26, 28, 29, 255)
+
+val Background2 = Color(0xFF1F1F29)

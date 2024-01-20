@@ -22,8 +22,10 @@
     <color name="ul2">#6793c0</color>
 
     <color name="background2">#1F1F29</color>
-    <color name="black2">#131316</color>
+    <color name="black2">#17171D</color>
     <color name="background_post">#18181e</color>
     <color name="subscribe">#89b9ff</color>
     <color name="type_group">#a3a3a5</color>
+    <color name="text_color">#76787A</color>
+    <color name="icon_color">#B9C1D9</color>
 </resources>
