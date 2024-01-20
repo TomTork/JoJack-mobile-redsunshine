@@ -96,16 +96,22 @@ class MainApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         try{
-            if(!mDatabase.id.exists() || mDatabase.getId() == -1)startActivity(Intent(this, MainActivity::class.java))
+            if(!mDatabase.id.exists() || mDatabase.getId() == -1)startActivity(Intent(this, LoginActivity::class.java))
         } catch (io: Exception){
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, LoginActivity::class.java))
         }
         setContent {
             JoJackTheme {
-                Content()
+                Content2()
+//                Content()
             }
         }
     }
+}
+
+@Composable
+private fun Content2(){
+
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
@@ -185,7 +191,9 @@ fun Content(){
                         .padding(0.dp)) {
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { contentManager = 0 }.weight(0.33f)) {
+                        modifier = Modifier
+                            .clickable { contentManager = 0 }
+                            .weight(0.33f)) {
                         IconButton(onClick = { contentManager = 0 }) {
                             Icon(painterResource(id = R.drawable.baseline_home), null,
                                 modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -199,7 +207,9 @@ fun Content(){
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { contentManager = 1 }.weight(0.33f)) {
+                        modifier = Modifier
+                            .clickable { contentManager = 1 }
+                            .weight(0.33f)) {
                         IconButton(onClick = { contentManager = 1 }) {
                             Icon(painterResource(id = R.drawable.message), null,
                                 modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -214,7 +224,9 @@ fun Content(){
                     }
                     Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { contentManager = 2 }.weight(0.33f)) {
+                        modifier = Modifier
+                            .clickable { contentManager = 2 }
+                            .weight(0.33f)) {
                         IconButton(onClick = { contentManager = 2 }) {
                             Icon(painterResource(id = R.drawable.baseline_settings), null,
                                 modifier = Modifier.align(Alignment.CenterHorizontally))

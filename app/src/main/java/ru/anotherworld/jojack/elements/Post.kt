@@ -13,15 +13,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,5 +63,43 @@ fun PostBase(
                 .background(colorResource(id = R.color.white), shape = RoundedCornerShape(10.dp))
                 .align(Alignment.CenterHorizontally))
         }
+    }
+}
+
+@Composable
+fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: ImageBitmap,
+              typeGroup: String, existsImages: Boolean = false, images: List<ImageBitmap>? = null){
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_semibold600, FontWeight.W600),
+        Font(R.font.nunito_medium500, FontWeight.W500)
+    )
+    Column(modifier=Modifier.padding(top=25.dp, bottom=26.dp, start=21.dp, end=21.dp)) {
+        Row {
+            Image(iconGroup, null)
+            Column {
+                Text(text=nameGroup, color=colorResource(id=R.color.white),
+                    fontFamily=nunitoFamily, fontWeight=FontWeight.W600)
+                Text(text=typeGroup, color=colorResource(id=R.color.type_group),
+                    fontFamily=nunitoFamily, fontWeight=FontWeight.W600)
+            }
+        }
+        Text(text=text, fontFamily=nunitoFamily, fontWeight=FontWeight.W500,
+            modifier=Modifier.padding(bottom=4.dp))
+        if(existsImages){
+            Image(images!![0], null,
+                modifier=Modifier.clip(RoundedCornerShape(8.dp)))
+        }
+        Row(modifier=Modifier.padding(top=4.dp)) {
+            IconButton(onClick = {  }) {
+                Icon(painterResource(id=R.drawable.like), "Like")
+            }
+            IconButton(onClick = {  }) {
+                Icon(painterResource(id=R.drawable.comments), "Comments")
+            }
+            IconButton(onClick = {  }) {
+                Icon(painterResource(id=R.drawable.repost), "Repost")
+            }
+        }
+
     }
 }
