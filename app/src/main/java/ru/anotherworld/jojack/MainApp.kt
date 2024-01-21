@@ -95,7 +95,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
-import ru.anotherworld.jojack.elements.PostBase
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
@@ -132,12 +131,10 @@ private fun Content(){
     var isVisible by remember { mutableStateOf(true) }
     var check by remember { mutableStateOf(0) }
     var contentManager by mutableStateOf(0)
-    val stableInsetsHolder = remember { StableStatusBarsInsetsHolder()}
     var visible by remember {
         mutableStateOf(true)
     }
     Scaffold(
-        contentWindowInsets = stableInsetsHolder.stableStatusBars,
         modifier = Modifier.background(Color.White),
         topBar = {
             var topText by mutableStateOf(stringResource(id = R.string.home))
@@ -193,30 +190,6 @@ private fun Content(){
                             Image(painterResource(id = R.drawable.search2),
                                 null, modifier = Modifier.size(25.dp))
                         }
-                        //DEPRECATED
-//                            Text(text = topText, fontSize = 35.sp,
-//                                modifier = Modifier
-//                                    .padding(horizontal = 10.dp)
-//                                    .weight(2f),
-//                                style = MaterialTheme.typography.headlineLarge,
-//                                fontWeight = FontWeight.Bold)
-//                            if(isVisible){
-//                                FilledIconButton(onClick = { check = if(check == 0) 1 else 0 }) {
-//                                    if(check == 0) Icon(painterResource(id = R.drawable.newspaper),
-//                                        null, tint=Color.White,
-//                                        modifier = Modifier.size(30.dp))
-//                                    else Icon(painterResource(id = R.drawable.handshake),
-//                                        null, tint=Color.White,
-//                                        modifier = Modifier.size(30.dp))
-//                                }
-//                            }
-//                            IconButton(onClick = { /*TODO*/ },
-//                                modifier = Modifier
-//                                    .weight(0.3f)
-//                                    .size(50.dp)) {
-//                                Icon(imageVector = Icons.Filled.Search, null,
-//                                    modifier = Modifier.padding(end=10.dp))
-//                            }
                     }
 
                 }
@@ -325,28 +298,6 @@ private fun boldMessenger(contentManager: Int): FontWeight{
 private fun boldAccount(contentManager: Int): FontWeight{
     if(contentManager == 2)return FontWeight.ExtraBold
     return FontWeight.Normal
-}
-
-@Composable
-fun ShowAnimatedText(
-    text : String?,
-    show: Boolean
-) {
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        AnimatedVisibility(
-            visible = show,
-            enter = fadeIn(animationSpec = tween(2000)),
-            exit = fadeOut(animationSpec = tween(2000))
-        ) {
-
-            text?.let {
-                Text(text = it)
-            }
-        }
-    }
 }
 
 @Composable
@@ -487,7 +438,7 @@ private fun Account(){
             Row(modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = 10.dp, end = 30.dp)) {
-                Button(onClick = { mDatabase.collapseDatabase(); context.startActivity(Intent(context, MainActivity::class.java)) }) {
+                Button(onClick = { mDatabase.collapseDatabase(); context.startActivity(Intent(context, LoginActivity::class.java)) }) {
                     Text(text = stringResource(id = R.string.exit), fontWeight = FontWeight.Bold,
                         fontSize = 20.sp, style=MaterialTheme.typography.bodyLarge,
                         color=colorResource(id=R.color.cred))
@@ -501,79 +452,4 @@ private fun changeTheme(value: Boolean){
     if(value){
 
     }
-}
-
-
-
-//private val SaveMap = mutableMapOf<String, MutableList<KeyParams>>()
-//
-//private val lastScreenName: String?
-//    get() = ""
-//
-//private class KeyParams(
-//    // Это ключ для вложенного списка.
-//    // Если на экране будет только один скроллящийся элемент
-//    // это поле будет пустым
-//    val params: String,
-//    val index: Int,
-//    val scrollOffset: Int,
-//)
-//@Composable
-//private fun rememberForeverLazyListState(
-//    params: String = "",
-//): LazyListState {
-//    val key = lastScreenName ?: return rememberLazyListState()
-//    val scrollState = rememberSaveable(saver = LazyListState.Saver) {
-//        val savedValue = getSavedValue(key, params)
-//        LazyListState(
-//            savedValue?.index.orDefault(),
-//            savedValue?.scrollOffset.orDefault()
-//        )
-//    }
-//    DisposableEffect(params) {
-//        onDispose {
-//            val lastIndex = scrollState.firstVisibleItemIndex
-//            val lastOffset = scrollState.firstVisibleItemScrollOffset
-//            addNewValue(key, KeyParams(params, lastIndex, lastOffset))
-//        }
-//    }
-//    return scrollState
-//}
-//
-////@Composable
-////fun DynamicThemeToggler() {
-////    var isDarkTheme by remember { mutableStateOf(false) }
-////    Switch(checked=isDarkTheme, onCheckedChange = { isDarkTheme = it } )
-////    MaterialTheme(colors=if (isDarkTheme) DarkColorPalette else LightColorPalette) {
-////    // Your app's screen content goes here }}
-////    }
-////}
-
-class StableStatusBarsInsetsHolder {
-    private var stableStatusBarsInsets: WindowInsets = WindowInsets(0.dp)
-    val stableStatusBars: WindowInsets
-        @Composable
-        get() {
-            val density = LocalDensity.current
-            val layoutDirection = LocalLayoutDirection.current
-            val statusBars = WindowInsets.statusBars
-            return remember {
-                derivedStateOf {
-                    if (statusBars.exclude(stableStatusBarsInsets).getTop(density) > 0) {
-                        stableStatusBarsInsets = statusBars.deepCopy(density, layoutDirection)
-                    }
-                    stableStatusBarsInsets
-                }
-            }.value
-        }
-
-}
-
-private fun WindowInsets.deepCopy(density: Density, layoutDirection: LayoutDirection): WindowInsets {
-    return WindowInsets(
-        left = getLeft(density, layoutDirection),
-        top = getTop(density),
-        right = getRight(density, layoutDirection),
-        bottom = getBottom(density)
-    )
 }
