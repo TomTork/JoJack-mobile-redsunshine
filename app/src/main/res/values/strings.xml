@@ -33,4 +33,7 @@
     <string name="empty_fields">Input fields cannot be empty.</string>
     <string name="meeting">Meeting</string>
     <string name="settings">Settings</string>
+    <string name="user_exists">The user already exists!</string>
+    <string name="nf">User not found!</string>
+    <string name="pl">Invalid password or login!</string>
 </resources>

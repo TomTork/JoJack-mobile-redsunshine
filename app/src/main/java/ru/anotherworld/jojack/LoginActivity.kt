@@ -2,6 +2,7 @@ package ru.anotherworld.jojack
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
 class LoginActivity : ComponentActivity() {
@@ -61,6 +64,7 @@ private fun LoginContent(){
     var password by remember { mutableStateOf("") }
     var login by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val coroutine = rememberCoroutineScope()
     Column(modifier = Modifier
         .background(colorResource(id = R.color.ghost_white))
         .fillMaxSize(1f)) {
@@ -190,7 +194,21 @@ private fun LoginContent(){
 
             ElevatedButton(onClick = {
                  if (login != "" && password != ""){
-                     context.startActivity(Intent(context, MainApp::class.java))
+                     val log = Login()
+                     coroutine.launch {
+                         val token = log.log(login, password)
+                         if(token == "NF") Toast.makeText(context, context.getText(R.string.nf),
+                             Toast.LENGTH_SHORT).show()
+                         else if(token == "PL") Toast.makeText(context, context.getText(R.string.pl),
+                             Toast.LENGTH_SHORT).show()
+                         else if(token != ""){
+                             database.setToken(token)
+                             database.setLogin(login)
+                             context.startActivity(Intent(context, MainApp::class.java))
+                         }
+                         else Toast.makeText(context, context.getText(R.string.error),
+                             Toast.LENGTH_SHORT).show()
+                     }
                  }
             },
                 modifier = Modifier

@@ -34,4 +34,7 @@
     <string name="empty_fields">Поля ввода не могут быть пусты.</string>
     <string name="meeting">Роение</string>
     <string name="settings">Настройки</string>
+    <string name="user_exists">Пользователь уже существует!</string>
+    <string name="nf">Пользователь не найден!</string>
+    <string name="pl">Неверный пароль или логин!</string>
 </resources>

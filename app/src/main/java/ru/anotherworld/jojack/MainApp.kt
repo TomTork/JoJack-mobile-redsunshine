@@ -66,17 +66,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ru.anotherworld.jojack.database.Database
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
 val mDatabase = MainDatabase()
+val database1 = Database()
 class MainApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         try{
-            if(!mDatabase.id.exists() || mDatabase.getId() == -1)startActivity(Intent(this, LoginActivity::class.java))
+            if(database1.getLogin() == "")startActivity(Intent(this, LoginActivity::class.java))
         } catch (io: Exception){
             startActivity(Intent(this, LoginActivity::class.java))
         }

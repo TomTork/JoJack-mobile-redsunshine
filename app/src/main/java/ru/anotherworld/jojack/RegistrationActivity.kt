@@ -4,6 +4,7 @@ package ru.anotherworld.jojack
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -37,6 +38,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +52,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
+import kotlinx.coroutines.launch
+import ru.anotherworld.jojack.database.Database
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
+val database = Database()
 class RegistrationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +74,7 @@ class RegistrationActivity : ComponentActivity() {
 private fun RegistrationContent(){
     var password by remember { mutableStateOf("") }
     var login by remember { mutableStateOf("") }
+    val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
     Column(modifier = Modifier
         .background(colorResource(id = R.color.ghost_white))
@@ -196,12 +203,23 @@ private fun RegistrationContent(){
                 isVisible2 = password.length > 20
             }
 
-            ElevatedButton(onClick = { /*TODO*/ },
+            ElevatedButton(onClick = {
+                val reg = Register()
+                coroutine.launch {
+                    val token = reg.reg(login, password)
+                    if(token != ""){
+                        database.setToken(token)
+                        database.setLogin(login)
+                        context.startActivity(Intent(context, MainApp::class.java))
+                    }
+                    else Toast.makeText(context, context.getText(R.string.user_exists), Toast.LENGTH_SHORT).show()
+                }
+            },
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(start = 10.dp, end = 10.dp, top = 10.dp)
                     .fillMaxWidth(0.9f)
-                    .alpha( if(login != "" && password != "") 1f else 0.8f ),
+                    .alpha(if (login != "" && password != "") 1f else 0.8f),
                 colors = ButtonDefaults
                     .buttonColors(containerColor = colorResource(id = R.color.register_button)),
                 shape = RoundedCornerShape(8.dp)
@@ -224,7 +242,7 @@ private fun RegistrationContent(){
             Text(text = stringResource(id = R.string.to_enter),
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier
-                .align(Alignment.CenterHorizontally)
+                    .align(Alignment.CenterHorizontally)
                     .clickable { context.startActivity(Intent(context, LoginActivity::class.java)) },
                 color = colorResource(id = R.color.ocen_blue),
                 textDecoration = TextDecoration.Underline
