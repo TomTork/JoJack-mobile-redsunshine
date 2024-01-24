@@ -3,6 +3,7 @@ package ru.anotherworld.jojack
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -66,22 +67,19 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ru.anotherworld.jojack.database.Database
+import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
-val mDatabase = MainDatabase()
-val database1 = Database()
 class MainApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try{
-            if(database1.getLogin() == "")startActivity(Intent(this, LoginActivity::class.java))
-        } catch (io: Exception){
-            startActivity(Intent(this, LoginActivity::class.java))
-        }
         setContent {
             JoJackTheme {
                 Content()
@@ -90,13 +88,19 @@ class MainApp : ComponentActivity() {
     }
 }
 
+val mDatabase = MainDatabase()
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
     "UnrememberedMutableState"
 )
 @Composable
 private fun Content(){
-    val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
+    try{
+        if(mDatabase.getLogin() == "")context.startActivity(Intent(context, LoginActivity::class.java))
+    } catch (io: Exception){
+        context.startActivity(Intent(context, LoginActivity::class.java))
+    }
+    val coroutine = rememberCoroutineScope()
     val interFamily = FontFamily(
         Font(R.font.inter600, FontWeight.W600),
     )
@@ -157,9 +161,11 @@ private fun Content(){
                                             .offset(y = (-3).dp))
                                 }
                             }
+                            IconButton(onClick = { Log.d("TAG", mDatabase.getToken()) }) {
+                                Image(painterResource(id = R.drawable.search2),
+                                    null, modifier = Modifier.size(25.dp))
+                            }
 
-                            Image(painterResource(id = R.drawable.search2),
-                                null, modifier = Modifier.size(25.dp))
                         }
                     }
 
@@ -356,7 +362,7 @@ private fun Account(){
                     fontSize = 20.sp,
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
                 Switch(checked = checked.value, onCheckedChange = { checked.value = it;
-                    mDatabase.setTheme(mDatabase.boolToInt(it)); changeTheme(it) },
+                    mDatabase.setTheme(boolToInt(it)); changeTheme(it) },
                     modifier = Modifier.weight(0.2f), colors=SwitchDefaults.colors(
                         checkedThumbColor = colorResource(id = R.color.message_color),
                         checkedTrackColor = colorResource(id = R.color.my_message_color)
@@ -412,7 +418,13 @@ private fun Account(){
             Row(modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = 10.dp, end = 30.dp)) {
-                Button(onClick = { mDatabase.collapseDatabase(); context.startActivity(Intent(context, LoginActivity::class.java)) },
+                Button(onClick = {
+                    Thread(Runnable {
+                        mDatabase.setLogin("")
+                        mDatabase.collapseDatabase()
+                    }).start()
+
+                    context.startActivity(Intent(context, LoginActivity::class.java)) },
                     colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.background2))) {
                     Text(text = stringResource(id = R.string.exit),
                         fontSize = 20.sp, style=MaterialTheme.typography.bodyLarge,
@@ -428,4 +440,9 @@ private fun changeTheme(value: Boolean){
     if(value){
 
     }
+}
+
+private fun boolToInt(value: Boolean): Int{
+    if(value)return 1
+    return 0
 }

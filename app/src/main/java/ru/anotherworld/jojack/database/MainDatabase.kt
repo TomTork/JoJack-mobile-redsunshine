@@ -1,5 +1,6 @@
 package ru.anotherworld.jojack.database
 
+import android.util.Log
 import ru.anotherworld.jojack.Cipher
 import java.io.File
 import java.io.FileInputStream
@@ -14,6 +15,7 @@ class MainDatabase {
     }
     val id = File(d("id"))
     private val login = File(d("login"))
+    private val token = File(d("token"))
     private val hash = File(d("hash_password"))
     private val serverId = File(d("server_id"))
     private val level = File(d("level"))
@@ -29,7 +31,7 @@ class MainDatabase {
             if (!id.exists() || !login.exists() || !hash.exists() ||
                 !serverId.exists() || !level.exists() || !trustLevel.exists() ||
                 !device.exists() || !controlSum.exists() || !key.exists() ||
-                !info.exists() || !theme.exists()){
+                !info.exists() || !theme.exists() || !token.exists()){
                 id.createNewFile()
                 login.createNewFile()
                 hash.createNewFile()
@@ -41,6 +43,7 @@ class MainDatabase {
                 key.createNewFile()
                 info.createNewFile()
                 theme.createNewFile()
+                token.createNewFile()
 
                 base()
             }
@@ -56,6 +59,7 @@ class MainDatabase {
             key.createNewFile()
             info.createNewFile()
             theme.createNewFile()
+            token.createNewFile()
 
             base()
         }
@@ -63,9 +67,10 @@ class MainDatabase {
     private fun base(){ setId(-1); setLogin(""); setHashPassword(""); setServerId(-1);
     setLevel(-1); setTrustLevel(-1); setDevice("Android"); setControlSum("");
     setKey(cipher.hash(List(16) { (('a'..'z') + ('A'..'Z') + ('0'..'9')).random() }.joinToString("")));
-    setInfo(""); setTheme(0) }
+    setInfo(""); setTheme(0); setToken("") }
     fun getId(): Int = cipher.decrypt(FileInputStream(id).bufferedReader().readText(), key_).toInt()
     fun getLogin(): String = cipher.decrypt(FileInputStream(login).bufferedReader().readText(), key_)
+    fun getToken(): String = cipher.decrypt(FileInputStream(token).bufferedReader().readText(), key_)
     fun getHashPassword(): String = cipher.decrypt(FileInputStream(hash).bufferedReader().readText(), key_)
     fun getServerId(): Int = cipher.decrypt(FileInputStream(serverId).bufferedReader().readText(), key_).toInt()
     fun getLevel(): Int = cipher.decrypt(FileInputStream(level).bufferedReader().readText(), key_).toInt()
@@ -77,6 +82,7 @@ class MainDatabase {
     fun getTheme(): Int = cipher.decrypt(FileInputStream(theme).bufferedReader().readText(), key_).toInt()
     fun setId(v: Int) = id.writeText(cipher.encrypt(v.toString(), key_))
     fun setLogin(v: String) = login.writeText(cipher.encrypt(v, key_))
+    fun setToken(v: String) = token.writeText(cipher.encrypt(v, key_))
     fun setHashPassword(v: String) = hash.writeText(cipher.encrypt(v, key_))
     fun setServerId(v: Int) = serverId.writeText(cipher.encrypt(v.toString(), key_))
     fun setLevel(v: Int) = level.writeText(cipher.encrypt(v.toString(), key_))
@@ -102,6 +108,7 @@ class MainDatabase {
         key.delete()
         info.delete()
         theme.delete()
+        token.delete()
     }
 }
 

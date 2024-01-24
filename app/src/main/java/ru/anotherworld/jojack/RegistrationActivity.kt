@@ -4,6 +4,7 @@ package ru.anotherworld.jojack
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,12 +54,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.startActivity
 import kotlinx.coroutines.launch
-import ru.anotherworld.jojack.database.Database
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
-val database = Database()
 class RegistrationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +74,8 @@ class RegistrationActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RegistrationContent(){
+//    val dataList = mainViewModel.dataList.collectAsState(initial = emptyList())
+//    println(dataList.value) //Количество строк в таблице
     var password by remember { mutableStateOf("") }
     var login by remember { mutableStateOf("") }
     val coroutine = rememberCoroutineScope()
@@ -206,10 +210,11 @@ private fun RegistrationContent(){
             ElevatedButton(onClick = {
                 val reg = Register()
                 coroutine.launch {
-                    val token = reg.reg(login, password)
-                    if(token != ""){
-                        database.setToken(token)
-                        database.setLogin(login)
+                    val token1 = reg.reg(login, password).substringAfter(":\"")
+                        .substringBefore("\"}")
+                    if(token1 != ""){
+                        mDatabase.setLogin(login)
+                        mDatabase.setToken(token1)
                         context.startActivity(Intent(context, MainApp::class.java))
                     }
                     else Toast.makeText(context, context.getText(R.string.user_exists), Toast.LENGTH_SHORT).show()
@@ -250,3 +255,8 @@ private fun RegistrationContent(){
         }
     }
 }
+
+@Serializable
+private data class RowToken(
+    val rowToken: String
+)

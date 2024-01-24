@@ -2,6 +2,7 @@ package ru.anotherworld.jojack
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -196,14 +197,15 @@ private fun LoginContent(){
                  if (login != "" && password != ""){
                      val log = Login()
                      coroutine.launch {
-                         val token = log.log(login, password)
+                         val token = log.log(login, password).substringAfter(":\"")
+                             .substringBefore("\"}")
                          if(token == "NF") Toast.makeText(context, context.getText(R.string.nf),
                              Toast.LENGTH_SHORT).show()
                          else if(token == "PL") Toast.makeText(context, context.getText(R.string.pl),
                              Toast.LENGTH_SHORT).show()
                          else if(token != ""){
-                             database.setToken(token)
-                             database.setLogin(login)
+                             mDatabase.setLogin(login)
+                             mDatabase.setToken(token)
                              context.startActivity(Intent(context, MainApp::class.java))
                          }
                          else Toast.makeText(context, context.getText(R.string.error),
