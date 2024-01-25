@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -51,7 +52,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -69,6 +72,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -89,11 +94,15 @@ class MainApp : ComponentActivity() {
 }
 
 val mDatabase = MainDatabase()
+val getInfo = GetInfo()
+val getPostVk = GetPostVk()
+//val arrayListPosts = ArrayList<VkPost>()
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
     "UnrememberedMutableState"
 )
 @Composable
 private fun Content(){
+    var maxId = 1
     val context = LocalContext.current
     try{
         if(mDatabase.getLogin() == "")context.startActivity(Intent(context, LoginActivity::class.java))
@@ -161,7 +170,7 @@ private fun Content(){
                                             .offset(y = (-3).dp))
                                 }
                             }
-                            IconButton(onClick = { Log.d("TAG", mDatabase.getToken()) }) {
+                            IconButton(onClick = {  }) {
                                 Image(painterResource(id = R.drawable.search2),
                                     null, modifier = Modifier.size(25.dp))
                             }
@@ -185,7 +194,9 @@ private fun Content(){
                     modifier = Modifier
                         .clickable { contentManager = 0 }
                         .weight(0.33f)) {
-                    IconButton(onClick = { contentManager = 0 },
+                    IconButton(onClick = {
+                        contentManager = 0
+                        },
                         modifier = Modifier.align(Alignment.CenterHorizontally)) {
                         Column(modifier = Modifier
                             .align(Alignment.CenterHorizontally)
@@ -274,23 +285,58 @@ private fun Meetings(){
 
 }
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 private fun NewsPaper(){
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val coroutine = rememberCoroutineScope()
+    var maxId = 1
+    val arrayTextPosts = remember { ArrayList<String>() }
+    val arrayNameGroup = remember { ArrayList<String>() }
+    val arrayIcon = remember { ArrayList<String>() }
+    val arrayImages = remember { ArrayList<String>() }
+    var view by remember { mutableStateOf(false) }
     Column (modifier = Modifier
         .verticalScroll(scrollState)
         .padding(top = 50.dp, bottom = 60.dp)
         .fillMaxWidth(1f)
         .background(color = colorResource(id = R.color.background2)),
         verticalArrangement = Arrangement.Center) {
-        val text = "Это длинный и осмысленный текст, таких текстов много, но этот длинный и осмысленный текст - один!"
-        for(i in 1..20){
-            PostBase2(idPost=i, text=text, nameGroup="Стас Ай, Как Просто",
-                iconGroup=painterResource(id = R.drawable.group),
-                typeGroup="Паблик", existsImages = false,
-                images = listOf(painterResource(id = R.drawable.preview))
-            )
+//        AsyncImage(
+//            model = ImageRequest.Builder(LocalContext.current)
+//                .data("https://sun9-18.userapi.com/impg/gj1v751JJrYARHQnFDhFur2m2MsbC1QcEi1Nng/nBQPEiI6jsw.jpg?size=2560x2560&quality=95&sign=fe062a4c5d45d739ef207fa3a8bf3a06&type=album")
+//                .crossfade(true)
+//                .build(),
+//            placeholder = painterResource(R.drawable.preview),
+//            contentDescription = stringResource(R.string.app_name),
+//            modifier = Modifier.align(Alignment.CenterHorizontally)
+//        )
+        coroutine.launch {
+            maxId = getInfo.getMaxId()
+            Log.d("TAG3", maxId.toString())
+            for(i in getPostVk.getPostVk(maxId - 20, maxId - 1).post){
+                arrayTextPosts.add(i.textPost)
+                arrayNameGroup.add(i.groupName)
+                arrayIcon.add(i.iconUrl)
+                arrayImages.add(i.imagesUrls)
+            }
+            view = true
+        }
+//        AsyncImage(
+//            model = ImageRequest.Builder(LocalContext.current)
+//                .data("https://sun21-2.userapi.com/impg/blC8Tqu-idWM14Uj2nmwYAMQEc87HY3ejliPmw/Iu9OqLTQrB4.jpg?size=2560x1733&quality=96&sign=10edc0884625ad4da8df431a42737610&type=album")
+//                .crossfade(true)
+//                .build(),
+//            placeholder = painterResource(R.drawable.preview),
+//            contentDescription = stringResource(R.string.app_name),
+//            contentScale = ContentScale.Crop
+//        )
+        if(view){
+            for(i in arrayTextPosts.indices){
+                PostBase2(idPost = 0, text = arrayTextPosts[i], nameGroup = arrayNameGroup[i], typeGroup = "Паблик",
+                    iconGroup = arrayIcon[i], existsImages = true, images = arrayImages[i])
+            }
         }
     }
 }

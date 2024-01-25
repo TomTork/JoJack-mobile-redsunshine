@@ -8,6 +8,7 @@ import android.content.Context.WIFI_SERVICE
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.getSystemService
+import kotlinx.serialization.json.Json
 import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
