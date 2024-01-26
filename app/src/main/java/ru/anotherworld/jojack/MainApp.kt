@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -39,11 +42,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -102,7 +108,6 @@ val getPostVk = GetPostVk()
 )
 @Composable
 private fun Content(){
-    var maxId = 1
     val context = LocalContext.current
     try{
         if(mDatabase.getLogin() == "")context.startActivity(Intent(context, LoginActivity::class.java))
@@ -285,57 +290,77 @@ private fun Meetings(){
 
 }
 
-@SuppressLint("CoroutineCreationDuringComposition")
+private data class SNews(
+    val textPosts: String,
+    val nameGroup: String,
+    val icon: String,
+    val images: String
+)
+
+@SuppressLint("CoroutineCreationDuringComposition", "MutableCollectionMutableState",
+    "UnrememberedMutableState"
+)
 @Composable
 private fun NewsPaper(){
-    val scrollState = rememberScrollState()
+//    val scrollState = rememberScrollState()
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
-    var maxId = 1
-    val arrayTextPosts = remember { ArrayList<String>() }
-    val arrayNameGroup = remember { ArrayList<String>() }
-    val arrayIcon = remember { ArrayList<String>() }
-    val arrayImages = remember { ArrayList<String>() }
+    var maxId by remember { mutableIntStateOf(1) }
     var view by remember { mutableStateOf(false) }
+    var view2 by remember { mutableStateOf(false) }
+    val array = remember { listOf<SNews>().toMutableStateList() }
+    val listState = rememberLazyListState()
+    var stateMax = 0
+    Log.e("STARTED", "TRUE")
+    coroutine.launch {
+        if(!view2){
+            maxId = getInfo.getMaxId()
+            view2 = true
+        }
+        if(view2){
+            if(!view){
+                maxId -= 20
+                Log.e("INIT", "$maxId ${maxId + 20}")
+                for(i in getPostVk.getPostVk(maxId, maxId + 20).post.reversed()){
+                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+                }
+                view = true
+            }
+        }
+
+    }
+
     Column (modifier = Modifier
-        .verticalScroll(scrollState)
         .padding(top = 50.dp, bottom = 60.dp)
         .fillMaxWidth(1f)
         .background(color = colorResource(id = R.color.background2)),
         verticalArrangement = Arrangement.Center) {
-//        AsyncImage(
-//            model = ImageRequest.Builder(LocalContext.current)
-//                .data("https://sun9-18.userapi.com/impg/gj1v751JJrYARHQnFDhFur2m2MsbC1QcEi1Nng/nBQPEiI6jsw.jpg?size=2560x2560&quality=95&sign=fe062a4c5d45d739ef207fa3a8bf3a06&type=album")
-//                .crossfade(true)
-//                .build(),
-//            placeholder = painterResource(R.drawable.preview),
-//            contentDescription = stringResource(R.string.app_name),
-//            modifier = Modifier.align(Alignment.CenterHorizontally)
-//        )
-        coroutine.launch {
-            maxId = getInfo.getMaxId()
-            Log.d("TAG3", maxId.toString())
-            for(i in getPostVk.getPostVk(maxId - 20, maxId - 1).post){
-                arrayTextPosts.add(i.textPost)
-                arrayNameGroup.add(i.groupName)
-                arrayIcon.add(i.iconUrl)
-                arrayImages.add(i.imagesUrls)
-            }
-            view = true
-        }
-//        AsyncImage(
-//            model = ImageRequest.Builder(LocalContext.current)
-//                .data("https://sun21-2.userapi.com/impg/blC8Tqu-idWM14Uj2nmwYAMQEc87HY3ejliPmw/Iu9OqLTQrB4.jpg?size=2560x1733&quality=96&sign=10edc0884625ad4da8df431a42737610&type=album")
-//                .crossfade(true)
-//                .build(),
-//            placeholder = painterResource(R.drawable.preview),
-//            contentDescription = stringResource(R.string.app_name),
-//            contentScale = ContentScale.Crop
-//        )
+
         if(view){
-            for(i in arrayTextPosts.indices){
-                PostBase2(idPost = 0, text = arrayTextPosts[i], nameGroup = arrayNameGroup[i], typeGroup = "Паблик",
-                    iconGroup = arrayIcon[i], existsImages = true, images = arrayImages[i])
+            LazyColumn(state = listState){
+                itemsIndexed(items = array, itemContent = {index, value ->
+                    PostBase2(idPost = stateMax - index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
+                        iconGroup = value.icon, existsImages = true, images = value.images)
+                    Log.e("INDEX", "$index ${array.size} $maxId")
+                    if (index == array.size - 4 && maxId > 0){
+                        if(maxId >= 20){
+                            maxId -= 20
+                            coroutine.launch {
+                                for(i in getPostVk.getPostVk(maxId, maxId + 20).post.reversed()){
+                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+                                }
+                            }
+                        }
+                        else{
+                            maxId = 0
+                            coroutine.launch {
+                                for(i in getPostVk.getPostVk(1, maxId).post.reversed()){
+                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+                                }
+                            }
+                        }
+                    }
+                })
             }
         }
     }

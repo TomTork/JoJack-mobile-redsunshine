@@ -65,7 +65,6 @@ class GetPostVk{
             setBody(VkResponseRemote(start, end, "-"))
         }
         val result = response.content.readUTF8Line().toString()
-        Log.d("TAG-SAFE", result)
         return Json.decodeFromString<GetRPost>(result)
     }
 }
