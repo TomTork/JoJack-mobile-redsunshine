@@ -312,23 +312,25 @@ private fun NewsPaper(){
     val listState = rememberLazyListState()
     var stateMax = 0
     Log.e("STARTED", "TRUE")
-    coroutine.launch {
-        if(!view2){
-            maxId = getInfo.getMaxId()
-            view2 = true
-        }
-        if(view2){
-            if(!view){
-                maxId -= 20
-                Log.e("INIT", "$maxId ${maxId + 20}")
-                for(i in getPostVk.getPostVk(maxId, maxId + 20).post.reversed()){
-                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
-                }
-                view = true
+    Thread(Runnable {
+        coroutine.launch {
+            if(!view2){
+                maxId = getInfo.getMaxId()
+                view2 = true
             }
-        }
+            if(view2){
+                if(!view){
+                    maxId -= 10
+                    Log.e("INIT", "$maxId ${maxId + 9}")
+                    for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
+                        array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+                    }
+                    view = true
+                }
+            }
 
-    }
+        }
+    }).start()
 
     Column (modifier = Modifier
         .padding(top = 50.dp, bottom = 60.dp)
@@ -339,26 +341,26 @@ private fun NewsPaper(){
         if(view){
             LazyColumn(state = listState){
                 itemsIndexed(items = array, itemContent = {index, value ->
-                    PostBase2(idPost = stateMax - index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
+                    PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
                         iconGroup = value.icon, existsImages = true, images = value.images)
-                    Log.e("INDEX", "$index ${array.size} $maxId")
-                    if (index == array.size - 4 && maxId > 0){
-                        if(maxId >= 20){
-                            maxId -= 20
+//                    Log.e("INDEX", "$index ${array.size} $maxId")
+                    if (index == array.size - 2 && maxId > 0){
+                        if(maxId >= 10){
                             coroutine.launch {
-                                for(i in getPostVk.getPostVk(maxId, maxId + 20).post.reversed()){
+                                maxId -= 10
+                                for(i in getPostVk.getPostVk(maxId + 1, maxId + 9).post){
                                     array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
                                 }
                             }
                         }
-                        else{
-                            maxId = 0
-                            coroutine.launch {
-                                for(i in getPostVk.getPostVk(1, maxId).post.reversed()){
-                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
-                                }
-                            }
-                        }
+//                        else{
+//                            coroutine.launch {
+//                                for(i in getPostVk.getPostVk(1, maxId).post){
+//                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+//                                }
+//                                maxId = 0
+//                            }
+//                        }
                     }
                 })
             }

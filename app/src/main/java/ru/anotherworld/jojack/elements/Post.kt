@@ -65,8 +65,11 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                 placeholder = painterResource(R.drawable.preview),
                 contentDescription = stringResource(R.string.app_name),
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(30.dp).clip(CircleShape)
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape)
             )
+//            Text(text = idPost.toString())
             Column(modifier=Modifier.padding(start=10.dp)) {
                 Text(text=nameGroup, color=colorResource(id=R.color.white),
                     fontFamily=nunitoFamily, fontWeight=FontWeight.W600,
