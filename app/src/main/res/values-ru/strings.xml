@@ -29,12 +29,18 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="register">Зарегистрироваться</string>
     <string name="enter">Войти</string>
-    <string name="to_enter">Уже есть аккаунт? Войти.</string>
+    <string name="to_enter">Есть аккаунт? Войти.</string>
     <string name="to_register">Нет аккаунта? Зарегистрироваться.</string>
+    <string name="no_account">Нет аккаунта?</string>
+    <string name="exists_account">Есть аккаунт?</string>
+    <string name="reg">Зарегистрироваться</string>
+    <string name="log">Войти</string>
     <string name="empty_fields">Поля ввода не могут быть пусты.</string>
     <string name="meeting">Роение</string>
     <string name="settings">Настройки</string>
     <string name="user_exists">Пользователь уже существует!</string>
     <string name="nf">Пользователь не найден!</string>
     <string name="pl">Неверный пароль или логин!</string>
+    <string name="enter_login">Введите логин</string>
+    <string name="enter_password">Введите пароль</string>
 </resources>

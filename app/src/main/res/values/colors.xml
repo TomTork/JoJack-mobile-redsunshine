@@ -30,4 +30,9 @@
     <color name="icon_color">#B9C1D9</color>
     <color name="my_message_color">#686DCD</color>
     <color name="message_color">#131316</color>
+    <color name="background_lr">#212121</color>
+    <color name="background_field">#292929</color>
+    <color name="background_lr_button">#8774e1</color>
+    <color name="background_lr_text">#686DCD</color>
+
 </resources>
