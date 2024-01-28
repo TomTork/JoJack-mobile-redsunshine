@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
+import java.net.ConnectException
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,10 +80,6 @@ class LoginActivity : ComponentActivity() {
 private fun LoginContent2(){
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     val interFamily = FontFamily(
         Font(R.font.inter600, FontWeight.W600),
         Font(R.font.inter_medium500, FontWeight.W500)
@@ -151,23 +148,27 @@ private fun LoginContent2(){
                 modifier = Modifier.padding(start=19.dp, end=19.dp, top=30.dp)
                     .fillMaxWidth(1f))
             ElevatedButton(onClick = {
-                if (login != "" && password != ""){
-                    val log = Login()
-                    coroutine.launch {
-                        val token = log.log(login, password).substringAfter(":\"")
-                            .substringBefore("\"}")
-                        if(token == "NF") Toast.makeText(context, context.getText(R.string.nf),
-                            Toast.LENGTH_SHORT).show()
-                        else if(token == "PL") Toast.makeText(context, context.getText(R.string.pl),
-                            Toast.LENGTH_SHORT).show()
-                        else if(token != ""){
-                            mDatabase.setLogin(login)
-                            mDatabase.setToken(token)
-                            context.startActivity(Intent(context, MainApp::class.java))
+                try{
+                    if (login != "" && password != ""){
+                        val log = Login()
+                        coroutine.launch {
+                            val token = log.log(login, password).substringAfter(":\"")
+                                .substringBefore("\"}")
+                            if(token == "NF") Toast.makeText(context, context.getText(R.string.nf),
+                                Toast.LENGTH_SHORT).show()
+                            else if(token == "PL") Toast.makeText(context, context.getText(R.string.pl),
+                                Toast.LENGTH_SHORT).show()
+                            else if(token != ""){
+                                mDatabase.setLogin(login)
+                                mDatabase.setToken(token)
+                                context.startActivity(Intent(context, MainApp::class.java))
+                            }
+                            else Toast.makeText(context, context.getText(R.string.error),
+                                Toast.LENGTH_SHORT).show()
                         }
-                        else Toast.makeText(context, context.getText(R.string.error),
-                            Toast.LENGTH_SHORT).show()
                     }
+                } catch (e: ConnectException){
+                    Toast.makeText(context, context.getText(R.string.error), Toast.LENGTH_SHORT).show()
                 }
             },
                 modifier = Modifier

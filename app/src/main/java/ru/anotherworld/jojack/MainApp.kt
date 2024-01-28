@@ -87,6 +87,7 @@ import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
+import java.net.ConnectException
 
 class MainApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,167 +110,173 @@ val getPostVk = GetPostVk()
 @Composable
 private fun Content(){
     val context = LocalContext.current
+    var start by remember { mutableStateOf(false) }
     try{
         if(mDatabase.getLogin() == "")context.startActivity(Intent(context, LoginActivity::class.java))
+        else start = true
     } catch (io: Exception){
+        Log.e("ERROR", "TRUE-TRUE")
         context.startActivity(Intent(context, LoginActivity::class.java))
     }
-    val coroutine = rememberCoroutineScope()
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-    )
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600)
-    )
-    var contentManager by mutableStateOf(0)
-    var select by remember { mutableStateOf(0) } //0 - Home; 1 - chat; 2 - settings
-    Scaffold(
-        modifier = Modifier.background(Color.White),
-        topBar = {
-            var topText by mutableStateOf(stringResource(id = R.string.home))
-            topText = when(contentManager){
-                1 -> stringResource(id = R.string.message)
-                2 -> stringResource(id = R.string.settings)
-                else -> stringResource(id = R.string.home)
-            }
-            Surface(modifier = Modifier
-                .background(Color.White)
-                .fillMaxWidth(1f)) {
-                Column(modifier = Modifier.fillMaxWidth(1f)) {
-                    Row(modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .background(colorResource(id = R.color.background2))) {
+    if(start){
+        val coroutine = rememberCoroutineScope()
+        val interFamily = FontFamily(
+            Font(R.font.inter600, FontWeight.W600),
+        )
+        val nunitoFamily = FontFamily(
+            Font(R.font.nunito_semibold600, FontWeight.W600)
+        )
+        var contentManager by mutableStateOf(0)
+        var select by remember { mutableStateOf(0) } //0 - Home; 1 - chat; 2 - settings
+        Scaffold(
+            modifier = Modifier.background(Color.White),
+            topBar = {
+                var topText by mutableStateOf(stringResource(id = R.string.home))
+                topText = when(contentManager){
+                    1 -> stringResource(id = R.string.message)
+                    2 -> stringResource(id = R.string.settings)
+                    else -> stringResource(id = R.string.home)
+                }
+                Surface(modifier = Modifier
+                    .background(Color.White)
+                    .fillMaxWidth(1f)) {
+                    Column(modifier = Modifier.fillMaxWidth(1f)) {
+                        Row(modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .background(colorResource(id = R.color.background2))) {
 
-                        Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
-                        null, modifier= Modifier
-                                .size(65.dp)
-                                .align(Alignment.CenterVertically)
-                                .padding(start = 20.dp, end = 5.dp))
-
-                        Text(text = stringResource(id = R.string.app_name),
-                            fontFamily = interFamily, fontWeight = FontWeight.W600,
-                            fontSize = 30.sp, modifier = Modifier
-                                .align(Alignment.CenterVertically))
-                        Spacer(modifier = Modifier.padding(bottom=20.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Absolute.Right,
-                            modifier = Modifier
-                                .align(Alignment.CenterVertically)
-                                .fillMaxWidth(1f)
-                                .padding(end = 20.dp)) {
-                            IconButton(onClick = { /*TODO*/ }) {
-                                Column(modifier = Modifier
-                                    .padding(end = 15.dp)
+                            Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
+                                null, modifier= Modifier
+                                    .size(65.dp)
                                     .align(Alignment.CenterVertically)
-                                    .offset(y = 3.dp)) {
-                                    Image(painterResource(id = R.drawable.notificate1),
-                                        null,
-                                        modifier = Modifier
-                                            .align(Alignment.CenterHorizontally)
-                                            .size(25.dp))
-                                    Image(painterResource(id = R.drawable.notificate2),
-                                        null,
-                                        modifier = Modifier
-                                            .align(Alignment.CenterHorizontally)
-                                            .size(9.dp)
-                                            .offset(y = (-3).dp))
-                                }
-                            }
-                            IconButton(onClick = {  }) {
-                                Image(painterResource(id = R.drawable.search2),
-                                    null, modifier = Modifier.size(25.dp))
-                            }
+                                    .padding(start = 20.dp, end = 5.dp))
 
-                        }
-                    }
-
-                }
-
-            }
-        },
-        bottomBar = {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Absolute.SpaceAround,
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .background(colorResource(id = R.color.black2))
-                    .padding(0.dp)) {
-                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clickable { contentManager = 0 }
-                        .weight(0.33f)) {
-                    IconButton(onClick = {
-                        contentManager = 0
-                        },
-                        modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                        Column(modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .offset(y = 3.dp)) {
-                            Icon(painterResource(id = R.drawable.home21), null,
-                                tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
-                                modifier = Modifier.align(Alignment.CenterHorizontally))
-                            Icon(painterResource(id = R.drawable.home22), null,
-                                tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                            Text(text = stringResource(id = R.string.app_name),
+                                fontFamily = interFamily, fontWeight = FontWeight.W600,
+                                fontSize = 30.sp, modifier = Modifier
+                                    .align(Alignment.CenterVertically))
+                            Spacer(modifier = Modifier.padding(bottom=20.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Absolute.Right,
                                 modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .offset(y = (-6).dp)
-                                    .scale(scaleX = 1.5f, scaleY = 1f))
+                                    .align(Alignment.CenterVertically)
+                                    .fillMaxWidth(1f)
+                                    .padding(end = 20.dp)) {
+                                IconButton(onClick = { /*TODO*/ }) {
+                                    Column(modifier = Modifier
+                                        .padding(end = 15.dp)
+                                        .align(Alignment.CenterVertically)
+                                        .offset(y = 3.dp)) {
+                                        Image(painterResource(id = R.drawable.notificate1),
+                                            null,
+                                            modifier = Modifier
+                                                .align(Alignment.CenterHorizontally)
+                                                .size(25.dp))
+                                        Image(painterResource(id = R.drawable.notificate2),
+                                            null,
+                                            modifier = Modifier
+                                                .align(Alignment.CenterHorizontally)
+                                                .size(9.dp)
+                                                .offset(y = (-3).dp))
+                                    }
+                                }
+                                IconButton(onClick = {  }) {
+                                    Image(painterResource(id = R.drawable.search2),
+                                        null, modifier = Modifier.size(25.dp))
+                                }
+
+                            }
                         }
+
                     }
-                    Text(text = stringResource(id = R.string.home),
-                        Modifier
+
+                }
+            },
+            bottomBar = {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Absolute.SpaceAround,
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .background(colorResource(id = R.color.black2))
+                        .padding(0.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
                             .clickable { contentManager = 0 }
-                            .shadow(2.dp)
-                            .align(Alignment.CenterHorizontally),
-                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                        color = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clickable { contentManager = 1 }
-                        .weight(0.33f)) {
-                    IconButton(onClick = { contentManager = 1 }) {
-                        Icon(painterResource(id = R.drawable.comments2), null,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            tint = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                            .weight(0.33f)) {
+                        IconButton(onClick = {
+                            contentManager = 0
+                        },
+                            modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                            Column(modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .offset(y = 3.dp)) {
+                                Icon(painterResource(id = R.drawable.home21), null,
+                                    tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                                    modifier = Modifier.align(Alignment.CenterHorizontally))
+                                Icon(painterResource(id = R.drawable.home22), null,
+                                    tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                                    modifier = Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .offset(y = (-6).dp)
+                                        .scale(scaleX = 1.5f, scaleY = 1f))
+                            }
+                        }
+                        Text(text = stringResource(id = R.string.home),
+                            Modifier
+                                .clickable { contentManager = 0 }
+                                .shadow(2.dp)
+                                .align(Alignment.CenterHorizontally),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                            color = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                     }
-                    Text(text = stringResource(id = R.string.message),
-                        Modifier
+                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
                             .clickable { contentManager = 1 }
-                            .shadow(2.dp)
-                            .align(Alignment.CenterHorizontally),
-                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                        color = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clickable { contentManager = 2 }
-                        .weight(0.33f)) {
-                    IconButton(onClick = { contentManager = 2 }) {
-                        Icon(painterResource(id = R.drawable.settings2), null,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            tint = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                            .weight(0.33f)) {
+                        IconButton(onClick = { contentManager = 1 }) {
+                            Icon(painterResource(id = R.drawable.comments2), null,
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                tint = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                        }
+                        Text(text = stringResource(id = R.string.message),
+                            Modifier
+                                .clickable { contentManager = 1 }
+                                .shadow(2.dp)
+                                .align(Alignment.CenterHorizontally),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                            color = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                     }
-                    Text(text = stringResource(id = R.string.settings),
-                        Modifier
+                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
                             .clickable { contentManager = 2 }
-                            .shadow(2.dp)
-                            .align(Alignment.CenterHorizontally),
-                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                        color = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                            .weight(0.33f)) {
+                        IconButton(onClick = { contentManager = 2 }) {
+                            Icon(painterResource(id = R.drawable.settings2), null,
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                tint = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                        }
+                        Text(text = stringResource(id = R.string.settings),
+                            Modifier
+                                .clickable { contentManager = 2 }
+                                .shadow(2.dp)
+                                .align(Alignment.CenterHorizontally),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                            color = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                    }
                 }
             }
-        }
-    ) {
-        when(contentManager){
-            0 -> { NewsPaper() }
-            1 -> { Messenger() }
-            2 -> { Account() }
+        ) {
+            when(contentManager){
+                0 -> { NewsPaper() }
+                1 -> { Messenger() }
+                2 -> { Account() }
+            }
         }
     }
+
 }
 
 private fun boldNews(contentManager: Int): FontWeight{
@@ -304,6 +311,7 @@ private data class SNews(
 private fun NewsPaper(){
 //    val scrollState = rememberScrollState()
     val context = LocalContext.current
+    var isServerConnect by remember { mutableStateOf(true) }
     val coroutine = rememberCoroutineScope()
     var maxId by remember { mutableIntStateOf(1) }
     var view by remember { mutableStateOf(false) }
@@ -312,25 +320,31 @@ private fun NewsPaper(){
     val listState = rememberLazyListState()
     var stateMax = 0
     Log.e("STARTED", "TRUE")
-    Thread(Runnable {
-        coroutine.launch {
-            if(!view2){
-                maxId = getInfo.getMaxId()
-                view2 = true
-            }
-            if(view2){
-                if(!view){
-                    maxId -= 10
-                    Log.e("INIT", "$maxId ${maxId + 9}")
-                    for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
-                        array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+    try {
+        if(isServerConnect){
+            Thread(Runnable {
+                coroutine.launch {
+                    if(!view2){
+                        maxId = getInfo.getMaxId()
+                        view2 = true
                     }
-                    view = true
+                    if(view2){
+                        if(!view){
+                            maxId -= 10
+                            Log.e("INIT", "$maxId ${maxId + 9}")
+                            for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
+                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+                            }
+                            view = true
+                        }
+                    }
                 }
-            }
-
+            }).start()
         }
-    }).start()
+    } catch (e: Exception){
+        isServerConnect = false
+        Log.e("Status connect", "BAD, FALSE ::MainApp")
+    }
 
     Column (modifier = Modifier
         .padding(top = 50.dp, bottom = 60.dp)
