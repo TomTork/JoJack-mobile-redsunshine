@@ -87,7 +87,6 @@ import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
-import java.net.ConnectException
 
 class MainApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,7 +102,6 @@ class MainApp : ComponentActivity() {
 val mDatabase = MainDatabase()
 val getInfo = GetInfo()
 val getPostVk = GetPostVk()
-//val arrayListPosts = ArrayList<VkPost>()
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
     "UnrememberedMutableState"
 )
@@ -279,24 +277,6 @@ private fun Content(){
 
 }
 
-private fun boldNews(contentManager: Int): FontWeight{
-    if(contentManager == 0)return FontWeight.ExtraBold
-    return FontWeight.Normal
-}
-private fun boldMessenger(contentManager: Int): FontWeight{
-    if(contentManager == 1)return FontWeight.ExtraBold
-    return FontWeight.Normal
-}
-private fun boldAccount(contentManager: Int): FontWeight{
-    if(contentManager == 2)return FontWeight.ExtraBold
-    return FontWeight.Normal
-}
-
-@Composable
-private fun Meetings(){
-
-}
-
 private data class SNews(
     val textPosts: String,
     val nameGroup: String,
@@ -396,11 +376,14 @@ private fun Messenger(){
             )
         )
         .background(colorResource(id = R.color.background2)), verticalArrangement = Arrangement.Center) {
-        val listSize = 20
         LazyColumn{
-            items(20){
-                ChatMessage(name = "CHAT", previewMessage = "Как дела?", username = "Вы")
+            item {
+                ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
+                    action = {  })
             }
+//            items(20){
+//                ChatMessage(name = "CHAT", previewMessage = "Как дела?", username = "Вы")
+//            }
         }
     }
 }

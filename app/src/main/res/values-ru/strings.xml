@@ -43,4 +43,5 @@
     <string name="pl">Неверный пароль или логин!</string>
     <string name="enter_login">Введите логин</string>
     <string name="enter_password">Введите пароль</string>
+    <string name="message1">Сообщение</string>
 </resources>

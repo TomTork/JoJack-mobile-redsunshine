@@ -42,4 +42,5 @@
     <string name="pl">Invalid password or login!</string>
     <string name="enter_login">Enter login</string>
     <string name="enter_password">Enter password</string>
+    <string name="message1">Message</string>
 </resources>
