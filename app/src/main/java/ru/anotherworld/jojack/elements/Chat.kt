@@ -18,9 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -63,11 +61,9 @@ import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.chatcontroller.Message
-import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.sDatabase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
-val chatDatabase = MainDatabase()
 class ChatActivity : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

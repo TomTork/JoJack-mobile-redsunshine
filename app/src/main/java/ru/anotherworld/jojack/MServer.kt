@@ -149,7 +149,7 @@ class ChatController{
     suspend fun initSession(username: String): Resource<Unit> {
         return try {
             socket = client.webSocketSession {
-                url("$BASE_WS/chat-socket?username=$username")
+                url("$BASE_WS/chat-socket?username=$username&token=${sDatabase.getToken()}")
             }
             if (socket?.isActive == true){
                 Log.d("SOCKET", "TRUE11")
