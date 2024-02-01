@@ -7,18 +7,20 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,12 +31,12 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,7 +49,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -134,18 +135,21 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
             TextField(value = message, onValueChange = { message = it },
                 placeholder = { Text(text = stringResource(id = R.string.message1),
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(1f)
                         .padding(start = 3.dp)
                         .alpha(0.5f),
                     textAlign = TextAlign.Start,
-                    color = colorResource(id = R.color.white)) },
+                    color = colorResource(id = R.color.white),
+                    fontSize = 20.sp) },
                 colors = TextFieldDefaults.textFieldColors(
                     containerColor = colorResource(id = R.color.background_field),
                     cursorColor = Color.White,
                     disabledLabelColor = colorResource(id = R.color.ghost_white),
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
+
                 ),
+                modifier = Modifier.fillMaxWidth(1f),
                 leadingIcon = {
                     IconButton(onClick = { /*Вложения*/ }) {
                         Icon(painterResource(id = R.drawable.attach), null,
@@ -192,7 +196,11 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 Divider(thickness = 2.dp, color = Color.Black)
                 LazyColumn{
                     itemsIndexed(messagesList){ _, message ->
-                        Log.d("LIST-MESSAGES", message.toString())
+                        MessageIn(
+                            login = message.username,
+                            text = message.text,
+                            time = message.formattedTime)
+                        Spacer(modifier = Modifier.padding(top = 5.dp))
                     }
                 }
             }
@@ -200,7 +208,37 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
     }
 }
 
-@Serializable
-data class SendMessage(
-    val message: String
-)
+@Composable
+private fun MessageIn(login: String, text: String, time: String){
+    val eq = (sDatabase.getLogin() == login) //true if user you
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_medium500, FontWeight.W500),
+        Font(R.font.nunito_light400, FontWeight.W400)
+    )
+    Row(
+        modifier = Modifier
+            .padding(start = 10.dp, end = 10.dp, top = 1.dp, bottom = 1.dp)
+            .fillMaxWidth(1f),
+        horizontalArrangement = if (eq) Arrangement.End else Arrangement.Start
+    ) {
+        Column(
+            modifier = Modifier            
+                .background(if (eq) colorResource(id = R.color.my_message_color) else colorResource(id = R.color.message_color),
+                    shape = RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .widthIn(min = 100.dp),
+            horizontalAlignment = if (eq) AbsoluteAlignment.Right else AbsoluteAlignment.Left
+        ) {
+            Text(text = login, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+            Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+            Text(text = time, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                modifier = Modifier
+                    .padding(end = 12.dp, start = 12.dp)
+                    .alpha(0.5f),
+                fontSize = 10.sp)
+            
+        }
+    }
+}
