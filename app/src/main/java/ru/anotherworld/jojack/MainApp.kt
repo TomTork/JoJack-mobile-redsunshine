@@ -84,6 +84,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.database.MainDatabase
+import ru.anotherworld.jojack.elements.ChatActivity
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
@@ -365,6 +366,7 @@ private fun NewsPaper(){
 @Composable
 private fun Messenger(){
 //    val scrollState = rememberScrollState()
+    val context = LocalContext.current
     Column (modifier = Modifier
         .padding(top = 60.dp, bottom = 60.dp)
         .clip(
@@ -379,7 +381,7 @@ private fun Messenger(){
         LazyColumn{
             item {
                 ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
-                    action = {  })
+                    action = { context.startActivity(Intent(context, ChatActivity::class.java)) })
             }
 //            items(20){
 //                ChatMessage(name = "CHAT", previewMessage = "Как дела?", username = "Вы")
@@ -408,7 +410,7 @@ private fun Account(){
             Icon(painterResource(id = R.drawable.account_circle), null,
                 modifier = Modifier.size(150.dp))
             Column(modifier= Modifier.align(Alignment.CenterHorizontally)) {
-                Text(text = stringResource(id = R.string.login) + ": ",
+                Text(text = stringResource(id = R.string.login) + ": " + mDatabase.getLogin(),
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
                 Text(text = stringResource(id = R.string.job) + " " + stringResource(id = R.string.jojack),
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)

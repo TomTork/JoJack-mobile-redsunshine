@@ -77,12 +77,6 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-    implementation("com.google.dagger:hilt-android:2.38.1")
-    kapt ("com.google.dagger:hilt-android-compiler:2.37")
-    implementation("androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha03")
-    kapt("androidx.hilt:hilt-compiler:1.1.0")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
-
     implementation ("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")

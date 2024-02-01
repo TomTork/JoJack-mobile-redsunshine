@@ -1,6 +1,7 @@
 package ru.anotherworld.jojack.elements
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,7 +38,8 @@ fun ChatMessage(name: String, previewMessage: String, username: String, idChat: 
     Column(modifier = Modifier
         .padding(top = 4.dp)
         .fillMaxWidth(1f)
-        .background(colorResource(id = R.color.black2))) {
+        .background(colorResource(id = R.color.black2))
+        .clickable { action(idChat) }) {
         Divider(color = colorResource(id = R.color.background2),
             thickness = 1.dp, modifier = Modifier.alpha(0.2f))
         Row {

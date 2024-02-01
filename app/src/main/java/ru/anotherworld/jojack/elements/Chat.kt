@@ -2,6 +2,10 @@ package ru.anotherworld.jojack.elements
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +16,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
@@ -24,9 +31,12 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,12 +57,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
+import ru.anotherworld.jojack.chatcontroller.Message
+import ru.anotherworld.jojack.database.MainDatabase
+import ru.anotherworld.jojack.sDatabase
+import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
+val chatDatabase = MainDatabase()
+class ChatActivity : ComponentActivity(){
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            JoJackTheme {
+                Chat()
+            }
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
 @Composable
 fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<String>? = null,
          iconChat: String? = "", messages: List<Pair<String, String>>? = null){
@@ -60,6 +88,8 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
     val nunitoFamily = FontFamily(Font(R.font.nunito_medium500, FontWeight.W500))
     var state by remember { mutableStateOf("Онлайн") } //Состояние в чате: кто-то печатает и т.д.
     var message by remember { mutableStateOf("") }
+    val coroutine = rememberCoroutineScope()
+    val chatController = ChatController()
     Scaffold(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -129,7 +159,13 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                     }
                 },
                 trailingIcon = {
-                    IconButton(onClick = { /*Отправить сообщение*/ }) {
+                    IconButton(onClick = {
+                        coroutine.launch {
+                            Log.d("SEND-MESSAGE", message)
+                            chatController.sendMessage(message)
+                            message = ""
+                        }
+                    }) {
                         Icon(painterResource(id = R.drawable.send2), null,
                             modifier = Modifier
                                 .padding(end = 7.dp)
@@ -140,8 +176,35 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
         }
     ) {
         Column {
-            Divider(thickness = 2.dp, color = Color.Black)
-//            LazyColumn(content = )
+            val messagesList = remember { listOf<Message>().toMutableStateList() }
+            var ready by remember { mutableStateOf(false) }
+            coroutine.launch {
+                if(!ready){
+                    chatController.initSession(sDatabase.getLogin())
+                    messagesList.addAll(chatController.getAllMessages().toMutableStateList())
+                }
+                ready = true
+
+                val result = chatController.waitNewData()
+                if(result != null){
+                    messagesList.add(result)
+                }
+
+            }
+            if (ready){
+                Log.d("MAS", messagesList.toList().toString())
+                Divider(thickness = 2.dp, color = Color.Black)
+                LazyColumn{
+                    itemsIndexed(messagesList){ _, message ->
+                        Log.d("LIST-MESSAGES", message.toString())
+                    }
+                }
+            }
         }
     }
 }
+
+@Serializable
+data class SendMessage(
+    val message: String
+)
