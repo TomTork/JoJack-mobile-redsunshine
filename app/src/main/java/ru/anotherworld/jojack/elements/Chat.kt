@@ -3,6 +3,8 @@ package ru.anotherworld.jojack.elements
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.os.StrictMode
+import android.os.StrictMode.ThreadPolicy
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -57,13 +59,16 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.chatcontroller.Message
 import ru.anotherworld.jojack.sDatabase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
+import kotlin.concurrent.thread
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
+
 
 class ChatActivity : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -193,10 +198,24 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
 
             }
             if (ready){
+                Thread(Runnable {
+                    coroutine.launch {
+                        chatController.readChannel()
+                    }
+                }).start()
+
+//                coroutine.launch {
+//                    chatController.observeMessages2()
+//                        .onEach { message ->
+//                            messagesList.add(0, message)
+//                        }
+//                }
                 Log.d("MAS", messagesList.toList().toString())
                 Divider(thickness = 2.dp, color = Color.Black)
-                LazyColumn{
-                    itemsIndexed(messagesList.reversed()){ _, message ->
+                LazyColumn(
+                    reverseLayout = true
+                ){
+                    itemsIndexed(messagesList){ _, message ->
                         MessageIn(
                             login = message.username,
                             text = message.text,
@@ -223,9 +242,11 @@ private fun MessageIn(login: String, text: String, time: String){
         horizontalArrangement = if (eq) Arrangement.End else Arrangement.Start
     ) {
         Column(
-            modifier = Modifier            
-                .background(if (eq) colorResource(id = R.color.my_message_color) else colorResource(id = R.color.message_color),
-                    shape = RoundedCornerShape(20.dp))
+            modifier = Modifier
+                .background(
+                    if (eq) colorResource(id = R.color.my_message_color) else colorResource(id = R.color.message_color),
+                    shape = RoundedCornerShape(20.dp)
+                )
                 .clip(RoundedCornerShape(20.dp))
                 .widthIn(min = 100.dp),
             horizontalAlignment = if (eq) AbsoluteAlignment.Right else AbsoluteAlignment.Left
