@@ -1,5 +1,6 @@
 package ru.anotherworld.jojack.database
 
+import android.os.Environment
 import android.util.Log
 import ru.anotherworld.jojack.Cipher
 import java.io.File
@@ -8,7 +9,7 @@ import java.io.FileNotFoundException
 
 class MainDatabase {
     companion object{
-        private const val path = "data/data/ru.anotherworld.jojack/files/"
+        private const val path = "data/data/ru.anotherworld.jojack/"
         private fun d(name: String): String = "$path$name.txt"
         private const val key_ = "ProtectDatabaseM"
         private val cipher = Cipher()

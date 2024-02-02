@@ -161,7 +161,6 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 trailingIcon = {
                     IconButton(onClick = {
                         coroutine.launch {
-                            Log.d("SEND-MESSAGE", message)
                             chatController.sendMessage(message)
                             message = ""
                         }
@@ -175,7 +174,9 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 )
         }
     ) {
-        Column {
+        Column(
+            modifier = Modifier.padding(top = 60.dp, bottom = 60.dp)
+        ) {
             val messagesList = remember { listOf<Message>().toMutableStateList() }
             var ready by remember { mutableStateOf(false) }
             coroutine.launch {
@@ -187,7 +188,7 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
 
                 val result = chatController.waitNewData()
                 if(result != null){
-                    messagesList.add(result)
+                    messagesList.add(0, result)
                 }
 
             }
@@ -195,7 +196,7 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 Log.d("MAS", messagesList.toList().toString())
                 Divider(thickness = 2.dp, color = Color.Black)
                 LazyColumn{
-                    itemsIndexed(messagesList){ _, message ->
+                    itemsIndexed(messagesList.reversed()){ _, message ->
                         MessageIn(
                             login = message.username,
                             text = message.text,

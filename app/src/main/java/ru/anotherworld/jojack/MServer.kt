@@ -148,6 +148,7 @@ class ChatController{
     }
     suspend fun initSession(username: String): Resource<Unit> {
         return try {
+            Log.d("WHAT", "$username ${sDatabase.getToken()}")
             socket = client.webSocketSession {
                 url("$BASE_WS/chat-socket?username=$username&token=${sDatabase.getToken()}")
             }
@@ -159,6 +160,7 @@ class ChatController{
                 Resource.Error("Couldn't establish a connection. ::ChatSocketServiceImpl")
             }
         } catch (e: Exception){
+            Log.d("WHAT", "$username ${sDatabase.getToken()}")
             Log.e("ERROR34", "TRUE")
             e.printStackTrace()
             Resource.Error(e.localizedMessage ?: "Unknown error ::ChatSocketServiceImpl")
