@@ -420,7 +420,6 @@ private fun Account(){
         }
         Spacer(modifier = Modifier.size(20.dp))
         Column(Modifier.verticalScroll(scrollState)) {
-
 //            Row(modifier = Modifier
 //                .padding(start = 30.dp, end = 30.dp)
 //                .background(

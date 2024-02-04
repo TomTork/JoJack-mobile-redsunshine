@@ -76,7 +76,6 @@ class ChatActivity : ComponentActivity(){
     @OptIn(DelicateCoroutinesApi::class)
     override fun onDestroy() {
         super.onDestroy()
-
         Log.d("ChatActivity", "LEAVE")
         GlobalScope.launch {
             destroyMServer!!.closeSession()

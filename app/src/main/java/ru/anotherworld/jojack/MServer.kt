@@ -260,7 +260,6 @@ class ChatController{
                 Log.e("ERROR", "Unknown error ::MServer::Chat")
             }
         }
-
         return chatM.value.messages
     }
 }
