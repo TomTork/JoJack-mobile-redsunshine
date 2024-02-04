@@ -57,8 +57,8 @@ import kotlin.time.Duration.Companion.seconds
 
 
 val cipher = Cipher()
-const val BASE_URL = "http://192.168.0.148:8080"
-const val BASE_WS = "ws://192.168.0.148:8080"
+const val BASE_URL = "http://192.168.31.196:8080"
+const val BASE_WS = "ws://192.168.31.196:8080"
 val sDatabase = MainDatabase()
 class Register{
     @OptIn(InternalAPI::class)
@@ -239,9 +239,6 @@ class ChatController{
         }
         return null
     }
-    suspend fun readChannel(){
-
-    }
     suspend fun closeSession() {
         socket?.close()
     }
@@ -265,7 +262,6 @@ class ChatController{
         }
         return chatM.value.messages
     }
-
 }
 
 data class ChatM(

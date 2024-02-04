@@ -420,26 +420,26 @@ private fun Account(){
         }
         Spacer(modifier = Modifier.size(20.dp))
         Column(Modifier.verticalScroll(scrollState)) {
-            Row(modifier = Modifier
-                .padding(start = 30.dp, end = 30.dp)
-                .background(
-                    colorResource(id = R.color.background2),
-                    shape = RoundedCornerShape(14.dp)
-                )
-                .height(50.dp)) {
-                Text(text = stringResource(id = R.string.theme), modifier = Modifier
-                    .weight(0.8f)
-                    .align(Alignment.CenterVertically)
-                    .padding(start = 10.dp),
-                    fontSize = 20.sp,
-                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
-                Switch(checked = checked.value, onCheckedChange = { checked.value = it;
-                    mDatabase.setTheme(boolToInt(it)); changeTheme(it) },
-                    modifier = Modifier.weight(0.2f), colors=SwitchDefaults.colors(
-                        checkedThumbColor = colorResource(id = R.color.message_color),
-                        checkedTrackColor = colorResource(id = R.color.my_message_color)
-                    ))
-            }
+//            Row(modifier = Modifier
+//                .padding(start = 30.dp, end = 30.dp)
+//                .background(
+//                    colorResource(id = R.color.background2),
+//                    shape = RoundedCornerShape(14.dp)
+//                )
+//                .height(50.dp)) {
+//                Text(text = stringResource(id = R.string.theme), modifier = Modifier
+//                    .weight(0.8f)
+//                    .align(Alignment.CenterVertically)
+//                    .padding(start = 10.dp),
+//                    fontSize = 20.sp,
+//                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
+//                Switch(checked = checked.value, onCheckedChange = { checked.value = it;
+//                    mDatabase.setTheme(boolToInt(it)); changeTheme(it) },
+//                    modifier = Modifier.weight(0.2f), colors=SwitchDefaults.colors(
+//                        checkedThumbColor = colorResource(id = R.color.message_color),
+//                        checkedTrackColor = colorResource(id = R.color.my_message_color)
+//                    ))
+//            }
             Row (modifier = Modifier
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
                 .background(
@@ -507,13 +507,6 @@ private fun Account(){
         }
     }
 }
-
-private fun changeTheme(value: Boolean){
-    if(value){
-
-    }
-}
-
 private fun boolToInt(value: Boolean): Int{
     if(value)return 1
     return 0

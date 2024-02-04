@@ -26,14 +26,16 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = CRed,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-    background = Color.White,
-    surface = Color.White,
+    primary = Background2,
+    secondary = PurpleGrey80,
+    tertiary = Pink80,
+    background = Black,
+    onBackground = Color.White,
+    surface = Black,
     onSurface = Color.LightGray,
-    onBackground = CRed,
-    onSecondary = Color.White
+    onSecondary = Color.White,
+    onPrimary = Color.White,
+
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),
@@ -66,7 +68,10 @@ fun JoJackTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            if (colorScheme == DarkColorScheme){
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            }
+            else WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }
 

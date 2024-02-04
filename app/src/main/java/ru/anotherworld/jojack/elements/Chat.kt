@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.MainApp
@@ -71,6 +73,15 @@ import kotlin.coroutines.coroutineContext
 
 
 class ChatActivity : ComponentActivity(){
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("ChatActivity", "LEAVE")
+        GlobalScope.launch {
+            destroyMServer!!.closeSession()
+            Log.d("ChatActivity", "LEAVE FINISH")
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -80,6 +91,7 @@ class ChatActivity : ComponentActivity(){
         }
     }
 }
+private var destroyMServer: ChatController? = null
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
@@ -187,6 +199,7 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
             coroutine.launch {
                 if(!ready){
                     chatController.initSession(sDatabase.getLogin())
+                    destroyMServer = chatController
                     messagesList.addAll(chatController.getAllMessages().toMutableStateList())
                 }
                 ready = true
@@ -198,19 +211,6 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
 
             }
             if (ready){
-                Thread(Runnable {
-                    coroutine.launch {
-                        chatController.readChannel()
-                    }
-                }).start()
-
-//                coroutine.launch {
-//                    chatController.observeMessages2()
-//                        .onEach { message ->
-//                            messagesList.add(0, message)
-//                        }
-//                }
-                Log.d("MAS", messagesList.toList().toString())
                 Divider(thickness = 2.dp, color = Color.Black)
                 LazyColumn(
                     reverseLayout = true
