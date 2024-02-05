@@ -397,6 +397,7 @@ private fun Account(){
     val scrollState = rememberScrollState()
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
+        Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
     var checked = remember { mutableStateOf(true) }

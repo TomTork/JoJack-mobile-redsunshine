@@ -51,4 +51,6 @@
     <string name="editor">Редактор</string>
     <string name="admin">Администратор</string>
     <string name="ck_user">Представтель ЦК</string>
+    <string name="title_activity_notification">NotificationActivity</string>
+    <string name="notification">Уведомления</string>
 </resources>

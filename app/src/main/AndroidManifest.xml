@@ -12,44 +12,47 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
-        android:networkSecurityConfig="@xml/network_security_config"
-        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.JoJack"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        <activity
+            android:name=".NotificationActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.JoJack" />
         <activity
             android:name=".LoginActivity"
             android:exported="false"
-            android:screenOrientation="portrait"
             android:label="@string/app_name"
-            android:theme="@style/Theme.JoJack"/>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.JoJack" />
         <activity
             android:name=".RegistrationActivity"
             android:exported="false"
-            android:screenOrientation="portrait"
             android:label="@string/app_name"
-            android:theme="@style/Theme.JoJack">
-
-        </activity>
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.JoJack"></activity>
         <activity
             android:name=".ChangePassword"
-            android:screenOrientation="portrait"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".Appeal"
-            android:screenOrientation="portrait"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".Terminal"
             android:exported="false"
-            android:screenOrientation="portrait"
             android:label="@string/title_activity_terminal"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.JoJack" />
         <activity
             android:name=".MainApp"
@@ -63,12 +66,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".elements.ChatActivity"
+        <activity
+            android:name=".elements.ChatActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.JoJack"/>
+            android:theme="@style/Theme.JoJack" />
     </application>
 
 </manifest>

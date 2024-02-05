@@ -169,7 +169,6 @@ private fun LoginContent2(){
 
                                 Thread(Runnable {
                                     GlobalScope.launch {
-                                        delay(7000)
                                         val data = initUser.getInit(login, token)
                                         mDatabase.setServerId(data.id)
                                         mDatabase.setLevel(data.job)

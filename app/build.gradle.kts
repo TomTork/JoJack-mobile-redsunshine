@@ -51,6 +51,9 @@ android {
         }
     }
     packagingOptions {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
         resources.excludes.add("META-INF/*")
     }
 }
@@ -68,6 +71,8 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.6.0")
     implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
     implementation("androidx.navigation:navigation-compose:2.7.6")
+    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     val composeBom = platform("androidx.compose:compose-bom:2024.01.00")
     implementation(composeBom)
     debugImplementation("androidx.compose.ui:ui-tooling")
