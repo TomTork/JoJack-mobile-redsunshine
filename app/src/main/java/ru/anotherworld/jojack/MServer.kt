@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.chatcontroller.Message
 import ru.anotherworld.jojack.chatcontroller.MessageDto
@@ -130,6 +131,23 @@ class GetInfo{
     }
 }
 
+class InitUser{
+    @OptIn(InternalAPI::class)
+    suspend fun getInit(login: String, token: String): InitRemote{
+        val client = HttpClient(){
+            install(ContentNegotiation){
+                json()
+            }
+        }
+        val response = client.post("$BASE_URL/initialInfo"){
+            contentType(ContentType.Application.Json)
+            setBody(Token2(login, token))
+        }
+        val result = response.content.readUTF8Line().toString()
+        return Json.decodeFromString<InitRemote>(result)
+    }
+}
+
 class ChatController{
     private companion object {
         val client = HttpClient(CIO){
@@ -165,14 +183,13 @@ class ChatController{
             emptyList()
         }
     }
-
-    suspend fun getAllMessages3(): List<Message>{
-        chatM.value = state.value.copy()
-        val result = getAllMessages()
-        chatM.value = state.value.copy(
-            messages = result)
-        return chatM.value.messages
-    }
+//    suspend fun getAllMessages3(): List<Message>{
+//        chatM.value = state.value.copy()
+//        val result = getAllMessages()
+//        chatM.value = state.value.copy(
+//            messages = result)
+//        return chatM.value.messages
+//    }
     suspend fun initSession(username: String): Resource<Unit> {
         return try {
             Log.d("WHAT", "$username ${sDatabase.getToken()}")
@@ -200,37 +217,37 @@ class ChatController{
             e.printStackTrace()
         }
     }
-    fun observeMessages(): Flow<Message> {
-        return try {
-            socket?.incoming
-                ?.receiveAsFlow()
-                ?.filter { it is Frame.Text }
-                ?.map {
-                    Log.d("WHAT IF", it.readBytes().decodeToString())
-                    val json = (it as? Frame.Text)?.readText() ?: ""
-                    val messageDto = Json.decodeFromString<MessageDto>(json)
-                    messageDto.toMessage()
-                } ?: flow {  }
-        } catch (e: Exception){
-            e.printStackTrace()
-            flow {  }
-        }
-    }
-    fun observeMessages2(): Flow<Message> {
-        return try {
-            socket?.incoming
-                ?.receiveAsFlow()
-                ?.map {
-                    Log.d("WHAT IF", it.readBytes().decodeToString())
-                    val json = (it as? Frame.Text)?.readText() ?: ""
-                    val messageDto = Json.decodeFromString<MessageDto>(json)
-                    messageDto.toMessage()
-                } ?: flow {  }
-        } catch (e: Exception){
-            e.printStackTrace()
-            flow {  }
-        }
-    }
+//    fun observeMessages(): Flow<Message> {
+//        return try {
+//            socket?.incoming
+//                ?.receiveAsFlow()
+//                ?.filter { it is Frame.Text }
+//                ?.map {
+//                    Log.d("WHAT IF", it.readBytes().decodeToString())
+//                    val json = (it as? Frame.Text)?.readText() ?: ""
+//                    val messageDto = Json.decodeFromString<MessageDto>(json)
+//                    messageDto.toMessage()
+//                } ?: flow {  }
+//        } catch (e: Exception){
+//            e.printStackTrace()
+//            flow {  }
+//        }
+//    }
+//    fun observeMessages2(): Flow<Message> {
+//        return try {
+//            socket?.incoming
+//                ?.receiveAsFlow()
+//                ?.map {
+//                    Log.d("WHAT IF", it.readBytes().decodeToString())
+//                    val json = (it as? Frame.Text)?.readText() ?: ""
+//                    val messageDto = Json.decodeFromString<MessageDto>(json)
+//                    messageDto.toMessage()
+//                } ?: flow {  }
+//        } catch (e: Exception){
+//            e.printStackTrace()
+//            flow {  }
+//        }
+//    }
     suspend fun waitNewData(): Message?{
         for(element in socket?.incoming!!){
             element as? Frame.Text ?: continue
@@ -242,26 +259,26 @@ class ChatController{
     suspend fun closeSession() {
         socket?.close()
     }
-    suspend fun getAllM2(): List<Message>{
-        when(val result = initSession(username)){
-            is Resource.Success -> {
-                observeMessages()
-                    .onEach { message ->
-                        val newList = ArrayList<Message>().apply {
-                            add(0, element = message)
-                        }
-                        chatM.value = state.value.copy(
-                            messages = newList
-                        )
-                    }
-
-            }
-            is Resource.Error -> {
-                Log.e("ERROR", "Unknown error ::MServer::Chat")
-            }
-        }
-        return chatM.value.messages
-    }
+//    suspend fun getAllM2(): List<Message>{
+//        when(val result = initSession(username)){
+//            is Resource.Success -> {
+//                observeMessages()
+//                    .onEach { message ->
+//                        val newList = ArrayList<Message>().apply {
+//                            add(0, element = message)
+//                        }
+//                        chatM.value = state.value.copy(
+//                            messages = newList
+//                        )
+//                    }
+//
+//            }
+//            is Resource.Error -> {
+//                Log.e("ERROR", "Unknown error ::MServer::Chat")
+//            }
+//        }
+//        return chatM.value.messages
+//    }
 }
 
 data class ChatM(
@@ -285,7 +302,11 @@ data class VkPost(
     val imagesUrls: String,
     val like: Int,
     val commentsUrl: String,
-    val originalUrl: String
+    val originalUrl: String,
+    val exclusive: Boolean,
+    val reposted: Boolean,
+    val origName: String? = "",
+    val origPost: String? = ""
 )
 
 @Serializable
@@ -310,4 +331,18 @@ private data class Token(
 private data class LoginResponseRemote(
     val login: String,
     val password: String
+)
+
+@Serializable
+private data class Token2(
+    val login: String,
+    val token: String
+)
+
+@Serializable
+data class InitRemote(
+    val id: Int,
+    val job: Int,
+    val trustLevel: Int,
+    val info: String? = ""
 )

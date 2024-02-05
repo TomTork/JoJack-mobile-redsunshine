@@ -44,4 +44,11 @@
     <string name="enter_login">Введите логин</string>
     <string name="enter_password">Введите пароль</string>
     <string name="message1">Сообщение</string>
+    <string name="blocked_user">Заблокированный пользователь</string>
+    <string name="user">Жожек</string>
+    <string name="author">Автор</string>
+    <string name="moderator">Модератор</string>
+    <string name="editor">Редактор</string>
+    <string name="admin">Администратор</string>
+    <string name="ck_user">Представтель ЦК</string>
 </resources>

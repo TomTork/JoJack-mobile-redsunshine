@@ -405,6 +405,16 @@ private fun Account(){
         .fillMaxWidth(1f)
         .fillMaxHeight(1f)
         .background(colorResource(id = R.color.black2))) {
+        val job = when(mDatabase.getLevel()){
+            -1 -> stringResource(id = R.string.blocked_user)
+            0 -> stringResource(id = R.string.user)
+            1 -> stringResource(id = R.string.author)
+            2 -> stringResource(id = R.string.moderator)
+            3 -> stringResource(id = R.string.editor)
+            4 -> stringResource(id = R.string.admin)
+            5 -> stringResource(id = R.string.ck_user)
+            else -> "ERROR in job-switch ::MainApp"
+        }
         Column(modifier = Modifier
             .align(Alignment.CenterHorizontally)) {
             Icon(painterResource(id = R.drawable.account_circle), null,
@@ -412,34 +422,14 @@ private fun Account(){
             Column(modifier= Modifier.align(Alignment.CenterHorizontally)) {
                 Text(text = stringResource(id = R.string.login) + ": " + mDatabase.getLogin(),
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
-                Text(text = stringResource(id = R.string.job) + " " + stringResource(id = R.string.jojack),
+                Text(text = stringResource(id = R.string.job) + " " + job,
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
-                Text(text = stringResource(id = R.string.ID),
+                Text(text = stringResource(id = R.string.ID) + " " + mDatabase.getServerId(),
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
             }
         }
         Spacer(modifier = Modifier.size(20.dp))
         Column(Modifier.verticalScroll(scrollState)) {
-//            Row(modifier = Modifier
-//                .padding(start = 30.dp, end = 30.dp)
-//                .background(
-//                    colorResource(id = R.color.background2),
-//                    shape = RoundedCornerShape(14.dp)
-//                )
-//                .height(50.dp)) {
-//                Text(text = stringResource(id = R.string.theme), modifier = Modifier
-//                    .weight(0.8f)
-//                    .align(Alignment.CenterVertically)
-//                    .padding(start = 10.dp),
-//                    fontSize = 20.sp,
-//                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
-//                Switch(checked = checked.value, onCheckedChange = { checked.value = it;
-//                    mDatabase.setTheme(boolToInt(it)); changeTheme(it) },
-//                    modifier = Modifier.weight(0.2f), colors=SwitchDefaults.colors(
-//                        checkedThumbColor = colorResource(id = R.color.message_color),
-//                        checkedTrackColor = colorResource(id = R.color.my_message_color)
-//                    ))
-//            }
             Row (modifier = Modifier
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
                 .background(

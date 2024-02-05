@@ -43,4 +43,11 @@
     <string name="enter_login">Enter login</string>
     <string name="enter_password">Enter password</string>
     <string name="message1">Message</string>
+    <string name="blocked_user">Blocked user</string>
+    <string name="user">JoJack</string>
+    <string name="author">Author</string>
+    <string name="moderator">Moderator</string>
+    <string name="editor">Editor</string>
+    <string name="admin">Admin</string>
+    <string name="ck_user">Representative of the Central Committee</string>
 </resources>
