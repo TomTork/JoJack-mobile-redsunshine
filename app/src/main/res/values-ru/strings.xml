@@ -53,4 +53,9 @@
     <string name="ck_user">Представтель ЦК</string>
     <string name="title_activity_notification">NotificationActivity</string>
     <string name="notification">Уведомления</string>
+    <string name="search">Поиск</string>
+    <string name="start_search">Начните поиск здесь</string>
+    <string name="enter_name">Введите своё имя</string>
+    <string name="enter_appeal">Введите текст обращения</string>
+    <string name="send_appeal">Отправить обращение</string>
 </resources>

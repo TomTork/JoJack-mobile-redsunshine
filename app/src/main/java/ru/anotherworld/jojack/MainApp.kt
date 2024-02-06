@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -28,17 +28,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -50,8 +50,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
@@ -71,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -179,7 +180,9 @@ private fun Content(){
                                                 .offset(y = (-3).dp))
                                     }
                                 }
-                                IconButton(onClick = {  }) {
+                                IconButton(onClick = {
+
+                                }) {
                                     Image(painterResource(id = R.drawable.search2),
                                         null, modifier = Modifier.size(25.dp))
                                 }
@@ -502,3 +505,73 @@ private fun boolToInt(value: Boolean): Int{
     if(value)return 1
     return 0
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Search(){
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_semibold600, FontWeight.W600),
+        Font(R.font.nunito_medium500, FontWeight.W500)
+    )
+    var inputSearch by remember { mutableStateOf("") }
+    val array = remember { listOf<SearchContent>().toMutableStateList() }
+    val context = LocalContext.current
+    Column(modifier = Modifier
+        .fillMaxWidth(1f)
+        .fillMaxHeight(1f)) {
+        TopAppBar(title = {
+            Row(modifier = Modifier
+                .fillMaxWidth(1f)
+                .background(colorResource(id = R.color.background2))
+                .align(Alignment.CenterHorizontally)) {
+                IconButton(onClick = { context.startActivity(Intent(context, MainApp::class.java)) },
+                    modifier = Modifier.align(Alignment.CenterVertically)) {
+                    Icon(painterResource(id = R.drawable.arrow_back), null,
+                        tint = colorResource(id = R.color.white))
+                }
+                Text(text = stringResource(id = R.string.search),
+                    color = colorResource(id = R.color.white),
+                    modifier = Modifier.align(Alignment.CenterVertically))
+            }
+        }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
+            colors = TopAppBarDefaults
+                .topAppBarColors(containerColor = colorResource(id = R.color.background2),
+                    titleContentColor = colorResource(id = R.color.background2)))
+        TextField(value = inputSearch, onValueChange = { inputSearch = it },
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .padding(start = 10.dp, end = 10.dp, top = 10.dp, bottom = 10.dp),
+            placeholder = { Text(text = stringResource(id = R.string.start_search),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 3.dp)
+                    .alpha(0.5f),
+                textAlign = TextAlign.Start,
+                color = colorResource(id = R.color.white)) })
+        //START SEARCHING
+        LazyColumn(modifier = Modifier
+            .fillMaxWidth(1f)
+            .fillMaxHeight(1f)
+            .padding(start = 10.dp, end = 10.dp)
+            .background(
+                color = colorResource(id = R.color.background2),
+                shape = RoundedCornerShape(10.dp)
+            )){
+            items(array){ arr ->
+                Column(modifier = Modifier.fillMaxWidth(1f)) {
+                    Text(text = arr.head, fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        color = colorResource(id = R.color.white))
+                    Text(text = arr.text, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                        color = colorResource(id = R.color.white))
+                }
+            }
+        }
+    }
+
+}
+
+private data class SearchContent(
+    val head: String,
+    val text: String,
+    val unit: () -> Unit
+)
