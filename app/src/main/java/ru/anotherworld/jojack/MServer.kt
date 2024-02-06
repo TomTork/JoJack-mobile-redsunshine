@@ -299,7 +299,7 @@ data class VkPost(
     val iconUrl: String,
     val groupName: String,
     val textPost: String,
-    val imagesUrls: String,
+    val imagesUrls: VkImageAndVideo,
     val like: Int,
     val commentsUrl: String,
     val originalUrl: String,
@@ -337,6 +337,12 @@ private data class LoginResponseRemote(
 private data class Token2(
     val login: String,
     val token: String
+)
+
+@Serializable
+data class VkImageAndVideo(
+    val images: List<String>,
+    val video: String
 )
 
 @Serializable

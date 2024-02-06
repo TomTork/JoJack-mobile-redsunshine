@@ -285,7 +285,7 @@ private data class SNews(
     val textPosts: String,
     val nameGroup: String,
     val icon: String,
-    val images: String
+    val images: VkImageAndVideo
 )
 
 @SuppressLint("CoroutineCreationDuringComposition", "MutableCollectionMutableState",
@@ -302,8 +302,6 @@ private fun NewsPaper(){
     var view2 by remember { mutableStateOf(false) }
     val array = remember { listOf<SNews>().toMutableStateList() }
     val listState = rememberLazyListState()
-    var stateMax = 0
-    Log.e("STARTED", "TRUE")
     try {
         if(isServerConnect){
             Thread(Runnable {
@@ -315,7 +313,6 @@ private fun NewsPaper(){
                     if(view2){
                         if(!view){
                             maxId -= 10
-                            Log.e("INIT", "$maxId ${maxId + 9}")
                             for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
                                 array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
                             }
@@ -341,16 +338,23 @@ private fun NewsPaper(){
                 itemsIndexed(items = array, itemContent = {index, value ->
                     PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
                         iconGroup = value.icon, existsImages = true, images = value.images)
-//                    Log.e("INDEX", "$index ${array.size} $maxId")
-                    if (index == array.size - 2 && maxId > 0){
-                        if(maxId >= 10){
-                            coroutine.launch {
-                                maxId -= 10
-                                for(i in getPostVk.getPostVk(maxId + 1, maxId + 9).post){
-                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
-                                }
-                            }
+                    if(index == array.size - 2 && maxId > 1){
+                        coroutine.launch {
+                            maxId -= 1
+                            for(i in getPostVk.getPostVk(maxId, maxId + 1).post)
+                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
                         }
+
+                    }
+//                    if (index == array.size - 2 && maxId > 0){
+//                        if(maxId >= 10){
+//                            coroutine.launch {
+//                                maxId -= 10
+//                                for(i in getPostVk.getPostVk(maxId + 1, maxId + 9).post){
+//                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+//                                }
+//                            }
+//                        }
 //                        else{
 //                            coroutine.launch {
 //                                for(i in getPostVk.getPostVk(1, maxId).post){
@@ -359,7 +363,7 @@ private fun NewsPaper(){
 //                                maxId = 0
 //                            }
 //                        }
-                    }
+//                    }
                 })
             }
         }

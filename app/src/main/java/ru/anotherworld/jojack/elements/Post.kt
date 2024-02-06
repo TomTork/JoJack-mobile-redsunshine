@@ -42,10 +42,11 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
 import ru.anotherworld.jojack.R
+import ru.anotherworld.jojack.VkImageAndVideo
 
 @Composable
 fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
-              typeGroup: String, existsImages: Boolean = false, images: String){
+              typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo){
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
@@ -81,26 +82,16 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         }
         Text(text=text, fontFamily=nunitoFamily, fontWeight=FontWeight.W500,
             modifier=Modifier.padding(bottom=4.dp, start=21.dp, end=21.dp), lineHeight=20.sp)
-        if(existsImages){
+        if(existsImages && images.images.size > 1){
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(images)
+                    .data(images.images[0])
                     .crossfade(true)
                     .build(),
-                placeholder = painterResource(R.drawable.preview),
+
                 contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-//            Image(
-//                rememberAsyncImagePainter("https://media.geeksforgeeks.org/wp-content/uploads/20210101144014/gfglogo.png"), null,
-//                modifier= Modifier
-//                    .clip(RoundedCornerShape(8.dp))
-//                    .padding(start = 21.dp, end = 21.dp)
-//                    .requiredSizeIn(minWidth = Dp.Infinity, minHeight = 100.dp)
-//                    .wrapContentSize()
-//                    .wrapContentHeight()
-//                    .wrapContentWidth(),
-//                alignment = Alignment.Center)
         }
         Row(modifier=Modifier.padding(top=4.dp, start=10.dp, end=21.dp)) {
             IconButton(onClick = {  }) {
