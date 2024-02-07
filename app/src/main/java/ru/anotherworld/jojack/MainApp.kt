@@ -285,7 +285,9 @@ private data class SNews(
     val textPosts: String,
     val nameGroup: String,
     val icon: String,
-    val images: VkImageAndVideo
+    val images: VkImageAndVideo,
+    val originalUrl: String,
+    val like: Int
 )
 
 @SuppressLint("CoroutineCreationDuringComposition", "MutableCollectionMutableState",
@@ -293,7 +295,6 @@ private data class SNews(
 )
 @Composable
 private fun NewsPaper(){
-//    val scrollState = rememberScrollState()
     val context = LocalContext.current
     var isServerConnect by remember { mutableStateOf(true) }
     val coroutine = rememberCoroutineScope()
@@ -314,7 +315,8 @@ private fun NewsPaper(){
                         if(!view){
                             maxId -= 10
                             for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
-                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
+                                    i.originalUrl, i.like))
                             }
                             view = true
                         }
@@ -337,33 +339,16 @@ private fun NewsPaper(){
             LazyColumn(state = listState){
                 itemsIndexed(items = array, itemContent = {index, value ->
                     PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
-                        iconGroup = value.icon, existsImages = true, images = value.images)
+                        iconGroup = value.icon, existsImages = true, images = value.images,
+                        originalUrl = value.originalUrl, like = value.like)
                     if(index == array.size - 2 && maxId > 1){
                         coroutine.launch {
                             maxId -= 1
-                            for(i in getPostVk.getPostVk(maxId, maxId + 1).post)
-                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
+                            for(i in getPostVk.getPostVk(maxId, maxId).post)
+                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
+                                    i.originalUrl, i.like))
                         }
-
                     }
-//                    if (index == array.size - 2 && maxId > 0){
-//                        if(maxId >= 10){
-//                            coroutine.launch {
-//                                maxId -= 10
-//                                for(i in getPostVk.getPostVk(maxId + 1, maxId + 9).post){
-//                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
-//                                }
-//                            }
-//                        }
-//                        else{
-//                            coroutine.launch {
-//                                for(i in getPostVk.getPostVk(1, maxId).post){
-//                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls))
-//                                }
-//                                maxId = 0
-//                            }
-//                        }
-//                    }
                 })
             }
         }

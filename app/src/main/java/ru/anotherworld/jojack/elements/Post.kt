@@ -20,6 +20,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,17 +46,23 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
+import kotlinx.coroutines.launch
+import ru.anotherworld.jojack.LikeController
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.VkImageAndVideo
 
 @Composable
 fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
-              typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo){
+              typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo,
+              originalUrl: String, like: Int){
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
     val context = LocalContext.current
+    val likeController = LikeController()
+    var checked by remember { mutableStateOf(false) }
+    val coroutine = rememberCoroutineScope()
     Column(modifier= Modifier
         .padding(bottom = 7.dp)
         .fillMaxWidth(1f)
@@ -70,7 +81,6 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     .size(30.dp)
                     .clip(CircleShape)
             )
-//            Text(text = idPost.toString())
             Column(modifier=Modifier.padding(start=10.dp)) {
                 Text(text=nameGroup, color=colorResource(id=R.color.white),
                     fontFamily=nunitoFamily, fontWeight=FontWeight.W600,
@@ -94,7 +104,12 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
             )
         }
         Row(modifier=Modifier.padding(top=4.dp, start=10.dp, end=21.dp)) {
-            IconButton(onClick = {  }) {
+            IconButton(onClick = {
+                coroutine.launch {
+                    likeController.newLike(originalUrl, !checked)
+                    checked = !checked
+                }
+            }) {
                 Icon(painterResource(id=R.drawable.like), "Like",
                     tint = colorResource(id = R.color.icon_color))
             }

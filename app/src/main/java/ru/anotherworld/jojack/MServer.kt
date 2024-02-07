@@ -166,10 +166,6 @@ class ChatController{
             }
         }
         private var socket: WebSocketSession? = null
-        private val username = sDatabase.getLogin()
-        private val chatM = mutableStateOf(ChatM())
-        val state: State<ChatM> = chatM
-
     }
     @OptIn(InternalAPI::class)
     suspend fun getAllMessages(): List<Message> {
@@ -183,13 +179,6 @@ class ChatController{
             emptyList()
         }
     }
-//    suspend fun getAllMessages3(): List<Message>{
-//        chatM.value = state.value.copy()
-//        val result = getAllMessages()
-//        chatM.value = state.value.copy(
-//            messages = result)
-//        return chatM.value.messages
-//    }
     suspend fun initSession(username: String): Resource<Unit> {
         return try {
             Log.d("WHAT", "$username ${sDatabase.getToken()}")
@@ -217,37 +206,6 @@ class ChatController{
             e.printStackTrace()
         }
     }
-//    fun observeMessages(): Flow<Message> {
-//        return try {
-//            socket?.incoming
-//                ?.receiveAsFlow()
-//                ?.filter { it is Frame.Text }
-//                ?.map {
-//                    Log.d("WHAT IF", it.readBytes().decodeToString())
-//                    val json = (it as? Frame.Text)?.readText() ?: ""
-//                    val messageDto = Json.decodeFromString<MessageDto>(json)
-//                    messageDto.toMessage()
-//                } ?: flow {  }
-//        } catch (e: Exception){
-//            e.printStackTrace()
-//            flow {  }
-//        }
-//    }
-//    fun observeMessages2(): Flow<Message> {
-//        return try {
-//            socket?.incoming
-//                ?.receiveAsFlow()
-//                ?.map {
-//                    Log.d("WHAT IF", it.readBytes().decodeToString())
-//                    val json = (it as? Frame.Text)?.readText() ?: ""
-//                    val messageDto = Json.decodeFromString<MessageDto>(json)
-//                    messageDto.toMessage()
-//                } ?: flow {  }
-//        } catch (e: Exception){
-//            e.printStackTrace()
-//            flow {  }
-//        }
-//    }
     suspend fun waitNewData(): Message?{
         for(element in socket?.incoming!!){
             element as? Frame.Text ?: continue
@@ -259,26 +217,24 @@ class ChatController{
     suspend fun closeSession() {
         socket?.close()
     }
-//    suspend fun getAllM2(): List<Message>{
-//        when(val result = initSession(username)){
-//            is Resource.Success -> {
-//                observeMessages()
-//                    .onEach { message ->
-//                        val newList = ArrayList<Message>().apply {
-//                            add(0, element = message)
-//                        }
-//                        chatM.value = state.value.copy(
-//                            messages = newList
-//                        )
-//                    }
-//
-//            }
-//            is Resource.Error -> {
-//                Log.e("ERROR", "Unknown error ::MServer::Chat")
-//            }
-//        }
-//        return chatM.value.messages
-//    }
+}
+class LikeController{
+    private companion object{
+        val client = HttpClient(CIO){
+            install(ContentNegotiation){
+                json()
+            }
+            install(HttpTimeout){
+                requestTimeoutMillis = 5.seconds.inWholeMilliseconds
+            }
+        }
+    }
+    suspend fun newLike(originalUrl: String, status: Boolean){
+        val response = client.post("$BASE_URL/like"){
+            contentType(ContentType.Application.Json)
+            setBody(RegisterLike(originalUrl, status, mDatabase.getToken()))
+        }
+    }
 }
 
 data class ChatM(
@@ -351,4 +307,11 @@ data class InitRemote(
     val job: Int,
     val trustLevel: Int,
     val info: String? = ""
+)
+
+@Serializable
+data class RegisterLike(
+    val url: String,
+    val status: Boolean,
+    val token: String
 )
