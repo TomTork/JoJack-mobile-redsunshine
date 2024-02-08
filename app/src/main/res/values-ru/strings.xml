@@ -58,4 +58,6 @@
     <string name="enter_name">Введите своё имя</string>
     <string name="enter_appeal">Введите текст обращения</string>
     <string name="send_appeal">Отправить обращение</string>
+    <string name="title_activity_messenger_post">MessengerPostActivity</string>
+    <string name="comments">Комментарии</string>
 </resources>

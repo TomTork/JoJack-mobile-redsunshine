@@ -152,16 +152,18 @@ private fun Content(){
                         shape = RoundedCornerShape(20.dp)
                     )
                     .fillMaxWidth(1f)
-                    .fillMaxHeight(1f))
+                    .fillMaxHeight(0.9f))
             Button(onClick = { /*Отправить обращение*/ },
                 colors = ButtonDefaults
                     .buttonColors(containerColor = colorResource(id = R.color.background_lr_button)),
-                modifier = Modifier.fillMaxWidth(0.9f)
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
                     .align(Alignment.CenterHorizontally),
                 shape = RoundedCornerShape(20.dp)) {
                 Text(text = stringResource(id = R.string.send_appeal),
                     fontFamily = nunitoFamily,
-                    fontWeight = FontWeight.W500)
+                    fontWeight = FontWeight.W500,
+                    color = colorResource(id = R.color.white))
             }
         }
     }

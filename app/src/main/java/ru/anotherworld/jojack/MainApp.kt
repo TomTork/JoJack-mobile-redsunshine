@@ -115,7 +115,6 @@ private fun Content(){
         if(mDatabase.getLogin() == "")context.startActivity(Intent(context, LoginActivity::class.java))
         else start = true
     } catch (io: Exception){
-        Log.e("ERROR", "TRUE-TRUE")
         context.startActivity(Intent(context, LoginActivity::class.java))
     }
     if(start){
@@ -287,7 +286,8 @@ private data class SNews(
     val icon: String,
     val images: VkImageAndVideo,
     val originalUrl: String,
-    val like: Int
+    val like: Int,
+    val exclusive: Boolean
 )
 
 @SuppressLint("CoroutineCreationDuringComposition", "MutableCollectionMutableState",
@@ -316,7 +316,7 @@ private fun NewsPaper(){
                             maxId -= 10
                             for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
                                 array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
-                                    i.originalUrl, i.like))
+                                    i.originalUrl, i.like, i.exclusive))
                             }
                             view = true
                         }
@@ -340,13 +340,13 @@ private fun NewsPaper(){
                 itemsIndexed(items = array, itemContent = {index, value ->
                     PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
                         iconGroup = value.icon, existsImages = true, images = value.images,
-                        originalUrl = value.originalUrl, like = value.like)
+                        originalUrl = value.originalUrl, like = value.like, exclusive = value.exclusive)
                     if(index == array.size - 2 && maxId > 1){
                         coroutine.launch {
                             maxId -= 1
                             for(i in getPostVk.getPostVk(maxId, maxId).post)
                                 array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
-                                    i.originalUrl, i.like))
+                                    i.originalUrl, i.like, i.exclusive))
                         }
                     }
                 })
@@ -375,9 +375,6 @@ private fun Messenger(){
                 ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
                     action = { context.startActivity(Intent(context, ChatActivity::class.java)) })
             }
-//            items(20){
-//                ChatMessage(name = "CHAT", previewMessage = "Как дела?", username = "Вы")
-//            }
         }
     }
 }
@@ -489,10 +486,6 @@ private fun Account(){
             }
         }
     }
-}
-private fun boolToInt(value: Boolean): Int{
-    if(value)return 1
-    return 0
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

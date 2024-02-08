@@ -24,6 +24,11 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".elements.MessengerPostActivity"
+            android:exported="false"
+            android:label="@string/title_activity_messenger_post"
+            android:theme="@style/Theme.JoJack" />
+        <activity
             android:name=".NotificationActivity"
             android:exported="false"
             android:label="@string/app_name"
@@ -39,7 +44,7 @@
             android:exported="false"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.JoJack"></activity>
+            android:theme="@style/Theme.JoJack" />
         <activity
             android:name=".ChangePassword"
             android:exported="false"

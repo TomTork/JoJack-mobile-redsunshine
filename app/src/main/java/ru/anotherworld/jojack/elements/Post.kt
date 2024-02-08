@@ -1,11 +1,16 @@
 package ru.anotherworld.jojack.elements
 
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.graphics.drawable.ShapeDrawable
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
@@ -17,25 +22,41 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -51,10 +72,15 @@ import ru.anotherworld.jojack.LikeController
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.VkImageAndVideo
 
+val constructorMessenger = ConstructorMessenger(null, null, null, null,
+    null, null, null, null, null, null, null)
+
+@SuppressLint("CoroutineCreationDuringComposition")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
               typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo,
-              originalUrl: String, like: Int){
+              originalUrl: String, like: Int, exclusive: Boolean, inMessenger: Boolean = false){
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
@@ -62,7 +88,11 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
     val context = LocalContext.current
     val likeController = LikeController()
     var checked by remember { mutableStateOf(false) }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var uLike by remember { mutableIntStateOf(like) }
+    val sheetState = rememberModalBottomSheetState()
     val coroutine = rememberCoroutineScope()
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
     Column(modifier= Modifier
         .padding(bottom = 7.dp)
         .fillMaxWidth(1f)
@@ -108,20 +138,146 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                 coroutine.launch {
                     likeController.newLike(originalUrl, !checked)
                     checked = !checked
+                    if (checked) uLike += 1
+                    else uLike -= 1
                 }
             }) {
                 Icon(painterResource(id=R.drawable.like), "Like",
-                    tint = colorResource(id = R.color.icon_color))
+                    tint = if(checked) colorResource(id = R.color.cred) else colorResource(id = R.color.icon_color))
             }
-            IconButton(onClick = {  }) {
-                Icon(painterResource(id=R.drawable.comments), "Comments",
-                    tint = colorResource(id = R.color.icon_color))
+            if (uLike != 0){
+                Text(text = standardLikes(uLike),
+                    fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                    color = if(checked) colorResource(id = R.color.cred) else colorResource(id = R.color.icon_color),
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .offset(x = (-7).dp),
+                    fontSize = 16.sp)
             }
-            IconButton(onClick = {  }) {
+            if(!inMessenger){
+                IconButton(onClick = {
+                    constructorMessenger.idPost = idPost
+                    constructorMessenger.text = text
+                    constructorMessenger.nameGroup = text
+                    constructorMessenger.iconGroup = text
+                    constructorMessenger.typeGroup = text
+                    constructorMessenger.images = images
+                    constructorMessenger.originalUrl = originalUrl
+                    constructorMessenger.like = like
+                    constructorMessenger.exclusive = exclusive
+                    constructorMessenger.inMessenger = true
+                    context.startActivity(Intent(context, MessengerPostActivity::class.java))
+                }) {
+                    Icon(painterResource(id=R.drawable.comments), "Comments",
+                        tint = colorResource(id = R.color.icon_color))
+                }
+            }
+
+            IconButton(onClick = {
+                if (exclusive) sendToMessenger(idPost, text, nameGroup, iconGroup, typeGroup,
+                    existsImages, images, originalUrl, like, exclusive)
+                else showBottomSheet = true
+            }) {
                 Icon(painterResource(id=R.drawable.repost), "Repost",
                     tint = colorResource(id = R.color.icon_color))
             }
         }
-
+        if(showBottomSheet){
+            ModalBottomSheet(onDismissRequest = { showBottomSheet = false },
+                sheetState = sheetState) {
+                Row(modifier = Modifier.fillMaxWidth(1f)) {
+                    Column {
+                        Text(text = nameGroup,
+                            fontFamily = nunitoFamily,
+                            fontWeight = FontWeight.W600,
+                            color = colorResource(id = R.color.white))
+                        Text(text = text.substring(0, 27) + "...",
+                            fontFamily = nunitoFamily,
+                            fontWeight = FontWeight.W600,
+                            color = colorResource(id = R.color.white))
+                    }
+                    IconButton(onClick = {
+                        clipboardManager.setText(AnnotatedString(originalUrl))
+                    }) {
+                        Icon(painterResource(id = R.drawable.copy), null,
+                            tint = colorResource(id = R.color.icon_color))
+                    }
+                    IconButton(onClick = {
+                        sendToMessenger(idPost, text, nameGroup, iconGroup, typeGroup, existsImages,
+                            images, originalUrl, like, exclusive)
+                    }) {
+                        Icon(painterResource(id = R.drawable.repost), null,
+                            tint = colorResource(id = R.color.icon_color))
+                    }
+                }
+                Spacer(modifier = Modifier.fillMaxHeight(0.05f))
+            }
+        }
     }
 }
+
+private fun standardLikes(like: Int): String{
+    if(like <= 999) return like.toString()
+    else if(like <= 9999){
+        val value = like.toString()
+        return if (value[1] == '0') value[0] + "K"
+        else value[0] + "." + value[1] + "K"
+    }
+    else if(like <= 99999) return (like.toString().substring(0, 2) + "K")
+    return like.toString()
+}
+
+private fun sendToMessenger(idPost: Int, text: String, nameGroup: String, iconGroup: String,
+                            typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo,
+                            originalUrl: String, like: Int, exclusive: Boolean){
+
+}
+
+fun Modifier.vectorShadow(
+    path: Path,
+    x: Dp,
+    y: Dp,
+    radius: Dp
+) = composed(
+    inspectorInfo = {
+        name = "vectorShadow"
+        value = path
+        value = x
+        value = y
+        value = radius
+    },
+    factory = {
+        val paint = remember {
+            Paint()
+        }
+        val frameworkPaint = remember {
+            paint.asFrameworkPaint()
+        }
+        val color = Color.DarkGray
+        val dx: Float
+        val dy: Float
+        val radiusInPx: Float
+        with(LocalDensity.current) {
+            dx = x.toPx()
+            dy = y.toPx()
+            radiusInPx = radius.toPx()
+        }
+        drawBehind {
+            this.drawIntoCanvas {
+                val transparent = color
+                    .copy(alpha = 0f)
+                    .toArgb()
+                frameworkPaint.color = transparent
+                frameworkPaint.setShadowLayer(
+                    radiusInPx,
+                    dx,
+                    dy,
+                    color
+                        .copy(alpha = .7f)
+                        .toArgb()
+                )
+                it.drawPath(path, paint)
+            }
+        }
+    }
+)

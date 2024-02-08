@@ -188,7 +188,7 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                                 .size(28.dp))
                     }
                 }
-                )
+            )
         }
     ) {
         Column(
