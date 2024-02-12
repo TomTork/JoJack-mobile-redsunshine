@@ -1,10 +1,6 @@
 package ru.anotherworld.jojack
 
-import android.os.StrictMode
-import android.os.StrictMode.ThreadPolicy
 import android.util.Log
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -14,9 +10,7 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.plugins.websocket.webSocketSession
-import io.ktor.client.plugins.websocket.ws
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -49,7 +43,9 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import ru.anotherworld.jojack.chatcontroller.Message
 import ru.anotherworld.jojack.chatcontroller.MessageDto
 import ru.anotherworld.jojack.chatcontroller.Resource
@@ -70,10 +66,14 @@ class Register{
                 json()
             }
         }
+        val pair = cipher.generatePairKeys()
         val response = client.post("$BASE_URL/register"){
             contentType(ContentType.Application.Json)
-            setBody(RegisterResponseRemote(login, password))
+            setBody(RegisterResponseRemote(login, password, cipher.encrypt(pair.first,
+                cipher.md5(pass)), pair.second))
         }
+        sDatabase.setPublicKey(pair.second)
+        sDatabase.setPrivateKey(pair.first)
         val token = Token(response.content.readUTF8Line())
         if (token.token == "User already exists") return ""
         return token.token!!
@@ -92,12 +92,32 @@ class Login{
             contentType(ContentType.Application.Json)
             setBody(LoginResponseRemote(login, password))
         }
-        val token = Token(response.content.readUTF8Line())
-        if(token.token == "User not found") return "NF"
-        else if(token.token == "Invalid password or login") return "PL"
+        val result = response.content.readUTF8Line().toString()
+        val token = Json.decodeFromString<TokenAndKeys>(result)
+
+        when (token.token) {
+            "User not found" -> return "NF"
+            "Invalid password or login" -> return "PL"
+            else -> {
+                if (token.privateKey != "" && token.publicKey != ""){
+                    sDatabase.setPublicKey(token.publicKey)
+                    sDatabase.setPrivateKey(cipher.decrypt(token.privateKey, cipher.md5(pass)))
+                }
+                else Log.e("MServer ::Login", "PRIVATE AND/OR PUBLIC KEYS ARE EMPTY")
+
+            }
+        }
         return token.token!!
     }
 }
+
+@Serializable
+private data class TokenAndKeys(
+    val token: String?,
+    val privateKey: String,
+    val publicKey: String
+)
+
 class GetPostVk{
     @OptIn(InternalAPI::class)
     suspend fun getPostVk(start: Int, end: Int): GetRPost {
@@ -237,6 +257,103 @@ class LikeController{
     }
 }
 
+class ChatTwo(private val nameDb: String){
+    private companion object {
+        val client = HttpClient(CIO){
+            install(Logging){
+                logger = Logger.DEFAULT
+                level = LogLevel.HEADERS
+            }
+            install(HttpTimeout){
+                requestTimeoutMillis = 5.seconds.inWholeMilliseconds
+            }
+            install(ContentNegotiation){
+                json()
+            }
+            install(WebSockets){
+                pingInterval = 5.seconds.inWholeMilliseconds
+            }
+        }
+        private var socket: WebSocketSession? = null
+    }
+    suspend fun initSession(): Resource<Unit> {
+        return try {
+            socket = client.webSocketSession {
+                url("$BASE_WS/chat-socket?namedb=$nameDb&token2=${sDatabase.getToken()}")
+            }
+            if (socket?.isActive == true){
+                Resource.Success(Unit)
+
+            } else {
+                Resource.Error("Couldn't establish a connection. ::ChatSocketServiceImpl")
+            }
+        } catch (e: Exception){
+            e.printStackTrace()
+            Resource.Error(e.localizedMessage ?: "Unknown error ::ChatSocketServiceImpl")
+        }
+    }
+    suspend fun sendMessage(message: TMessage) {
+        try {
+            socket?.send(Frame.Text(Json.encodeToString<TMessage>(message)))
+        } catch (e: Exception){
+            e.printStackTrace()
+        }
+    }
+    suspend fun waitNewData(): TMessage?{
+        for(element in socket?.incoming!!){
+            element as? Frame.Text ?: continue
+            val json = element.readBytes().decodeToString()
+            return Json.decodeFromString<TMessage>(json)
+        }
+        return null
+    }
+    suspend fun closeSession() {
+        socket?.close()
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun getRangeMessages(startIndex: Int, endIndex: Int): List<TMessage>{
+        val response = client.post("$BASE_URL/getchat2"){
+            contentType(ContentType.Application.Json)
+            setBody(Indexes(startIndex, endIndex))
+        }
+        val result = response.content.readUTF8Line().toString()
+        return Json.decodeFromString<TTMessages>(result).list
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun getCountMessages(): Int{
+        val response = client.get("$BASE_URL/chatmessages"){
+            contentType(ContentType.Application.Json)
+        }
+        return Json.decodeFromString<GetLengthMessages>(response
+            .content.readUTF8Line().toString()).length
+    }
+}
+
+class SearchIdOrName{
+    //Configure searching -> "id:" for search only by id; "name:" for search only by login
+    private companion object{
+        private val client = HttpClient()
+        private var socket: WebSocketSession? = null
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun search(query: String): Search{
+        return try {
+            val response = client.post("$BASE_URL/search"){
+                setBody(query)
+            }
+            val result = response.content.readUTF8Line().toString()
+            Json.decodeFromString<Search>(result)
+        } catch (e: Exception){
+            Search(arrayListOf())
+        }
+    }
+}
+
+@Serializable
+data class Search(
+    val arr: List<Pair<String, String>>
+)
+
 data class ChatM(
     val messages: List<Message> = emptyList()
 )
@@ -275,7 +392,9 @@ data class VkResponseRemote(
 @Serializable
 private data class RegisterResponseRemote(
     val login: String,
-    val password: String
+    val password: String,
+    val privateKey: String,
+    val publicKey: String
 )
 
 @Serializable
@@ -314,4 +433,48 @@ data class RegisterLike(
     val url: String,
     val status: Boolean,
     val token: String
+)
+
+@Serializable
+data class ChatOnJoin(
+    val username: String,
+    val text: String,
+    val nameDB: String,
+    val oKey: String = cipher.generatePassword()
+)
+
+@Serializable
+data class TMessage(
+    val id: Int,
+    val author: String,
+    val message: String,
+    val time: Long
+)
+
+@Serializable
+data class TInitPair(
+    val nameDB: String,
+    val oKey: String,
+    val token: String
+)
+
+@Serializable
+data class NameDB2(
+    val nameDB: String
+)
+
+@Serializable
+data class GetLengthMessages(
+    val length: Int
+)
+
+@Serializable
+data class Indexes(
+    val startIndex: Int,
+    val endIndex: Int
+)
+
+@Serializable
+data class TTMessages(
+    val list: List<TMessage>
 )

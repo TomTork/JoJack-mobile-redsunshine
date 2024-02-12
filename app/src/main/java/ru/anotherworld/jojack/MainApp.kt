@@ -6,10 +6,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,19 +32,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +71,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -84,6 +96,7 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import ru.anotherworld.jojack.animation.CrossSlide
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.ChatActivity
 import ru.anotherworld.jojack.elements.ChatMessage
@@ -104,9 +117,9 @@ class MainApp : ComponentActivity() {
 val mDatabase = MainDatabase()
 val getInfo = GetInfo()
 val getPostVk = GetPostVk()
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
-    "UnrememberedMutableState"
-)
+    "UnrememberedMutableState")
 @Composable
 private fun Content(){
     val context = LocalContext.current
@@ -125,73 +138,123 @@ private fun Content(){
         val nunitoFamily = FontFamily(
             Font(R.font.nunito_semibold600, FontWeight.W600)
         )
-        var contentManager by mutableStateOf(0)
-        var select by remember { mutableStateOf(0) } //0 - Home; 1 - chat; 2 - settings
+        var contentManager by mutableIntStateOf(0)
+        var select by remember { mutableIntStateOf(0) } //0 - Home; 1 - chat; 2 - settings
+        var showSearchUser by remember { mutableStateOf(false) }
+        var search by remember { mutableStateOf("") }
         Scaffold(
             modifier = Modifier.background(Color.White),
             topBar = {
-                var topText by mutableStateOf(stringResource(id = R.string.home))
-                topText = when(contentManager){
-                    1 -> stringResource(id = R.string.message)
-                    2 -> stringResource(id = R.string.settings)
-                    else -> stringResource(id = R.string.home)
-                }
-                Surface(modifier = Modifier
-                    .background(Color.White)
-                    .fillMaxWidth(1f)) {
-                    Column(modifier = Modifier.fillMaxWidth(1f)) {
-                        Row(modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .background(colorResource(id = R.color.background2))) {
+                if (!showSearchUser){
+                    var topText by mutableStateOf(stringResource(id = R.string.home))
+                    topText = when(contentManager){
+                        1 -> stringResource(id = R.string.message)
+                        2 -> stringResource(id = R.string.settings)
+                        else -> stringResource(id = R.string.home)
+                    }
+                    Surface(modifier = Modifier
+                        .background(Color.White)
+                        .fillMaxWidth(1f)) {
+                        Column(modifier = Modifier.fillMaxWidth(1f)) {
+                            Row(modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .background(colorResource(id = R.color.background2))) {
 
-                            Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
-                                null, modifier= Modifier
-                                    .size(65.dp)
-                                    .align(Alignment.CenterVertically)
-                                    .padding(start = 20.dp, end = 5.dp))
-
-                            Text(text = stringResource(id = R.string.app_name),
-                                fontFamily = interFamily, fontWeight = FontWeight.W600,
-                                fontSize = 30.sp, modifier = Modifier
-                                    .align(Alignment.CenterVertically))
-                            Spacer(modifier = Modifier.padding(bottom=20.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Absolute.Right,
-                                modifier = Modifier
-                                    .align(Alignment.CenterVertically)
-                                    .fillMaxWidth(1f)
-                                    .padding(end = 20.dp)) {
-                                IconButton(onClick = { /*TODO*/ }) {
-                                    Column(modifier = Modifier
-                                        .padding(end = 15.dp)
+                                Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
+                                    null, modifier= Modifier
+                                        .size(65.dp)
                                         .align(Alignment.CenterVertically)
-                                        .offset(y = 3.dp)) {
-                                        Image(painterResource(id = R.drawable.notificate1),
-                                            null,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterHorizontally)
-                                                .size(25.dp))
-                                        Image(painterResource(id = R.drawable.notificate2),
-                                            null,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterHorizontally)
-                                                .size(9.dp)
-                                                .offset(y = (-3).dp))
+                                        .padding(start = 20.dp, end = 5.dp))
+
+                                Text(text = stringResource(id = R.string.app_name),
+                                    fontFamily = interFamily, fontWeight = FontWeight.W600,
+                                    fontSize = 30.sp, modifier = Modifier
+                                        .align(Alignment.CenterVertically))
+                                Spacer(modifier = Modifier.padding(bottom=20.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Absolute.Right,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .fillMaxWidth(1f)
+                                        .padding(end = 20.dp)) {
+                                    if (contentManager == 1){
+                                        IconButton(onClick = {
+                                            showSearchUser = !showSearchUser
+                                        }) {
+                                            Image(painterResource(id = R.drawable.add_circle),
+                                                null,
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterVertically)
+                                                    .size(35.dp))
+                                        }
                                     }
-                                }
-                                IconButton(onClick = {
+                                    else {
+                                        IconButton(onClick = { /*TODO*/ }) {
+                                            Column(modifier = Modifier
+                                                .padding(end = 15.dp)
+                                                .align(Alignment.CenterVertically)
+                                                .offset(y = 3.dp)) {
+                                                Image(painterResource(id = R.drawable.notificate1),
+                                                    null,
+                                                    modifier = Modifier
+                                                        .align(Alignment.CenterHorizontally)
+                                                        .size(25.dp))
+                                                Image(painterResource(id = R.drawable.notificate2),
+                                                    null,
+                                                    modifier = Modifier
+                                                        .align(Alignment.CenterHorizontally)
+                                                        .size(9.dp)
+                                                        .offset(y = (-3).dp))
+                                            }
+                                        }
+                                    }
 
-                                }) {
-                                    Image(painterResource(id = R.drawable.search2),
-                                        null, modifier = Modifier.size(25.dp))
-                                }
+                                    IconButton(onClick = {
 
+                                    }) {
+                                        Image(painterResource(id = R.drawable.search2),
+                                            null, modifier = Modifier.size(25.dp))
+                                    }
+
+                                }
                             }
+
                         }
 
                     }
-
                 }
+                else {
+                    TopAppBar(title = {
+                        Row(modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .background(colorResource(id = R.color.background2))) {
+                            IconButton(onClick = { showSearchUser = false },
+                                modifier = Modifier.align(Alignment.CenterVertically)) {
+                                Icon(painterResource(id = R.drawable.arrow_back), null,
+                                    tint = colorResource(id = R.color.white))
+                            }
+                            TextField(value = search, onValueChange = { search = it },
+                                placeholder = { Text(text = stringResource(id = R.string.search_user),
+                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                    modifier = Modifier.alpha(0.5f),
+                                    color = colorResource(id = R.color.white)) },
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .align(Alignment.CenterVertically),
+                                colors = TextFieldDefaults.textFieldColors(
+                                    containerColor = colorResource(id = R.color.background2),
+                                    cursorColor = Color.White,
+                                    disabledLabelColor = colorResource(id = R.color.ghost_white),
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    ))
+                        }
+                    }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
+                        colors = TopAppBarDefaults
+                            .topAppBarColors(containerColor = colorResource(id = R.color.background2),
+                                titleContentColor = colorResource(id = R.color.background2)))
+                }
+
             },
             bottomBar = {
                 Row(verticalAlignment = Alignment.CenterVertically,
@@ -270,11 +333,99 @@ private fun Content(){
                 }
             }
         ) {
-            when(contentManager){
-                0 -> { NewsPaper() }
-                1 -> { Messenger() }
-                2 -> { Account() }
+            if (showSearchUser){ //Отобразить поиск
+
+                var checkedSwitch by remember { mutableStateOf(false) }
+                var checkedSwitch2 by remember { mutableStateOf(false) }
+
+                Column(modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .fillMaxHeight(1f)
+                    .animateContentSize()
+                    .background(colorResource(id = R.color.black2))
+                    .padding(top = 65.dp)) {
+                    Row(modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .padding(start = 20.dp, end = 20.dp, bottom = 5.dp, top = 5.dp)) {
+                        Text(text = stringResource(id = R.string.group),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .align(Alignment.CenterVertically))
+                        Switch(checked = checkedSwitch,
+                            onCheckedChange = { if (!checkedSwitch2) checkedSwitch = !checkedSwitch },
+                            modifier = Modifier
+                                .weight(0.1f)
+                                .align(Alignment.CenterVertically),
+                            colors = SwitchDefaults
+                                .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
+                    }
+                    Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .alpha(0.5f))
+                    Row(modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .padding(start = 20.dp, end = 20.dp, bottom = 5.dp, top = 5.dp)) {
+                        Text(text = stringResource(id = R.string.enable_encrypt),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                            modifier = Modifier
+                                .weight(0.9f)
+                                .align(Alignment.CenterVertically))
+                        Switch(checked = checkedSwitch2,
+                            onCheckedChange = {
+                                checkedSwitch2 = !checkedSwitch2
+                                if(checkedSwitch) checkedSwitch = false
+                            },
+                            modifier = Modifier
+                                .weight(0.1f)
+                                .align(Alignment.CenterVertically),
+                            colors = SwitchDefaults
+                                .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
+                    }
+                    Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .alpha(0.5f))
+                    val searchF = SearchIdOrName()
+                    LazyColumn(modifier = Modifier.fillMaxWidth(1f)){
+                        coroutine.launch {
+                            val list = searchF.search(search)
+                            itemsIndexed(list.arr){ index, item ->
+                                var chBox by remember { mutableStateOf(false) }
+                                Row(modifier = Modifier
+                                    .fillMaxWidth(1f)
+                                    .clickable { if(!checkedSwitch) TODO() else chBox = !chBox }) {
+                                    Column {
+                                        Text(text = stringResource(id = R.string.login) + ": " + item.first,
+                                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+                                        Text(text = stringResource(id = R.string.ID) + ": " + item.second,
+                                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+                                    }
+                                    if (checkedSwitch){
+                                        Checkbox(checked = chBox, onCheckedChange = { chBox = !chBox })
+                                    }
+
+
+                                }
+                            }
+                        }
+
+                    }
+                }
+
             }
+            else{
+                CrossSlide(targetState = contentManager, reverseAnimation = false){ screen ->
+                    when(screen){
+                        0 -> { NewsPaper() }
+                        1 -> { Messenger() }
+                        2 -> { Account() }
+                    }
+                }
+
+            }
+
         }
     }
 
@@ -291,8 +442,7 @@ private data class SNews(
 )
 
 @SuppressLint("CoroutineCreationDuringComposition", "MutableCollectionMutableState",
-    "UnrememberedMutableState"
-)
+    "UnrememberedMutableState")
 @Composable
 private fun NewsPaper(){
     val context = LocalContext.current
@@ -549,7 +699,6 @@ private fun Search(){
             }
         }
     }
-
 }
 
 private data class SearchContent(

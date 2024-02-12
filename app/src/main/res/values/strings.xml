@@ -59,4 +59,7 @@
     <string name="send_appeal">Send the appeal</string>
     <string name="title_activity_messenger_post">MessengerPostActivity</string>
     <string name="comments">Comments</string>
+    <string name="search_user">User search</string>
+    <string name="group">Group?</string>
+    <string name="enable_encrypt">Enable encryption?</string>
 </resources>

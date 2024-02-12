@@ -23,6 +23,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,27 +48,32 @@ fun ChatMessage(name: String, previewMessage: String, username: String, idChat: 
                 Icon(
                     painterResource(id = R.drawable.account_circle), null,
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(70.dp)
                         .padding(start = 10.dp))
             }
             else{
                 Icon(image, null, Modifier
-                    .size(40.dp)
+                    .size(70.dp)
                     .padding(start = 10.dp))
             }
-            Text(text = name, fontWeight = FontWeight.W600, fontSize = 15.sp,
-                fontFamily = nunitoFamily,
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .padding(start = 5.dp), style=MaterialTheme.typography.titleLarge)
-            if (countMessage != 0){
-                Text(text = countMessage.toString(), modifier = Modifier
-                    .background(colorResource(id = R.color.grey), shape = RoundedCornerShape(20.dp))
-                    .align(Alignment.CenterVertically))
+            Column(modifier = Modifier.align(Alignment.CenterVertically)) {
+                Text(text = name, fontWeight = FontWeight.W600, fontSize = 18.sp,
+                    fontFamily = nunitoFamily,
+                    modifier = Modifier
+                        .padding(start = 5.dp))
+                if (countMessage != 0){
+                    Text(text = countMessage.toString(), modifier = Modifier
+                        .background(colorResource(id = R.color.grey),
+                            shape = RoundedCornerShape(20.dp))
+                    )
+                }
+                Text(text = "$username: $previewMessage", modifier = Modifier.padding(start = 5.dp,
+                        bottom = 5.dp), fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                    fontSize = 16.sp)
+                Spacer(modifier = Modifier.padding(bottom=4.dp))
             }
+
         }
-        Text(text = "$username: $previewMessage", modifier = Modifier.padding(start=10.dp,
-            bottom = 5.dp), fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
-        Spacer(modifier = Modifier.padding(bottom=4.dp))
+
     }
 }

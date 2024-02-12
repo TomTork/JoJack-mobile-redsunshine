@@ -23,7 +23,8 @@ class MainDatabase {
     private val trustLevel = File(d("trust_level"))
     private val device = File(d("device"))
     private val controlSum = File(d("control_sum"))
-    private val key = File(d("key"))
+    private val privateKey = File(d("private_key"))
+    private val publicKey = File(d("public_key"))
     private val info = File(d("info"))
     private val theme = File(d("theme"))
 
@@ -31,8 +32,8 @@ class MainDatabase {
         try {
             if (!id.exists() || !login.exists() || !hash.exists() ||
                 !serverId.exists() || !level.exists() || !trustLevel.exists() ||
-                !device.exists() || !controlSum.exists() || !key.exists() ||
-                !info.exists() || !theme.exists() || !token.exists()){
+                !device.exists() || !controlSum.exists() || !privateKey.exists() ||
+                !info.exists() || !theme.exists() || !token.exists() || !publicKey.exists()){
                 id.createNewFile()
                 login.createNewFile()
                 hash.createNewFile()
@@ -41,7 +42,8 @@ class MainDatabase {
                 trustLevel.createNewFile()
                 device.createNewFile()
                 controlSum.createNewFile()
-                key.createNewFile()
+                privateKey.createNewFile()
+                publicKey.createNewFile()
                 info.createNewFile()
                 theme.createNewFile()
                 token.createNewFile()
@@ -57,7 +59,8 @@ class MainDatabase {
             trustLevel.createNewFile()
             device.createNewFile()
             controlSum.createNewFile()
-            key.createNewFile()
+            privateKey.createNewFile()
+            publicKey.createNewFile()
             info.createNewFile()
             theme.createNewFile()
             token.createNewFile()
@@ -67,7 +70,6 @@ class MainDatabase {
     }
     private fun base(){ setId(-1); setLogin(""); setHashPassword(""); setServerId(-1);
     setLevel(-1); setTrustLevel(-1); setDevice("Android"); setControlSum("");
-    setKey(cipher.hash(List(16) { (('a'..'z') + ('A'..'Z') + ('0'..'9')).random() }.joinToString("")));
     setInfo(""); setTheme(0); setToken("") }
     fun getId(): Int = cipher.decrypt(FileInputStream(id).bufferedReader().readText(), key_).toInt()
     fun getLogin(): String = cipher.decrypt(FileInputStream(login).bufferedReader().readText(), key_)
@@ -78,7 +80,8 @@ class MainDatabase {
     fun getTrustLevel(): Int = cipher.decrypt(FileInputStream(trustLevel).bufferedReader().readText(), key_).toInt()
     fun getDevice(): String = cipher.decrypt(FileInputStream(device).bufferedReader().readText(), key_)
     fun getControlSum(): String = cipher.decrypt(FileInputStream(controlSum).bufferedReader().readText(), key_)
-    fun getKey(): String = cipher.decrypt(FileInputStream(key).bufferedReader().readText(), key_)
+    fun getPrivateKey(): String = cipher.decrypt(FileInputStream(privateKey).bufferedReader().readText(), key_)
+    fun getPublicKey(): String = cipher.decrypt(FileInputStream(publicKey).bufferedReader().readText(), key_)
     fun getInfo(): String = cipher.decrypt(FileInputStream(info).bufferedReader().readText(), key_)
     fun getTheme(): Int = cipher.decrypt(FileInputStream(theme).bufferedReader().readText(), key_).toInt()
     fun setId(v: Int) = id.writeText(cipher.encrypt(v.toString(), key_))
@@ -90,7 +93,8 @@ class MainDatabase {
     fun setTrustLevel(v: Int) = trustLevel.writeText(cipher.encrypt(v.toString(), key_))
     fun setDevice(v: String) = device.writeText(cipher.encrypt(v, key_))
     fun setControlSum(v: String) = controlSum.writeText(cipher.encrypt(v, key_))
-    fun setKey(v: String) = key.writeText(cipher.encrypt(v, key_))
+    fun setPrivateKey(v: String) = privateKey.writeText(cipher.encrypt(v, key_))
+    fun setPublicKey(v: String) = publicKey.writeText(cipher.encrypt(v, key_))
     fun setInfo(v: String) = info.writeText(cipher.encrypt(v, key_))
     fun setTheme(v: Int) = theme.writeText(cipher.encrypt(v.toString(), key_))
     fun boolToInt(v: Boolean): Int{
@@ -106,7 +110,8 @@ class MainDatabase {
         trustLevel.delete()
         device.delete()
         controlSum.delete()
-        key.delete()
+        privateKey.delete()
+        publicKey.delete()
         info.delete()
         theme.delete()
         token.delete()
