@@ -30,15 +30,22 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxColors
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchColors
@@ -142,6 +149,10 @@ private fun Content(){
         var select by remember { mutableIntStateOf(0) } //0 - Home; 1 - chat; 2 - settings
         var showSearchUser by remember { mutableStateOf(false) }
         var search by remember { mutableStateOf("") }
+        var searchList = SearchP(listOf())
+        var searchUpdate by remember { mutableStateOf(false) }
+        var searchExample: SearchP? = null
+        val searchF = SearchIdOrName()
         Scaffold(
             modifier = Modifier.background(Color.White),
             topBar = {
@@ -233,7 +244,17 @@ private fun Content(){
                                 Icon(painterResource(id = R.drawable.arrow_back), null,
                                     tint = colorResource(id = R.color.white))
                             }
-                            TextField(value = search, onValueChange = { search = it },
+                            TextField(value = search,
+                                onValueChange = {
+                                    search = it
+                                    coroutine.launch {
+//                                        //UPDATE searchList
+//                                        searchList = searchF.search(search)
+//                                        Log.d("LOG2", searchList.arr.toList().toString())
+                                        searchExample = searchF.search(search)
+                                        searchUpdate = true
+                                    }
+                                                },
                                 placeholder = { Text(text = stringResource(id = R.string.search_user),
                                     fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
                                     modifier = Modifier.alpha(0.5f),
@@ -337,6 +358,7 @@ private fun Content(){
 
                 var checkedSwitch by remember { mutableStateOf(false) }
                 var checkedSwitch2 by remember { mutableStateOf(false) }
+                val arrayPeopleIds = remember { listOf<String>().toMutableStateList() }
 
                 Column(modifier = Modifier
                     .fillMaxWidth(1f)
@@ -344,6 +366,7 @@ private fun Content(){
                     .animateContentSize()
                     .background(colorResource(id = R.color.black2))
                     .padding(top = 65.dp)) {
+
                     Row(modifier = Modifier
                         .fillMaxWidth(1f)
                         .padding(start = 20.dp, end = 20.dp, bottom = 5.dp, top = 5.dp)) {
@@ -387,30 +410,68 @@ private fun Content(){
                         modifier = Modifier
                             .fillMaxWidth(1f)
                             .alpha(0.5f))
-                    val searchF = SearchIdOrName()
-                    LazyColumn(modifier = Modifier.fillMaxWidth(1f)){
-                        coroutine.launch {
-                            val list = searchF.search(search)
-                            itemsIndexed(list.arr){ index, item ->
-                                var chBox by remember { mutableStateOf(false) }
-                                Row(modifier = Modifier
-                                    .fillMaxWidth(1f)
-                                    .clickable { if(!checkedSwitch) TODO() else chBox = !chBox }) {
-                                    Column {
-                                        Text(text = stringResource(id = R.string.login) + ": " + item.first,
-                                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
-                                        Text(text = stringResource(id = R.string.ID) + ": " + item.second,
-                                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+                    LazyColumn(modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .weight(0.9f)
+                        .padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                        state = rememberLazyListState()){
+                        if(searchUpdate){
+                            searchUpdate = false
+                            coroutine.launch {
+                                itemsIndexed(searchExample!!.arr){ index, item ->
+                                    var chBox by remember { mutableStateOf(false) }
+                                    Row(modifier = Modifier
+                                        .fillMaxWidth(1f)
+                                        .clickable {
+                                            if (!checkedSwitch) TODO() else chBox = !chBox
+                                        }
+                                        .background(
+                                            color = colorResource(id = R.color.background_field),
+                                            shape = RoundedCornerShape(10.dp)
+                                        )
+                                        .padding(
+                                            top = 10.dp,
+                                            bottom = 10.dp,
+                                            start = 5.dp,
+                                            end = 5.dp
+                                        )) {
+                                        Column(modifier = Modifier.weight(0.9f)) {
+                                            Text(text = stringResource(id = R.string.login) + ": " + item.first,
+                                                fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                                                modifier = Modifier.padding(start = 10.dp))
+                                            Text(text = stringResource(id = R.string.ID) + " " + item.second,
+                                                fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                                                modifier = Modifier.padding(start = 10.dp))
+                                        }
+                                        if (checkedSwitch){
+                                            Checkbox(checked = chBox, onCheckedChange = {
+                                                chBox = !chBox
+                                                if(chBox) arrayPeopleIds.add(item.second)
+                                                else if(item.second in arrayPeopleIds) arrayPeopleIds.remove(item.second) },
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterVertically)
+                                                    .weight(0.1f), colors = CheckboxDefaults.colors(
+                                                        checkedColor = colorResource(id = R.color.subscribe)
+                                                    )
+                                            )
+                                        }
                                     }
-                                    if (checkedSwitch){
-                                        Checkbox(checked = chBox, onCheckedChange = { chBox = !chBox })
-                                    }
-
-
                                 }
                             }
+
                         }
 
+
+                    }
+                    if(checkedSwitch){
+                        FloatingActionButton(onClick = {
+                            Log.d("ARRAY", arrayPeopleIds.toList().toString())
+                        }, modifier = Modifier
+                            .weight(0.1f)
+                            .offset(x = (-10).dp, y = (-80).dp)
+                            .align(Alignment.End)) {
+                            Icon(Icons.Filled.Add, null)
+                        }
                     }
                 }
 

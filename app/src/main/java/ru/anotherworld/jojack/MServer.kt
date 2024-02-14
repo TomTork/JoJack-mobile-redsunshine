@@ -54,8 +54,8 @@ import kotlin.time.Duration.Companion.seconds
 
 
 val cipher = Cipher()
-const val BASE_URL = "http://192.168.31.196:8080"
-const val BASE_WS = "ws://192.168.31.196:8080"
+const val BASE_URL = "http://192.168.0.100:8080"
+const val BASE_WS = "ws://192.168.0.100:8080"
 val sDatabase = MainDatabase()
 class Register{
     @OptIn(InternalAPI::class)
@@ -336,21 +336,22 @@ class SearchIdOrName{
         private var socket: WebSocketSession? = null
     }
     @OptIn(InternalAPI::class)
-    suspend fun search(query: String): Search{
+    suspend fun search(query: String): SearchP{
         return try {
             val response = client.post("$BASE_URL/search"){
                 setBody(query)
             }
             val result = response.content.readUTF8Line().toString()
-            Json.decodeFromString<Search>(result)
+            Json.decodeFromString<SearchP>(result)
         } catch (e: Exception){
-            Search(arrayListOf())
+            Log.e("ERROR", e.message.toString())
+            SearchP(arrayListOf())
         }
     }
 }
 
 @Serializable
-data class Search(
+data class SearchP(
     val arr: List<Pair<String, String>>
 )
 
