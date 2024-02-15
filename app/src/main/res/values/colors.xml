@@ -34,5 +34,6 @@
     <color name="background_field">#292929</color>
     <color name="background_lr_button">#8774e1</color>
     <color name="background_lr_text">#686DCD</color>
+    <color name="hashtag">#71aaeb</color>
 
 </resources>

@@ -1,11 +1,17 @@
 package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -23,6 +29,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -38,6 +46,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
@@ -75,6 +84,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
@@ -96,10 +106,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -109,24 +125,105 @@ import ru.anotherworld.jojack.elements.ChatActivity
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
+import java.util.jar.Manifest
 
 class MainApp : ComponentActivity() {
+    @SuppressLint("PermissionLaunchedDuringComposition")
+    @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             JoJackTheme {
-                Content()
+                MissingPermissionsComponent {
+                    Content()
+                }
+
             }
         }
+    }
+}
+
+@SuppressLint("PermissionLaunchedDuringComposition")
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun MissingPermissionsComponent(
+    content: @Composable () -> Unit
+) {
+    val context = LocalContext.current
+    var noPerm by remember { mutableStateOf(false) }
+    var permissions = listOf(
+        android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        android.Manifest.permission.READ_EXTERNAL_STORAGE
+    )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        permissions = permissions.plus(
+            listOf(
+                android.Manifest.permission.POST_NOTIFICATIONS
+            )
+        )
+    }
+    val permissionsState = rememberMultiplePermissionsState(
+        permissions = permissions,
+    )
+    if (permissionsState.allPermissionsGranted || noPerm || (Build.VERSION.SDK_INT >= 33 && rememberPermissionState(
+            permission = android.Manifest.permission.POST_NOTIFICATIONS).status.isGranted)) {
+        content()
+    }
+    else {
+        val nunitoFamily = FontFamily(
+            Font(R.font.inter_medium500, FontWeight.W500),
+            Font(R.font.inter600, FontWeight.W600)
+        )
+        Column(modifier = Modifier
+            .fillMaxWidth(1f)
+            .fillMaxHeight(1f)
+            .background(color = colorResource(id = R.color.background2))) {
+            Column(modifier = Modifier
+                .fillMaxWidth(1f)
+                .fillMaxHeight(1f)
+                .weight(0.95f)) {
+                Text(text = stringResource(id = R.string.not_yet), fontSize = 30.sp,
+                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                    modifier= Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(start = 10.dp, end = 10.dp, top = 30.dp),
+                    color = colorResource(id = R.color.white))
+                Spacer(modifier = Modifier.weight(0.5f))
+                ElevatedButton(onClick = { permissionsState.launchMultiplePermissionRequest(); noPerm = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorResource(id = R.color.background_lr_button)
+                    ),
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier
+                        .padding(start = 20.dp, end = 20.dp, top = 30.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .weight(0.1f)
+                        .fillMaxWidth(0.9f)) {
+                    Text(text = stringResource(id = R.string.yet), fontFamily = nunitoFamily,
+                        fontWeight = FontWeight.W500, modifier = Modifier,
+                        color = colorResource(id = R.color.white))
+                }
+                Spacer(modifier = Modifier.weight(0.4f))
+            }
+            Text(text = stringResource(id = R.string.no_permissions),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .weight(0.05f)
+                    .clickable { noPerm = true },
+                color = colorResource(id = R.color.background_lr_text),
+                fontSize = 14.sp)
+        }
+
     }
 }
 
 val mDatabase = MainDatabase()
 val getInfo = GetInfo()
 val getPostVk = GetPostVk()
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
-    "UnrememberedMutableState")
+    "UnrememberedMutableState"
+)
 @Composable
 private fun Content(){
     val context = LocalContext.current
@@ -248,9 +345,6 @@ private fun Content(){
                                 onValueChange = {
                                     search = it
                                     coroutine.launch {
-//                                        //UPDATE searchList
-//                                        searchList = searchF.search(search)
-//                                        Log.d("LOG2", searchList.arr.toList().toString())
                                         searchExample = searchF.search(search)
                                         searchUpdate = true
                                     }
@@ -477,6 +571,18 @@ private fun Content(){
 
             }
             else{
+
+//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+//                    val notificationPermission = rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
+//                    if(!notificationPermission.status.isGranted){
+//                        notificationPermission.launchPermissionRequest()
+//                    }
+//                }
+//                val memoryPermission = rememberPermissionState(permission = android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+//                if(!memoryPermission.status.isGranted) memoryPermission.launchPermissionRequest()
+//                val memoryPermission2 = rememberPermissionState(permission = android.Manifest.permission.READ_EXTERNAL_STORAGE)
+//                if(!memoryPermission2.status.isGranted) memoryPermission2.launchPermissionRequest()
+
                 CrossSlide(targetState = contentManager, reverseAnimation = false){ screen ->
                     when(screen){
                         0 -> { NewsPaper() }
@@ -606,6 +712,8 @@ private fun Account(){
         .fillMaxWidth(1f)
         .fillMaxHeight(1f)
         .background(colorResource(id = R.color.black2))) {
+        val level = mDatabase.getLevel()
+
         val job = when(mDatabase.getLevel()){
             -1 -> stringResource(id = R.string.blocked_user)
             0 -> stringResource(id = R.string.user)

@@ -62,4 +62,7 @@
     <string name="search_user">User search</string>
     <string name="group">Group?</string>
     <string name="enable_encrypt">Enable encryption?</string>
+    <string name="not_yet">There\'s just a little bit left.... Some permissions are required for the application to work properly.</string>
+    <string name="yet">Provide permissions</string>
+    <string name="no_permissions">Continue without permissions (not recommended)</string>
 </resources>

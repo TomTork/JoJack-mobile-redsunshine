@@ -63,4 +63,7 @@
     <string name="search_user">Поиск пользователя по id или login</string>
     <string name="group">Группа?</string>
     <string name="enable_encrypt">Чат с шифрованием?</string>
+    <string name="not_yet">Осталось совсем чуть-чуть... Для корректной работы приложения необходимы некоторые разрешения.</string>
+    <string name="yet">Предоставить разрешения</string>
+    <string name="no_permissions">Продолжить без разрешений (не рекомендуется)</string>
 </resources>

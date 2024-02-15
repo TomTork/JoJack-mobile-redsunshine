@@ -22,14 +22,17 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,9 +60,13 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,7 +105,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         .fillMaxWidth(1f)
         .background(color = colorResource(id = R.color.black2))) {
         Spacer(modifier=Modifier.padding(top=21.dp))
-        Row(Modifier.padding(start=21.dp)) {
+        Row(Modifier.padding(start=10.dp)) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(iconGroup)
@@ -108,7 +115,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                 contentDescription = stringResource(R.string.app_name),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(36.dp)
                     .clip(CircleShape)
             )
             Column(modifier=Modifier.padding(start=10.dp)) {
@@ -120,8 +127,10 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     modifier=Modifier.offset(y=(-4).dp))
             }
         }
-        Text(text=text, fontFamily=nunitoFamily, fontWeight=FontWeight.W500,
-            modifier=Modifier.padding(bottom=4.dp, start=21.dp, end=21.dp), lineHeight=20.sp)
+        HashtagsMentionsTextView(text = text, onClick = {}, modifier = Modifier.padding(bottom=4.dp, start=10.dp, end=10.dp),
+            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+//        Text(text=text, fontFamily=nunitoFamily, fontWeight=FontWeight.W500,
+//            modifier=Modifier.padding(bottom=4.dp, start=21.dp, end=21.dp), lineHeight=20.sp)
         if(existsImages && images.images.size > 1){
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -233,51 +242,80 @@ private fun sendToMessenger(idPost: Int, text: String, nameGroup: String, iconGr
 
 }
 
-fun Modifier.vectorShadow(
-    path: Path,
-    x: Dp,
-    y: Dp,
-    radius: Dp
-) = composed(
-    inspectorInfo = {
-        name = "vectorShadow"
-        value = path
-        value = x
-        value = y
-        value = radius
-    },
-    factory = {
-        val paint = remember {
-            Paint()
-        }
-        val frameworkPaint = remember {
-            paint.asFrameworkPaint()
-        }
-        val color = Color.DarkGray
-        val dx: Float
-        val dy: Float
-        val radiusInPx: Float
-        with(LocalDensity.current) {
-            dx = x.toPx()
-            dy = y.toPx()
-            radiusInPx = radius.toPx()
-        }
-        drawBehind {
-            this.drawIntoCanvas {
-                val transparent = color
-                    .copy(alpha = 0f)
-                    .toArgb()
-                frameworkPaint.color = transparent
-                frameworkPaint.setShadowLayer(
-                    radiusInPx,
-                    dx,
-                    dy,
-                    color
-                        .copy(alpha = .7f)
-                        .toArgb()
+@Composable
+fun HashtagsMentionsTextView(text: String, modifier: Modifier = Modifier, onClick: (String) -> Unit,
+                             fontFamily: FontFamily, fontWeight: FontWeight) {
+
+    val colorScheme = MaterialTheme.colorScheme
+    val textStyle = SpanStyle(color = colorScheme.onBackground, fontFamily = fontFamily, fontWeight = fontWeight,
+        fontSize = 17.sp)
+    val primaryStyle = SpanStyle(color = colorResource(id = R.color.hashtag), fontFamily = fontFamily, fontWeight = fontWeight,
+        fontSize = 17.sp)
+
+    val hashtags = Regex("((?=[^\\w!])[#@][\\u4e00-\\u9fa5\\w]+)")
+
+    val annotatedStringList = remember {
+
+        var lastIndex = 0
+        val annotatedStringList = mutableStateListOf<AnnotatedString.Range<String>>()
+
+        // Add a text range for hashtags
+        for (match in hashtags.findAll(text)) {
+
+            val start = match.range.first
+            val end = match.range.last + 1
+            val string = text.substring(start, end)
+
+            if (start > lastIndex) {
+                annotatedStringList.add(
+                    AnnotatedString.Range(
+                        text.substring(lastIndex, start),
+                        lastIndex,
+                        start,
+                        "text"
+                    )
                 )
-                it.drawPath(path, paint)
+            }
+            annotatedStringList.add(
+                AnnotatedString.Range(string, start, end, "link")
+            )
+            lastIndex = end
+        }
+
+        if (lastIndex < text.length) {
+            annotatedStringList.add(
+                AnnotatedString.Range(
+                    text.substring(lastIndex, text.length),
+                    lastIndex,
+                    text.length,
+                    "text"
+                )
+            )
+        }
+        annotatedStringList
+    }
+
+    // Build an annotated string
+    val annotatedString = buildAnnotatedString {
+        annotatedStringList.forEach {
+            if (it.tag == "link") {
+                pushStringAnnotation(tag = it.tag, annotation = it.item)
+                withStyle(style = primaryStyle) { append(it.item) }
+                pop()
+            } else {
+                withStyle(style = textStyle) { append(it.item) }
             }
         }
     }
-)
+
+    ClickableText(
+        text = annotatedString,
+        style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight),
+        modifier = modifier,
+        onClick = { position ->
+            val annotatedStringRange =
+                annotatedStringList.first { it.start < position && position < it.end }
+            if (annotatedStringRange.tag == "link") onClick(annotatedStringRange.item)
+        }
+    )
+}
