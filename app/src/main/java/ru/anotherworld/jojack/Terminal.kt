@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -39,6 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -55,6 +59,7 @@ class Terminal : ComponentActivity() {
     }
 }
 
+@Preview
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +72,7 @@ private fun Content(){
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
+    val array = remember { listOf<String>().toMutableStateList() }
     Column(modifier = Modifier
         .fillMaxHeight(1f)
         .fillMaxWidth(1f)
@@ -83,23 +89,24 @@ private fun Content(){
                 }
                 Text(text = stringResource(id = R.string.terminal),
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                    fontSize = 27.sp, modifier = Modifier.align(Alignment.CenterVertically))
+                    fontSize = 27.sp, modifier = Modifier.align(Alignment.CenterVertically),
+                    color = colorResource(id = R.color.white))
             }
         },
+            modifier = Modifier.background(color = colorResource(id = R.color.black2)),
             bottomBar = {
                 TextField(value = command, onValueChange = { command = it },
                     modifier = Modifier
                         .fillMaxWidth(1f)
-                        .padding(start = 10.dp, end = 10.dp)
+                        .padding(start = 5.dp, end = 5.dp, bottom = 5.dp)
                         .background(
                             color = colorResource(id = R.color.black2),
-                            shape = RoundedCornerShape(10.dp)
                         ),
                     maxLines = 1,
                     trailingIcon = {
                         IconButton(onClick = {
                             coroutine.launch {
-                                //TODO()
+                                //SEND RESULT TO ARRAY
                                 command = ""
                             }
                         }) {
@@ -109,24 +116,34 @@ private fun Content(){
                                     .size(28.dp))
                         }
                     },
+                    shape = RoundedCornerShape(10.dp),
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = colorResource(id = R.color.background_field),
                         cursorColor = Color.White,
                         disabledLabelColor = colorResource(id = R.color.ghost_white),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-
                         ))
             }) {
-            Column {
-                Text(text = output, modifier = Modifier
-                    .fillMaxWidth(1f)
+            Column(modifier = Modifier
+                .fillMaxWidth(1f)
+                .fillMaxHeight(1f)) {
+                LazyColumn(modifier = Modifier
                     .fillMaxHeight(1f)
-                    .background(
-                        color = colorResource(id = R.color.black2),
-                        shape = RoundedCornerShape(10.dp)
-                    ),
-                    fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+                    .fillMaxWidth(1f)
+                    .background(color = colorResource(id = R.color.black2))){
+                    itemsIndexed(array){ index, item ->
+                        Text(text = item, modifier = Modifier
+                            .padding(top = 30.dp)
+                            .fillMaxWidth(1f)
+                            .background(
+                                color = colorResource(id = R.color.black2),
+                                shape = RoundedCornerShape(10.dp)
+                            ),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+                    }
+                }
+
             }
         }
     }

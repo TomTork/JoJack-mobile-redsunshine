@@ -3,34 +3,33 @@ package ru.anotherworld.jojack
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
+import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -43,21 +42,17 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchColors
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -65,59 +60,37 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.startActivity
-import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.animation.CrossSlide
 import ru.anotherworld.jojack.database.MainDatabase
@@ -125,7 +98,8 @@ import ru.anotherworld.jojack.elements.ChatActivity
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
-import java.util.jar.Manifest
+import java.io.File
+
 
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition")
@@ -571,18 +545,6 @@ private fun Content(){
 
             }
             else{
-
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-//                    val notificationPermission = rememberPermissionState(permission = android.Manifest.permission.POST_NOTIFICATIONS)
-//                    if(!notificationPermission.status.isGranted){
-//                        notificationPermission.launchPermissionRequest()
-//                    }
-//                }
-//                val memoryPermission = rememberPermissionState(permission = android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//                if(!memoryPermission.status.isGranted) memoryPermission.launchPermissionRequest()
-//                val memoryPermission2 = rememberPermissionState(permission = android.Manifest.permission.READ_EXTERNAL_STORAGE)
-//                if(!memoryPermission2.status.isGranted) memoryPermission2.launchPermissionRequest()
-
                 CrossSlide(targetState = contentManager, reverseAnimation = false){ screen ->
                     when(screen){
                         0 -> { NewsPaper() }
@@ -696,23 +658,40 @@ private fun Messenger(){
     }
 }
 
-@SuppressLint("UnrememberedMutableState")
+@OptIn(ExperimentalPermissionsApi::class)
+@SuppressLint("UnrememberedMutableState", "CoroutineCreationDuringComposition")
 @Composable
 private fun Account(){
     val context = LocalContext.current
+    val coroutine = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val bitmap =  remember { mutableStateOf<Bitmap?>(null) }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
-    var checked = remember { mutableStateOf(true) }
     Column(modifier = Modifier
-        .padding(top = 60.dp, bottom = 60.dp)
         .fillMaxWidth(1f)
         .fillMaxHeight(1f)
-        .background(colorResource(id = R.color.black2))) {
-        val level = mDatabase.getLevel()
+        .background(colorResource(id = R.color.black2))
+        .padding(top = 70.dp, bottom = 60.dp)) {
+
+        if(mDatabase.getLevel() == -1){
+            coroutine.launch {
+                val initUser = InitUser()
+                val data = initUser.getInit(mDatabase.getLogin(), mDatabase.getToken())
+                mDatabase.setServerId(data.id)
+                mDatabase.setLevel(data.job)
+                mDatabase.setTrustLevel(data.trustLevel)
+            }
+        }
+        var ready by remember { mutableStateOf(false) }
+        val launcher = rememberLauncherForActivityResult(contract =
+        ActivityResultContracts.GetContent()) { uri: Uri? ->
+            imageUri = uri
+        }
 
         val job = when(mDatabase.getLevel()){
             -1 -> stringResource(id = R.string.blocked_user)
@@ -726,8 +705,36 @@ private fun Account(){
         }
         Column(modifier = Modifier
             .align(Alignment.CenterHorizontally)) {
-            Icon(painterResource(id = R.drawable.account_circle), null,
-                modifier = Modifier.size(150.dp))
+            IconButton(onClick = {
+                launcher.launch("image/*")
+            }, modifier = Modifier
+                .size(150.dp)
+                .align(Alignment.CenterHorizontally)) {
+                if(!ready){
+                    Icon(painterResource(id = R.drawable.account_circle), null,
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(RoundedCornerShape(10.dp)))
+                }
+                else {
+                    Image(bitmap = bitmap.value!!.asImageBitmap(), null,
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Crop)
+                }
+            }
+            imageUri?.let {
+                if(Build.VERSION.SDK_INT < 28){
+                    bitmap.value = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+                    ready = true
+                }
+                else {
+                    val source = ImageDecoder.createSource(context.contentResolver, it)
+                    bitmap.value = ImageDecoder.decodeBitmap(source)
+                    ready = true
+                }
+            }
             Column(modifier= Modifier.align(Alignment.CenterHorizontally)) {
                 Text(text = stringResource(id = R.string.login) + ": " + mDatabase.getLogin(),
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)

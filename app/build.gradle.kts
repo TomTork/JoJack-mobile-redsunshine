@@ -126,8 +126,4 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
 //    implementation("h.qos.logback:logback-classic:1.2.6")
 
-    //Api VK
-    implementation("com.vk.api:sdk:1.0.15")
-    implementation("com.vk:android-sdk-core:4.1.0")
-    implementation("com.vk:android-sdk-api:4.1.0")
 }

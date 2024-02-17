@@ -167,14 +167,12 @@ private fun LoginContent2(){
                                 mDatabase.setLogin(login)
                                 mDatabase.setToken(token)
 
-                                Thread(Runnable {
-                                    GlobalScope.launch {
-                                        val data = initUser.getInit(login, token)
-                                        mDatabase.setServerId(data.id)
-                                        mDatabase.setLevel(data.job)
-                                        mDatabase.setTrustLevel(data.trustLevel)
-                                    }
-                                }).start()
+                                coroutine.launch {
+                                    val data = initUser.getInit(login, token)
+                                    mDatabase.setServerId(data.id)
+                                    mDatabase.setLevel(data.job)
+                                    mDatabase.setTrustLevel(data.trustLevel)
+                                }
 
                                 context.startActivity(Intent(context, MainApp::class.java))
                             }
