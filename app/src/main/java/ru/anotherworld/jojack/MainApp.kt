@@ -111,7 +111,6 @@ class MainApp : ComponentActivity() {
                 MissingPermissionsComponent {
                     Content()
                 }
-
             }
         }
     }
@@ -200,16 +199,18 @@ val getPostVk = GetPostVk()
 )
 @Composable
 private fun Content(){
+    val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
     var start by remember { mutableStateOf(false) }
     try{
-        if(mDatabase.getLogin() == "")context.startActivity(Intent(context, LoginActivity::class.java))
-        else start = true
+        coroutine.launch {
+            if(mDatabase.getLogin() == null) context.startActivity(Intent(context, LoginActivity::class.java))
+            else start = true
+        }
     } catch (io: Exception){
         context.startActivity(Intent(context, LoginActivity::class.java))
     }
     if(start){
-        val coroutine = rememberCoroutineScope()
         val interFamily = FontFamily(
             Font(R.font.inter600, FontWeight.W600),
         )
@@ -678,22 +679,32 @@ private fun Account(){
         .background(colorResource(id = R.color.black2))
         .padding(top = 70.dp, bottom = 60.dp)) {
 
-        if(mDatabase.getLevel() == -1){
-            coroutine.launch {
-                val initUser = InitUser()
-                val data = initUser.getInit(mDatabase.getLogin(), mDatabase.getToken())
-                mDatabase.setServerId(data.id)
-                mDatabase.setLevel(data.job)
-                mDatabase.setTrustLevel(data.trustLevel)
+        coroutine.launch {
+            if(mDatabase.getJob() == -1){
+                coroutine.launch {
+                    val initUser = InitUser()
+                    val data = initUser.getInit(mDatabase.getLogin()!!, mDatabase.getToken()!!)
+                    mDatabase.setServerId(data.id)
+                    mDatabase.setJob(data.job)
+                    mDatabase.setTrustLevel(data.trustLevel)
+                }
             }
         }
+
         var ready by remember { mutableStateOf(false) }
         val launcher = rememberLauncherForActivityResult(contract =
         ActivityResultContracts.GetContent()) { uri: Uri? ->
             imageUri = uri
         }
-
-        val job = when(mDatabase.getLevel()){
+        var job_ by remember { mutableIntStateOf(0) }
+        var login_ by remember { mutableStateOf("") }
+        var serverId_ by remember { mutableIntStateOf(0) }
+        coroutine.launch {
+            job_ = mDatabase.getJob()!!
+            login_ = mDatabase.getLogin()!!
+            serverId_ = mDatabase.getServerId()!!
+        }
+        val job = when(job_){
             -1 -> stringResource(id = R.string.blocked_user)
             0 -> stringResource(id = R.string.user)
             1 -> stringResource(id = R.string.author)
@@ -736,11 +747,11 @@ private fun Account(){
                 }
             }
             Column(modifier= Modifier.align(Alignment.CenterHorizontally)) {
-                Text(text = stringResource(id = R.string.login) + ": " + mDatabase.getLogin(),
+                Text(text = stringResource(id = R.string.login) + ": " + login_,
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
                 Text(text = stringResource(id = R.string.job) + " " + job,
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
-                Text(text = stringResource(id = R.string.ID) + " " + mDatabase.getServerId(),
+                Text(text = stringResource(id = R.string.ID) + " " + serverId_,
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
             }
         }
@@ -797,10 +808,10 @@ private fun Account(){
                 .align(Alignment.End)
                 .padding(top = 10.dp, end = 30.dp)) {
                 Button(onClick = {
-                    Thread(Runnable {
+                    coroutine.launch {
                         mDatabase.setLogin("")
                         mDatabase.collapseDatabase()
-                    }).start()
+                    }
 
                     context.startActivity(Intent(context, LoginActivity::class.java)) },
                     colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.background2))) {

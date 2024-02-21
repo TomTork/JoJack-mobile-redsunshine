@@ -71,6 +71,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import ru.anotherworld.jojack.database.MainData
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
 class RegistrationActivity : ComponentActivity() {
@@ -164,7 +165,9 @@ private fun RegistrationContent2(){
                 if (login != "" && password != ""){
                     val reg = Register()
                     coroutine.launch {
-                        val token1 = reg.reg(login, password).substringAfter(":\"")
+                        mDatabase.init(MainData("", "", 0, 0, -1,
+                            "", "", "", "", ""))
+                        val token1 = reg.reg(login, password, coroutine).substringAfter(":\"")
                             .substringBefore("\"}")
                         if(token1 != ""){
                             mDatabase.setLogin(login)

@@ -198,7 +198,7 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
             var ready by remember { mutableStateOf(false) }
             coroutine.launch {
                 if(!ready){
-                    chatController.initSession(sDatabase.getLogin())
+                    chatController.initSession(sDatabase.getLogin()!!, sDatabase.getToken()!!)
                     destroyMServer = chatController
                     messagesList.addAll(chatController.getAllMessages().toMutableStateList())
                 }
@@ -228,9 +228,16 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
     }
 }
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 private fun MessageIn(login: String, text: String, time: String){
-    val eq = (sDatabase.getLogin() == login) //true if user you
+    val coroutine = rememberCoroutineScope()
+    var login1 by remember { mutableStateOf("") }
+    coroutine.launch {
+        login1 = sDatabase.getLogin()!!
+    }
+    var eq by remember { mutableStateOf(false) }
+    eq = (login1 == login) //true if user you
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_medium500, FontWeight.W500),
         Font(R.font.nunito_light400, FontWeight.W400)

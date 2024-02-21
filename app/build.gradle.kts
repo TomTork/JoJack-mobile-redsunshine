@@ -59,7 +59,6 @@ android {
 }
 
 dependencies {
-
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
@@ -110,6 +109,11 @@ dependencies {
     implementation("androidx.compose.runtime:runtime-livedata")
     implementation("androidx.compose.runtime:runtime-rxjava2")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    implementation("org.jetbrains.exposed:exposed-core:0.47.0")
+    implementation("org.jetbrains.exposed:exposed-dao:0.47.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.47.0")
+    implementation("com.h2database:h2:2.2.224")
 
     //Ktor
     implementation("io.ktor:ktor-network:2.3.7")

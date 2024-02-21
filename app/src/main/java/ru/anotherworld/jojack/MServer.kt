@@ -30,6 +30,7 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import io.ktor.websocket.readText
 import io.ktor.websocket.serialization.receiveDeserializedBase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -59,7 +61,7 @@ const val BASE_WS = "ws://192.168.0.100:8080"
 val sDatabase = MainDatabase()
 class Register{
     @OptIn(InternalAPI::class)
-    suspend fun reg(login: String, pass: String): String{
+    suspend fun reg(login: String, pass: String, coroutineScope: CoroutineScope): String{
         val password = cipher.hash(pass)
         val client = HttpClient(){
             install(ContentNegotiation){
@@ -72,8 +74,10 @@ class Register{
             setBody(RegisterResponseRemote(login, password, cipher.encrypt(pair.first,
                 cipher.md5(pass)), pair.second))
         }
-        sDatabase.setPublicKey(pair.second)
-        sDatabase.setPrivateKey(pair.first)
+        coroutineScope.launch {
+            sDatabase.setOpenedKey(pair.second)
+            sDatabase.setClosedKey(pair.first)
+        }
         val token = Token(response.content.readUTF8Line())
         if (token.token == "User already exists") return ""
         return token.token!!
@@ -81,7 +85,7 @@ class Register{
 }
 class Login{
     @OptIn(InternalAPI::class)
-    suspend fun log(login: String, pass: String): String{
+    suspend fun log(login: String, pass: String, coroutineScope: CoroutineScope): String{
         val password = cipher.hash(pass)
         val client = HttpClient(){
             install(ContentNegotiation){
@@ -100,8 +104,10 @@ class Login{
             "Invalid password or login" -> return "PL"
             else -> {
                 if (token.privateKey != "" && token.publicKey != ""){
-                    sDatabase.setPublicKey(token.publicKey)
-                    sDatabase.setPrivateKey(cipher.decrypt(token.privateKey, cipher.md5(pass)))
+                    coroutineScope.launch {
+                        sDatabase.setOpenedKey(token.publicKey)
+                        sDatabase.setClosedKey(cipher.decrypt(token.privateKey, cipher.md5(pass)))
+                    }
                 }
                 else Log.e("MServer ::Login", "PRIVATE AND/OR PUBLIC KEYS ARE EMPTY")
 
@@ -199,11 +205,10 @@ class ChatController{
             emptyList()
         }
     }
-    suspend fun initSession(username: String): Resource<Unit> {
+    suspend fun initSession(username: String, token: String): Resource<Unit> {
         return try {
-            Log.d("WHAT", "$username ${sDatabase.getToken()}")
             socket = client.webSocketSession {
-                url("$BASE_WS/chat-socket?username=$username&token=${sDatabase.getToken()}")
+                url("$BASE_WS/chat-socket?username=$username&token=${token}")
             }
             if (socket?.isActive == true){
                 Resource.Success(Unit)
@@ -213,8 +218,6 @@ class ChatController{
                 Resource.Error("Couldn't establish a connection. ::ChatSocketServiceImpl")
             }
         } catch (e: Exception){
-            Log.d("WHAT", "$username ${sDatabase.getToken()}")
-            Log.e("ERROR34", "TRUE")
             e.printStackTrace()
             Resource.Error(e.localizedMessage ?: "Unknown error ::ChatSocketServiceImpl")
         }
@@ -249,10 +252,10 @@ class LikeController{
             }
         }
     }
-    suspend fun newLike(originalUrl: String, status: Boolean){
+    suspend fun newLike(originalUrl: String, status: Boolean, token: String){
         val response = client.post("$BASE_URL/like"){
             contentType(ContentType.Application.Json)
-            setBody(RegisterLike(originalUrl, status, mDatabase.getToken()))
+            setBody(RegisterLike(originalUrl, status, token))
         }
     }
 }
@@ -276,10 +279,10 @@ class ChatTwo(private val nameDb: String){
         }
         private var socket: WebSocketSession? = null
     }
-    suspend fun initSession(): Resource<Unit> {
+    suspend fun initSession(token: String): Resource<Unit> {
         return try {
             socket = client.webSocketSession {
-                url("$BASE_WS/chat-socket?namedb=$nameDb&token2=${sDatabase.getToken()}")
+                url("$BASE_WS/chat-socket?namedb=$nameDb&token2=${token}")
             }
             if (socket?.isActive == true){
                 Resource.Success(Unit)

@@ -64,6 +64,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.internal.wait
+import ru.anotherworld.jojack.database.MainData
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.net.ConnectException
 
@@ -157,7 +158,9 @@ private fun LoginContent2(){
                         val log = Login()
                         val initUser = InitUser()
                         coroutine.launch {
-                            val token = log.log(login, password).substringAfter(":\"")
+                            mDatabase.init(MainData("", "", 0, 0, -1,
+                                "", "", "", "", ""))
+                            val token = log.log(login, password, coroutine).substringAfter(":\"")
                                 .substringBefore("\"}")
                             if(token == "NF") Toast.makeText(context, context.getText(R.string.nf),
                                 Toast.LENGTH_SHORT).show()
@@ -170,7 +173,7 @@ private fun LoginContent2(){
                                 coroutine.launch {
                                     val data = initUser.getInit(login, token)
                                     mDatabase.setServerId(data.id)
-                                    mDatabase.setLevel(data.job)
+                                    mDatabase.setJob(data.job)
                                     mDatabase.setTrustLevel(data.trustLevel)
                                 }
 

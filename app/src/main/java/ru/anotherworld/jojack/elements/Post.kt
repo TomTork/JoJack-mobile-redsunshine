@@ -78,6 +78,7 @@ import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.LikeController
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.VkImageAndVideo
+import ru.anotherworld.jojack.database.MainDatabase
 
 val constructorMessenger = ConstructorMessenger(null, null, null, null,
     null, null, null, null, null, null, null)
@@ -145,7 +146,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         Row(modifier=Modifier.padding(top=4.dp, start=10.dp, end=21.dp)) {
             IconButton(onClick = {
                 coroutine.launch {
-                    likeController.newLike(originalUrl, !checked)
+                    likeController.newLike(originalUrl, !checked, MainDatabase().getToken()!!)
                     checked = !checked
                     if (checked) uLike += 1
                     else uLike -= 1
