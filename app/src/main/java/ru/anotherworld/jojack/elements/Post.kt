@@ -78,6 +78,7 @@ import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.LikeController
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.VkImageAndVideo
+import ru.anotherworld.jojack.database.LikesDatabase
 import ru.anotherworld.jojack.database.MainDatabase
 
 val constructorMessenger = ConstructorMessenger(null, null, null, null,
@@ -93,13 +94,25 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
+    val likesDatabase = LikesDatabase()
     val context = LocalContext.current
     val likeController = LikeController()
+    val coroutine = rememberCoroutineScope()
     var checked by remember { mutableStateOf(false) }
+
+    coroutine.launch {
+        val previewChecked = likesDatabase.getLikedByOriginalUrl(originalUrl)
+        if (previewChecked != null){
+            if(previewChecked == true){
+                checked = true
+            }
+        }
+    }
+
     var showBottomSheet by remember { mutableStateOf(false) }
     var uLike by remember { mutableIntStateOf(like) }
     val sheetState = rememberModalBottomSheetState()
-    val coroutine = rememberCoroutineScope()
+
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
     Column(modifier= Modifier
         .padding(bottom = 7.dp)
@@ -150,6 +163,11 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     checked = !checked
                     if (checked) uLike += 1
                     else uLike -= 1
+
+                    //Регистрация лайков пользователя в бд
+                    if(checked && likesDatabase.getLikedByOriginalUrl(originalUrl) == null) likesDatabase.insertAll(originalUrl)
+                    else if(!checked) likesDatabase.setLikedByOriginalUrl(originalUrl, false)
+                    else if(checked) likesDatabase.setLikedByOriginalUrl(originalUrl, true)
                 }
             }) {
                 Icon(painterResource(id=R.drawable.like), "Like",
@@ -260,13 +278,10 @@ fun HashtagsMentionsTextView(text: String, modifier: Modifier = Modifier, onClic
         var lastIndex = 0
         val annotatedStringList = mutableStateListOf<AnnotatedString.Range<String>>()
 
-        // Add a text range for hashtags
         for (match in hashtags.findAll(text)) {
-
             val start = match.range.first
             val end = match.range.last + 1
             val string = text.substring(start, end)
-
             if (start > lastIndex) {
                 annotatedStringList.add(
                     AnnotatedString.Range(
@@ -295,8 +310,6 @@ fun HashtagsMentionsTextView(text: String, modifier: Modifier = Modifier, onClic
         }
         annotatedStringList
     }
-
-    // Build an annotated string
     val annotatedString = buildAnnotatedString {
         annotatedStringList.forEach {
             if (it.tag == "link") {
@@ -308,7 +321,6 @@ fun HashtagsMentionsTextView(text: String, modifier: Modifier = Modifier, onClic
             }
         }
     }
-
     ClickableText(
         text = annotatedString,
         style = TextStyle(fontFamily = fontFamily, fontWeight = fontWeight),

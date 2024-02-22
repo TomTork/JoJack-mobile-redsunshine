@@ -85,6 +85,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -99,17 +100,30 @@ import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.io.File
-
+import java.net.NoRouteToHostException
 
 class MainApp : ComponentActivity() {
-    @SuppressLint("PermissionLaunchedDuringComposition")
+    @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             JoJackTheme {
-                MissingPermissionsComponent {
-                    Content()
+                val coroutine = rememberCoroutineScope()
+                val context = LocalContext.current
+                var start by remember { mutableStateOf(false) }
+                try{ //Check first enter or no
+                    coroutine.launch {
+                        if(mDatabase.getLogin() == null) context.startActivity(Intent(context, LoginActivity::class.java))
+                        else start = true
+                    }
+                } catch (io: Exception){
+                    context.startActivity(Intent(context, LoginActivity::class.java))
+                }
+                if(start){
+                    MissingPermissionsComponent {
+                        Content()
+                    }
                 }
             }
         }
@@ -121,7 +135,7 @@ class MainApp : ComponentActivity() {
 @Composable
 fun MissingPermissionsComponent(
     content: @Composable () -> Unit
-) {
+) { //Activity-check user's permissions
     val context = LocalContext.current
     var noPerm by remember { mutableStateOf(false) }
     var permissions = listOf(
@@ -193,371 +207,358 @@ fun MissingPermissionsComponent(
 val mDatabase = MainDatabase()
 val getInfo = GetInfo()
 val getPostVk = GetPostVk()
+@Preview
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
     "UnrememberedMutableState"
 )
 @Composable
-private fun Content(){
+private fun Content(){ //Main Activity
     val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
-    var start by remember { mutableStateOf(false) }
-    try{
-        coroutine.launch {
-            if(mDatabase.getLogin() == null) context.startActivity(Intent(context, LoginActivity::class.java))
-            else start = true
-        }
-    } catch (io: Exception){
-        context.startActivity(Intent(context, LoginActivity::class.java))
-    }
-    if(start){
-        val interFamily = FontFamily(
-            Font(R.font.inter600, FontWeight.W600),
-        )
-        val nunitoFamily = FontFamily(
-            Font(R.font.nunito_semibold600, FontWeight.W600)
-        )
-        var contentManager by mutableIntStateOf(0)
-        var select by remember { mutableIntStateOf(0) } //0 - Home; 1 - chat; 2 - settings
-        var showSearchUser by remember { mutableStateOf(false) }
-        var search by remember { mutableStateOf("") }
-        var searchList = SearchP(listOf())
-        var searchUpdate by remember { mutableStateOf(false) }
-        var searchExample: SearchP? = null
-        val searchF = SearchIdOrName()
-        Scaffold(
-            modifier = Modifier.background(Color.White),
-            topBar = {
-                if (!showSearchUser){
-                    var topText by mutableStateOf(stringResource(id = R.string.home))
-                    topText = when(contentManager){
-                        1 -> stringResource(id = R.string.message)
-                        2 -> stringResource(id = R.string.settings)
-                        else -> stringResource(id = R.string.home)
-                    }
-                    Surface(modifier = Modifier
-                        .background(Color.White)
-                        .fillMaxWidth(1f)) {
-                        Column(modifier = Modifier.fillMaxWidth(1f)) {
-                            Row(modifier = Modifier
-                                .fillMaxWidth(1f)
-                                .background(colorResource(id = R.color.background2))) {
-
-                                Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
-                                    null, modifier= Modifier
-                                        .size(65.dp)
-                                        .align(Alignment.CenterVertically)
-                                        .padding(start = 20.dp, end = 5.dp))
-
-                                Text(text = stringResource(id = R.string.app_name),
-                                    fontFamily = interFamily, fontWeight = FontWeight.W600,
-                                    fontSize = 30.sp, modifier = Modifier
-                                        .align(Alignment.CenterVertically))
-                                Spacer(modifier = Modifier.padding(bottom=20.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Absolute.Right,
-                                    modifier = Modifier
-                                        .align(Alignment.CenterVertically)
-                                        .fillMaxWidth(1f)
-                                        .padding(end = 20.dp)) {
-                                    if (contentManager == 1){
-                                        IconButton(onClick = {
-                                            showSearchUser = !showSearchUser
-                                        }) {
-                                            Image(painterResource(id = R.drawable.add_circle),
+    val interFamily = FontFamily(
+        Font(R.font.inter600, FontWeight.W600),
+    )
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_semibold600, FontWeight.W600)
+    )
+    var contentManager by mutableIntStateOf(0)
+    var select by remember { mutableIntStateOf(0) } //0 - Home; 1 - chat; 2 - settings
+    var showSearchUser by remember { mutableStateOf(false) }
+    var search by remember { mutableStateOf("") }
+    var searchUpdate by remember { mutableStateOf(false) }
+    var searchExample: SearchP? = null
+    val searchF = SearchIdOrName()
+    Scaffold(
+        modifier = Modifier.background(Color.White),
+        topBar = {
+            if (!showSearchUser){
+                var topText by mutableStateOf(stringResource(id = R.string.home))
+                topText = when(contentManager){
+                    1 -> stringResource(id = R.string.message)
+                    2 -> stringResource(id = R.string.settings)
+                    else -> stringResource(id = R.string.home)
+                }
+                Surface(modifier = Modifier
+                    .background(Color.White)
+                    .fillMaxWidth(1f)) {
+                    Column(modifier = Modifier.fillMaxWidth(1f)) {
+                        Row(modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .background(colorResource(id = R.color.background2))) {
+                            Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
+                                null, modifier= Modifier
+                                    .size(65.dp)
+                                    .align(Alignment.CenterVertically)
+                                    .padding(start = 20.dp, end = 5.dp))
+                            Text(text = stringResource(id = R.string.app_name),
+                                fontFamily = interFamily, fontWeight = FontWeight.W600,
+                                fontSize = 30.sp, modifier = Modifier
+                                    .align(Alignment.CenterVertically))
+                            Spacer(modifier = Modifier.padding(bottom=15.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Absolute.Right,
+                                modifier = Modifier
+                                    .align(Alignment.CenterVertically)
+                                    .fillMaxWidth(1f)
+                                    .padding(end = 20.dp)) {
+//                                    if (contentManager == 1){
+//                                        IconButton(onClick = {
+//                                            showSearchUser = !showSearchUser
+//                                        }) {
+//                                            Image(painterResource(id = R.drawable.add_circle),
+//                                                null,
+//                                                modifier = Modifier
+//                                                    .align(Alignment.CenterVertically)
+//                                                    .size(35.dp))
+//                                        }
+//                                    }
+                                if(contentManager != 1) {
+                                    IconButton(onClick = { /*TODO*/ }) {
+                                        Column(modifier = Modifier
+                                            .padding(end = 15.dp)
+                                            .align(Alignment.CenterVertically)
+                                            .offset(y = 3.dp)) {
+                                            Image(painterResource(id = R.drawable.notificate1),
                                                 null,
                                                 modifier = Modifier
-                                                    .align(Alignment.CenterVertically)
-                                                    .size(35.dp))
+                                                    .align(Alignment.CenterHorizontally)
+                                                    .size(25.dp))
+                                            Image(painterResource(id = R.drawable.notificate2),
+                                                null,
+                                                modifier = Modifier
+                                                    .align(Alignment.CenterHorizontally)
+                                                    .size(9.dp)
+                                                    .offset(y = (-3).dp))
                                         }
                                     }
-                                    else {
-                                        IconButton(onClick = { /*TODO*/ }) {
-                                            Column(modifier = Modifier
-                                                .padding(end = 15.dp)
-                                                .align(Alignment.CenterVertically)
-                                                .offset(y = 3.dp)) {
-                                                Image(painterResource(id = R.drawable.notificate1),
-                                                    null,
-                                                    modifier = Modifier
-                                                        .align(Alignment.CenterHorizontally)
-                                                        .size(25.dp))
-                                                Image(painterResource(id = R.drawable.notificate2),
-                                                    null,
-                                                    modifier = Modifier
-                                                        .align(Alignment.CenterHorizontally)
-                                                        .size(9.dp)
-                                                        .offset(y = (-3).dp))
-                                            }
-                                        }
-                                    }
-
-                                    IconButton(onClick = {
-
+                                }
+                                else if(contentManager == 1){
+                                    IconButton(onClick = { //Search new user -> show search-activity
+                                        showSearchUser = !showSearchUser
                                     }) {
                                         Image(painterResource(id = R.drawable.search2),
                                             null, modifier = Modifier.size(25.dp))
                                     }
-
                                 }
-                            }
 
+                            }
                         }
 
                     }
-                }
-                else {
-                    TopAppBar(title = {
-                        Row(modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .background(colorResource(id = R.color.background2))) {
-                            IconButton(onClick = { showSearchUser = false },
-                                modifier = Modifier.align(Alignment.CenterVertically)) {
-                                Icon(painterResource(id = R.drawable.arrow_back), null,
-                                    tint = colorResource(id = R.color.white))
-                            }
-                            TextField(value = search,
-                                onValueChange = {
-                                    search = it
-                                    coroutine.launch {
-                                        searchExample = searchF.search(search)
-                                        searchUpdate = true
-                                    }
-                                                },
-                                placeholder = { Text(text = stringResource(id = R.string.search_user),
-                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                                    modifier = Modifier.alpha(0.5f),
-                                    color = colorResource(id = R.color.white)) },
-                                maxLines = 1,
-                                modifier = Modifier
-                                    .align(Alignment.CenterVertically),
-                                colors = TextFieldDefaults.textFieldColors(
-                                    containerColor = colorResource(id = R.color.background2),
-                                    cursorColor = Color.White,
-                                    disabledLabelColor = colorResource(id = R.color.ghost_white),
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    ))
-                        }
-                    }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
-                        colors = TopAppBarDefaults
-                            .topAppBarColors(containerColor = colorResource(id = R.color.background2),
-                                titleContentColor = colorResource(id = R.color.background2)))
-                }
 
-            },
-            bottomBar = {
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Absolute.SpaceAround,
+                }
+            }
+            else {
+                TopAppBar(title = {
+                    Row(modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .background(colorResource(id = R.color.background2))) {
+                        IconButton(onClick = { showSearchUser = false },
+                            modifier = Modifier.align(Alignment.CenterVertically)) {
+                            Icon(painterResource(id = R.drawable.arrow_back), null,
+                                tint = colorResource(id = R.color.white))
+                        }
+                        TextField(value = search,
+                            onValueChange = {
+                                search = it
+                                coroutine.launch {
+                                    searchExample = searchF.search(search)
+                                    searchUpdate = true
+                                }
+                                            },
+                            placeholder = { Text(text = stringResource(id = R.string.search_user),
+                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                modifier = Modifier.alpha(0.5f),
+                                color = colorResource(id = R.color.white)) },
+                            maxLines = 1,
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically),
+                            colors = TextFieldDefaults.textFieldColors(
+                                containerColor = colorResource(id = R.color.background2),
+                                cursorColor = Color.White,
+                                disabledLabelColor = colorResource(id = R.color.ghost_white),
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                ))
+                    }
+                }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
+                    colors = TopAppBarDefaults
+                        .topAppBarColors(containerColor = colorResource(id = R.color.background2),
+                            titleContentColor = colorResource(id = R.color.background2)))
+            }
+
+        },
+        bottomBar = {
+            Row(verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Absolute.SpaceAround,
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .background(colorResource(id = R.color.black2))
+                    .padding(0.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { contentManager = 0 }
+                        .weight(0.33f)) {
+                    IconButton(onClick = {
+                        contentManager = 0
+                    },
+                        modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                        Column(modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .offset(y = 3.dp)) {
+                            Icon(painterResource(id = R.drawable.home21), null,
+                                tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                                modifier = Modifier.align(Alignment.CenterHorizontally))
+                            Icon(painterResource(id = R.drawable.home22), null,
+                                tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .offset(y = (-6).dp)
+                                    .scale(scaleX = 1.5f, scaleY = 1f))
+                        }
+                    }
+                    Text(text = stringResource(id = R.string.home),
+                        Modifier
+                            .clickable { contentManager = 0 }
+                            .shadow(2.dp)
+                            .align(Alignment.CenterHorizontally),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        color = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { contentManager = 1 }
+                        .weight(0.33f)) {
+                    IconButton(onClick = { contentManager = 1 }) {
+                        Icon(painterResource(id = R.drawable.comments2), null,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            tint = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                    }
+                    Text(text = stringResource(id = R.string.message),
+                        Modifier
+                            .clickable { contentManager = 1 }
+                            .shadow(2.dp)
+                            .align(Alignment.CenterHorizontally),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        color = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { contentManager = 2 }
+                        .weight(0.33f)) {
+                    IconButton(onClick = { contentManager = 2 }) {
+                        Icon(painterResource(id = R.drawable.settings2), null,
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            tint = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                    }
+                    Text(text = stringResource(id = R.string.settings),
+                        Modifier
+                            .clickable { contentManager = 2 }
+                            .shadow(2.dp)
+                            .align(Alignment.CenterHorizontally),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        color = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                }
+            }
+        }
+    ) {
+        if (showSearchUser){ //Отобразить поиск
+
+            var checkedSwitch by remember { mutableStateOf(false) }
+            var checkedSwitch2 by remember { mutableStateOf(false) }
+            val arrayPeopleIds = remember { listOf<String>().toMutableStateList() }
+
+            Column(modifier = Modifier
+                .fillMaxWidth(1f)
+                .fillMaxHeight(1f)
+                .animateContentSize()
+                .background(colorResource(id = R.color.black2))
+                .padding(top = 65.dp)) {
+
+                Row(modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 5.dp, top = 5.dp)) {
+                    Text(text = stringResource(id = R.string.group),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                        modifier = Modifier
+                            .weight(0.9f)
+                            .align(Alignment.CenterVertically))
+                    Switch(checked = checkedSwitch,
+                        onCheckedChange = { if (!checkedSwitch2) checkedSwitch = !checkedSwitch },
+                        modifier = Modifier
+                            .weight(0.1f)
+                            .align(Alignment.CenterVertically),
+                        colors = SwitchDefaults
+                            .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
+                }
+                Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
                     modifier = Modifier
                         .fillMaxWidth(1f)
-                        .background(colorResource(id = R.color.black2))
-                        .padding(0.dp)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clickable { contentManager = 0 }
-                            .weight(0.33f)) {
-                        IconButton(onClick = {
-                            contentManager = 0
-                        },
-                            modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                            Column(modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .offset(y = 3.dp)) {
-                                Icon(painterResource(id = R.drawable.home21), null,
-                                    tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
-                                    modifier = Modifier.align(Alignment.CenterHorizontally))
-                                Icon(painterResource(id = R.drawable.home22), null,
-                                    tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
-                                    modifier = Modifier
-                                        .align(Alignment.CenterHorizontally)
-                                        .offset(y = (-6).dp)
-                                        .scale(scaleX = 1.5f, scaleY = 1f))
-                            }
-                        }
-                        Text(text = stringResource(id = R.string.home),
-                            Modifier
-                                .clickable { contentManager = 0 }
-                                .shadow(2.dp)
-                                .align(Alignment.CenterHorizontally),
-                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                            color = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clickable { contentManager = 1 }
-                            .weight(0.33f)) {
-                        IconButton(onClick = { contentManager = 1 }) {
-                            Icon(painterResource(id = R.drawable.comments2), null,
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
-                                tint = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                        }
-                        Text(text = stringResource(id = R.string.message),
-                            Modifier
-                                .clickable { contentManager = 1 }
-                                .shadow(2.dp)
-                                .align(Alignment.CenterHorizontally),
-                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                            color = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clickable { contentManager = 2 }
-                            .weight(0.33f)) {
-                        IconButton(onClick = { contentManager = 2 }) {
-                            Icon(painterResource(id = R.drawable.settings2), null,
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
-                                tint = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                        }
-                        Text(text = stringResource(id = R.string.settings),
-                            Modifier
-                                .clickable { contentManager = 2 }
-                                .shadow(2.dp)
-                                .align(Alignment.CenterHorizontally),
-                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                            color = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                    }
-                }
-            }
-        ) {
-            if (showSearchUser){ //Отобразить поиск
-
-                var checkedSwitch by remember { mutableStateOf(false) }
-                var checkedSwitch2 by remember { mutableStateOf(false) }
-                val arrayPeopleIds = remember { listOf<String>().toMutableStateList() }
-
-                Column(modifier = Modifier
+                        .alpha(0.5f))
+                Row(modifier = Modifier
                     .fillMaxWidth(1f)
-                    .fillMaxHeight(1f)
-                    .animateContentSize()
-                    .background(colorResource(id = R.color.black2))
-                    .padding(top = 65.dp)) {
-
-                    Row(modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .padding(start = 20.dp, end = 20.dp, bottom = 5.dp, top = 5.dp)) {
-                        Text(text = stringResource(id = R.string.group),
-                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                            modifier = Modifier
-                                .weight(0.9f)
-                                .align(Alignment.CenterVertically))
-                        Switch(checked = checkedSwitch,
-                            onCheckedChange = { if (!checkedSwitch2) checkedSwitch = !checkedSwitch },
-                            modifier = Modifier
-                                .weight(0.1f)
-                                .align(Alignment.CenterVertically),
-                            colors = SwitchDefaults
-                                .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
-                    }
-                    Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
+                    .padding(start = 20.dp, end = 20.dp, bottom = 5.dp, top = 5.dp)) {
+                    Text(text = stringResource(id = R.string.enable_encrypt),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
                         modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .alpha(0.5f))
-                    Row(modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .padding(start = 20.dp, end = 20.dp, bottom = 5.dp, top = 5.dp)) {
-                        Text(text = stringResource(id = R.string.enable_encrypt),
-                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                            modifier = Modifier
-                                .weight(0.9f)
-                                .align(Alignment.CenterVertically))
-                        Switch(checked = checkedSwitch2,
-                            onCheckedChange = {
-                                checkedSwitch2 = !checkedSwitch2
-                                if(checkedSwitch) checkedSwitch = false
-                            },
-                            modifier = Modifier
-                                .weight(0.1f)
-                                .align(Alignment.CenterVertically),
-                            colors = SwitchDefaults
-                                .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
-                    }
-                    Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
+                            .weight(0.9f)
+                            .align(Alignment.CenterVertically))
+                    Switch(checked = checkedSwitch2,
+                        onCheckedChange = {
+                            checkedSwitch2 = !checkedSwitch2
+                            if(checkedSwitch) checkedSwitch = false
+                        },
                         modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .alpha(0.5f))
-                    LazyColumn(modifier = Modifier
+                            .weight(0.1f)
+                            .align(Alignment.CenterVertically),
+                        colors = SwitchDefaults
+                            .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
+                }
+                Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
+                    modifier = Modifier
                         .fillMaxWidth(1f)
-                        .weight(0.9f)
-                        .padding(start = 10.dp, end = 10.dp, top = 10.dp),
-                        state = rememberLazyListState()){
-                        if(searchUpdate){
-                            searchUpdate = false
-                            coroutine.launch {
-                                itemsIndexed(searchExample!!.arr){ index, item ->
-                                    var chBox by remember { mutableStateOf(false) }
-                                    Row(modifier = Modifier
-                                        .fillMaxWidth(1f)
-                                        .clickable {
-                                            if (!checkedSwitch) TODO() else chBox = !chBox
-                                        }
-                                        .background(
-                                            color = colorResource(id = R.color.background_field),
-                                            shape = RoundedCornerShape(10.dp)
+                        .alpha(0.5f))
+                LazyColumn(modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .weight(0.9f)
+                    .padding(start = 10.dp, end = 10.dp, top = 10.dp),
+                    state = rememberLazyListState()){
+                    if(searchUpdate){
+                        searchUpdate = false
+                        coroutine.launch {
+                            itemsIndexed(searchExample!!.arr){ index, item ->
+                                var chBox by remember { mutableStateOf(false) }
+                                Row(modifier = Modifier
+                                    .fillMaxWidth(1f)
+                                    .clickable {
+                                        if (!checkedSwitch) TODO() else chBox = !chBox
+                                    }
+                                    .background(
+                                        color = colorResource(id = R.color.background_field),
+                                        shape = RoundedCornerShape(10.dp)
+                                    )
+                                    .padding(
+                                        top = 10.dp,
+                                        bottom = 10.dp,
+                                        start = 5.dp,
+                                        end = 5.dp
+                                    )) {
+                                    Column(modifier = Modifier.weight(0.9f)) {
+                                        Text(text = stringResource(id = R.string.login) + ": " + item.first,
+                                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                                            modifier = Modifier.padding(start = 10.dp))
+                                        Text(text = stringResource(id = R.string.ID) + " " + item.second,
+                                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                                            modifier = Modifier.padding(start = 10.dp))
+                                    }
+                                    if (checkedSwitch){
+                                        Checkbox(checked = chBox, onCheckedChange = {
+                                            chBox = !chBox
+                                            if(chBox) arrayPeopleIds.add(item.second)
+                                            else if(item.second in arrayPeopleIds) arrayPeopleIds.remove(item.second) },
+                                            modifier = Modifier
+                                                .align(Alignment.CenterVertically)
+                                                .weight(0.1f), colors = CheckboxDefaults.colors(
+                                                    checkedColor = colorResource(id = R.color.subscribe)
+                                                )
                                         )
-                                        .padding(
-                                            top = 10.dp,
-                                            bottom = 10.dp,
-                                            start = 5.dp,
-                                            end = 5.dp
-                                        )) {
-                                        Column(modifier = Modifier.weight(0.9f)) {
-                                            Text(text = stringResource(id = R.string.login) + ": " + item.first,
-                                                fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                                                modifier = Modifier.padding(start = 10.dp))
-                                            Text(text = stringResource(id = R.string.ID) + " " + item.second,
-                                                fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                                                modifier = Modifier.padding(start = 10.dp))
-                                        }
-                                        if (checkedSwitch){
-                                            Checkbox(checked = chBox, onCheckedChange = {
-                                                chBox = !chBox
-                                                if(chBox) arrayPeopleIds.add(item.second)
-                                                else if(item.second in arrayPeopleIds) arrayPeopleIds.remove(item.second) },
-                                                modifier = Modifier
-                                                    .align(Alignment.CenterVertically)
-                                                    .weight(0.1f), colors = CheckboxDefaults.colors(
-                                                        checkedColor = colorResource(id = R.color.subscribe)
-                                                    )
-                                            )
-                                        }
                                     }
                                 }
                             }
-
                         }
 
-
-                    }
-                    if(checkedSwitch){
-                        FloatingActionButton(onClick = {
-                            Log.d("ARRAY", arrayPeopleIds.toList().toString())
-                        }, modifier = Modifier
-                            .weight(0.1f)
-                            .offset(x = (-10).dp, y = (-80).dp)
-                            .align(Alignment.End)) {
-                            Icon(Icons.Filled.Add, null)
-                        }
                     }
                 }
-
-            }
-            else{
-                CrossSlide(targetState = contentManager, reverseAnimation = false){ screen ->
-                    when(screen){
-                        0 -> { NewsPaper() }
-                        1 -> { Messenger() }
-                        2 -> { Account() }
+                if(checkedSwitch){
+                    FloatingActionButton(onClick = {
+                        Log.d("ARRAY", arrayPeopleIds.toList().toString())
+                    }, modifier = Modifier
+                        .weight(0.1f)
+                        .offset(x = (-10).dp, y = (-80).dp)
+                        .align(Alignment.End)) {
+                        Icon(Icons.Filled.Add, null)
                     }
                 }
-
             }
 
         }
+        else{
+            CrossSlide(targetState = contentManager, reverseAnimation = false){ screen ->
+                when(screen){
+                    0 -> { NewsPaper() }
+                    1 -> { Messenger() }
+                    2 -> { Account() }
+                }
+            }
+
+        }
+
     }
+
 
 }
 
@@ -571,10 +572,14 @@ private data class SNews(
     val exclusive: Boolean
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("CoroutineCreationDuringComposition", "MutableCollectionMutableState",
     "UnrememberedMutableState")
 @Composable
 private fun NewsPaper(){
+    val interFamily = FontFamily(
+        Font(R.font.inter600, FontWeight.W600),
+    )
     val context = LocalContext.current
     var isServerConnect by remember { mutableStateOf(true) }
     val coroutine = rememberCoroutineScope()
@@ -583,6 +588,12 @@ private fun NewsPaper(){
     var view2 by remember { mutableStateOf(false) }
     val array = remember { listOf<SNews>().toMutableStateList() }
     val listState = rememberLazyListState()
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_light400, FontWeight.W400),
+        Font(R.font.nunito_semibold600, FontWeight.W600)
+    )
+    var job by remember { mutableIntStateOf(0) }
+    var startCreateNewPostFromUser by remember { mutableStateOf(false) }
     try {
         if(isServerConnect){
             Thread(Runnable {
@@ -591,7 +602,7 @@ private fun NewsPaper(){
                         maxId = getInfo.getMaxId()
                         view2 = true
                     }
-                    if(view2){
+                    else{
                         if(!view){
                             maxId -= 10
                             for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
@@ -601,38 +612,127 @@ private fun NewsPaper(){
                             view = true
                         }
                     }
+                    job = sDatabase.getJob()!!
                 }
             }).start()
         }
-    } catch (e: Exception){
+    } catch (e: NoRouteToHostException){
         isServerConnect = false
-        Log.e("Status connect", "BAD, FALSE ::MainApp")
     }
+    if(!startCreateNewPostFromUser){
+        Column (modifier = Modifier
+            .padding(top = 50.dp, bottom = 60.dp)
+            .fillMaxWidth(1f)
+            .background(color = colorResource(id = R.color.background2)),
+            verticalArrangement = Arrangement.Center) {
 
-    Column (modifier = Modifier
-        .padding(top = 50.dp, bottom = 60.dp)
-        .fillMaxWidth(1f)
-        .background(color = colorResource(id = R.color.background2)),
-        verticalArrangement = Arrangement.Center) {
-
-        if(view){
-            LazyColumn(state = listState){
-                itemsIndexed(items = array, itemContent = {index, value ->
-                    PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
-                        iconGroup = value.icon, existsImages = true, images = value.images,
-                        originalUrl = value.originalUrl, like = value.like, exclusive = value.exclusive)
-                    if(index == array.size - 2 && maxId > 1){
-                        coroutine.launch {
-                            maxId -= 1
-                            for(i in getPostVk.getPostVk(maxId, maxId).post)
-                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
-                                    i.originalUrl, i.like, i.exclusive))
+            if(view){
+                LazyColumn(state = listState){
+                    if(job >= 2){ //Функция создания постов доступна не для всех пользователей
+                        item { //View listener to create new post from user
+                            Row(modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .clickable { startCreateNewPostFromUser = true }) {
+                                Icon(painter = painterResource(id = R.drawable.account_circle),
+                                    null, tint = colorResource(id = R.color.white),
+                                    modifier = Modifier.size(30.dp))
+                                Text(text = stringResource(id = R.string.write_something),
+                                    modifier = Modifier.align(Alignment.CenterVertically),
+                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                                    fontSize = 14.sp)
+                            }
                         }
                     }
-                })
+
+                    itemsIndexed(items = array, itemContent = {index, value ->
+                        PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
+                            iconGroup = value.icon, existsImages = true, images = value.images,
+                            originalUrl = value.originalUrl, like = value.like, exclusive = value.exclusive)
+                        if(index == array.size - 2 && maxId > 1){
+                            coroutine.launch {
+                                maxId -= 1
+                                for(i in getPostVk.getPostVk(maxId, maxId).post)
+                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
+                                        i.originalUrl, i.like, i.exclusive))
+                            }
+                        }
+                    })
+                }
+            }
+            else{ //show activity-no-internet
+                Column(modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .fillMaxHeight(1f)
+                    .background(color = colorResource(id = R.color.background2)),
+                    verticalArrangement = Arrangement.Center) {
+                    Text(text = stringResource(id = R.string.no_internet2),
+                        fontFamily = interFamily, fontWeight = FontWeight.W600,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        fontSize = 20.sp, color = colorResource(id = R.color.white))
+                    Button(onClick = { isServerConnect = true },
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .padding(top = 10.dp)
+                            .align(Alignment.CenterHorizontally),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorResource(id = R.color.background_lr_button))) {
+                        Text(text = stringResource(id = R.string.try_again),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                            color = colorResource(id = R.color.white))
+                    }
+                }
+
+            }
+        }    
+    }
+    else { //show create-new-post-activity-from-user
+        var textPost by remember { mutableStateOf("") }
+        Column(modifier = Modifier
+            .fillMaxWidth(1f)
+            .fillMaxHeight(1f)
+            .background(color = colorResource(id = R.color.background2))) {
+            IconButton(onClick = { startCreateNewPostFromUser = false },
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .align(Alignment.Start)) {
+                Icon(painter = painterResource(id = R.drawable.clear), contentDescription = null,
+                    tint = colorResource(id = R.color.white))
+            }
+            Button(onClick = { /*Опубликовать пост*/ },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent),
+                modifier = Modifier.align(Alignment.End)) {
+                Text(text = stringResource(id = R.string.publish),
+                    color = colorResource(id = R.color.white),
+                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
             }
         }
+        Divider(thickness = 2.dp, color = colorResource(id = R.color.white),
+            modifier = Modifier
+                .alpha(0.5f)
+                .padding(bottom = 10.dp))
+        TextField(value = textPost, onValueChange = { textPost = it },
+            placeholder = {
+                Text(text = stringResource(id = R.string.write_something),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 3.dp)
+                        .alpha(0.5f),
+                    textAlign = TextAlign.Start,
+                    color = colorResource(id = R.color.white))
+            },
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .fillMaxHeight(1f),
+            colors = TextFieldDefaults.textFieldColors(
+                containerColor = Color.Transparent,
+                cursorColor = Color.White,
+                disabledLabelColor = colorResource(id = R.color.ghost_white),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            ))
     }
+    
 }
 
 @Composable
@@ -825,68 +925,69 @@ private fun Account(){
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Search(){
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
-    var inputSearch by remember { mutableStateOf("") }
-    val array = remember { listOf<SearchContent>().toMutableStateList() }
-    val context = LocalContext.current
-    Column(modifier = Modifier
-        .fillMaxWidth(1f)
-        .fillMaxHeight(1f)) {
-        TopAppBar(title = {
-            Row(modifier = Modifier
-                .fillMaxWidth(1f)
-                .background(colorResource(id = R.color.background2))
-                .align(Alignment.CenterHorizontally)) {
-                IconButton(onClick = { context.startActivity(Intent(context, MainApp::class.java)) },
-                    modifier = Modifier.align(Alignment.CenterVertically)) {
-                    Icon(painterResource(id = R.drawable.arrow_back), null,
-                        tint = colorResource(id = R.color.white))
-                }
-                Text(text = stringResource(id = R.string.search),
-                    color = colorResource(id = R.color.white),
-                    modifier = Modifier.align(Alignment.CenterVertically))
-            }
-        }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
-            colors = TopAppBarDefaults
-                .topAppBarColors(containerColor = colorResource(id = R.color.background2),
-                    titleContentColor = colorResource(id = R.color.background2)))
-        TextField(value = inputSearch, onValueChange = { inputSearch = it },
-            modifier = Modifier
-                .fillMaxWidth(1f)
-                .padding(start = 10.dp, end = 10.dp, top = 10.dp, bottom = 10.dp),
-            placeholder = { Text(text = stringResource(id = R.string.start_search),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 3.dp)
-                    .alpha(0.5f),
-                textAlign = TextAlign.Start,
-                color = colorResource(id = R.color.white)) })
-        //START SEARCHING
-        LazyColumn(modifier = Modifier
-            .fillMaxWidth(1f)
-            .fillMaxHeight(1f)
-            .padding(start = 10.dp, end = 10.dp)
-            .background(
-                color = colorResource(id = R.color.background2),
-                shape = RoundedCornerShape(10.dp)
-            )){
-            items(array){ arr ->
-                Column(modifier = Modifier.fillMaxWidth(1f)) {
-                    Text(text = arr.head, fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                        color = colorResource(id = R.color.white))
-                    Text(text = arr.text, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                        color = colorResource(id = R.color.white))
-                }
-            }
-        }
-    }
-}
+//DEPRECATED
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//private fun Search(){
+//    val nunitoFamily = FontFamily(
+//        Font(R.font.nunito_semibold600, FontWeight.W600),
+//        Font(R.font.nunito_medium500, FontWeight.W500)
+//    )
+//    var inputSearch by remember { mutableStateOf("") }
+//    val array = remember { listOf<SearchContent>().toMutableStateList() }
+//    val context = LocalContext.current
+//    Column(modifier = Modifier
+//        .fillMaxWidth(1f)
+//        .fillMaxHeight(1f)) {
+//        TopAppBar(title = {
+//            Row(modifier = Modifier
+//                .fillMaxWidth(1f)
+//                .background(colorResource(id = R.color.background2))
+//                .align(Alignment.CenterHorizontally)) {
+//                IconButton(onClick = { context.startActivity(Intent(context, MainApp::class.java)) },
+//                    modifier = Modifier.align(Alignment.CenterVertically)) {
+//                    Icon(painterResource(id = R.drawable.arrow_back), null,
+//                        tint = colorResource(id = R.color.white))
+//                }
+//                Text(text = stringResource(id = R.string.search),
+//                    color = colorResource(id = R.color.white),
+//                    modifier = Modifier.align(Alignment.CenterVertically))
+//            }
+//        }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
+//            colors = TopAppBarDefaults
+//                .topAppBarColors(containerColor = colorResource(id = R.color.background2),
+//                    titleContentColor = colorResource(id = R.color.background2)))
+//        TextField(value = inputSearch, onValueChange = { inputSearch = it },
+//            modifier = Modifier
+//                .fillMaxWidth(1f)
+//                .padding(start = 10.dp, end = 10.dp, top = 10.dp, bottom = 10.dp),
+//            placeholder = { Text(text = stringResource(id = R.string.start_search),
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .padding(start = 3.dp)
+//                    .alpha(0.5f),
+//                textAlign = TextAlign.Start,
+//                color = colorResource(id = R.color.white)) })
+//        //START SEARCHING
+//        LazyColumn(modifier = Modifier
+//            .fillMaxWidth(1f)
+//            .fillMaxHeight(1f)
+//            .padding(start = 10.dp, end = 10.dp)
+//            .background(
+//                color = colorResource(id = R.color.background2),
+//                shape = RoundedCornerShape(10.dp)
+//            )){
+//            items(array){ arr ->
+//                Column(modifier = Modifier.fillMaxWidth(1f)) {
+//                    Text(text = arr.head, fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+//                        color = colorResource(id = R.color.white))
+//                    Text(text = arr.text, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+//                        color = colorResource(id = R.color.white))
+//                }
+//            }
+//        }
+//    }
+//}
 
 private data class SearchContent(
     val head: String,

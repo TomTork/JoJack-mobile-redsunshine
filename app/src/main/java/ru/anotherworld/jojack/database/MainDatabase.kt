@@ -57,6 +57,13 @@ class LikesDatabase{
     suspend fun getLikedByOriginalUrl(originalUrl: String): Boolean?{
         return daoLikes.getLikedByOriginalUrl(originalUrl)
     }
+    suspend fun existsData(originalUrl: String): Boolean{
+        return try {
+            daoLikes.existsData(originalUrl)
+        } catch (e: Exception){
+            false
+        }
+    }
     suspend fun setLikedByOriginalUrl(originalUrl: String, liked: Boolean = true){
         daoLikes.setLikedByOriginalUrl(liked, originalUrl)
     }

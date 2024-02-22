@@ -222,6 +222,13 @@ class DAOLikesDatabase{
             .singleOrNull()
             ?.liked
     }
+    suspend fun existsData(originalUrl: String): Boolean = dbQuery {
+        return@dbQuery LikesTable
+            .selectAll()
+            .where { LikesTable.originalUrl eq originalUrl }
+            .map(::resultToLikesDatabase)
+            .toList().isNotEmpty()
+    }
     suspend fun setLikedByOriginalUrl(liked1: Boolean, originalUrl1: String) = dbQuery {
         LikesTable
             .update({ LikesTable.originalUrl eq originalUrl1 }) {

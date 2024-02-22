@@ -66,4 +66,8 @@
     <string name="not_yet">Осталось совсем чуть-чуть... Для корректной работы приложения необходимы некоторые разрешения.</string>
     <string name="yet">Предоставить разрешения</string>
     <string name="no_permissions">Продолжить без разрешений (не рекомендуется)</string>
+    <string name="no_internet2">Похоже, ваше устройство не подключено к интернету. Проверьте подключение или повторите попытку позже...</string>
+    <string name="try_again">Попытаться снова</string>
+    <string name="write_something">Что у вас нового?</string>
+    <string name="publish">Опубликовать</string>
 </resources>
