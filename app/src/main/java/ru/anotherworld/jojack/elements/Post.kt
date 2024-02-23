@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.drawable.ShapeDrawable
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -42,15 +45,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -80,12 +74,13 @@ import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.VkImageAndVideo
 import ru.anotherworld.jojack.database.LikesDatabase
 import ru.anotherworld.jojack.database.MainDatabase
+import androidx.compose.foundation.pager.rememberPagerState
 
 val constructorMessenger = ConstructorMessenger(null, null, null, null,
     null, null, null, null, null, null, null)
 
 @SuppressLint("CoroutineCreationDuringComposition")
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
               typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo,
@@ -98,6 +93,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
     val context = LocalContext.current
     val likeController = LikeController()
     val coroutine = rememberCoroutineScope()
+    val pagerState = rememberPagerState { images.images.size }
     var checked by remember { mutableStateOf(false) }
 
     coroutine.launch {
@@ -143,18 +139,24 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         }
         HashtagsMentionsTextView(text = text, onClick = {}, modifier = Modifier.padding(bottom=4.dp, start=10.dp, end=10.dp),
             fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
-//        Text(text=text, fontFamily=nunitoFamily, fontWeight=FontWeight.W500,
-//            modifier=Modifier.padding(bottom=4.dp, start=21.dp, end=21.dp), lineHeight=20.sp)
-        if(existsImages && images.images.size > 1){
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(images.images[0])
-                    .crossfade(true)
-                    .build(),
+        if(existsImages && images.images.isNotEmpty()){
+            HorizontalPager(state = pagerState,
+                key = { images.images[it] },
+                pageSize = PageSize.Fill,
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .align(Alignment.CenterHorizontally)) {index ->
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(images.images[index])
+                        .crossfade(true)
+                        .build(),
 
-                contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+                    contentDescription = stringResource(R.string.app_name),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+
         }
         Row(modifier=Modifier.padding(top=4.dp, start=10.dp, end=21.dp)) {
             IconButton(onClick = {

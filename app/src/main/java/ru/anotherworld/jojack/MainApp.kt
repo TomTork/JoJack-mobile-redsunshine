@@ -101,6 +101,7 @@ import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.io.File
 import java.net.NoRouteToHostException
+import io.ktor.client.network.sockets.ConnectTimeoutException
 
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
@@ -594,30 +595,36 @@ private fun NewsPaper(){
     )
     var job by remember { mutableIntStateOf(0) }
     var startCreateNewPostFromUser by remember { mutableStateOf(false) }
-    try {
-        if(isServerConnect){
-            Thread(Runnable {
-                coroutine.launch {
-                    if(!view2){
-                        maxId = getInfo.getMaxId()
-                        view2 = true
-                    }
-                    else{
-                        if(!view){
-                            maxId -= 10
-                            for(i in getPostVk.getPostVk(maxId, maxId + 9).post){
-                                array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
-                                    i.originalUrl, i.like, i.exclusive))
-                            }
-                            view = true
-                        }
-                    }
-                    job = sDatabase.getJob()!!
+    if(isServerConnect){
+        coroutine.launch {
+            try {
+                Log.d("LOG", "TRUE")
+                if (!view2) {
+                    maxId = getInfo.getMaxId()
+                    view2 = true
                 }
-            }).start()
+                if (view2) {
+                    if (!view) {
+                        maxId -= 10
+                        for (i in getPostVk.getPostVk(maxId, maxId + 9).post) {
+                            array.add(
+                                SNews(
+                                    i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
+                                    i.originalUrl, i.like, i.exclusive
+                                )
+                            )
+                        }
+                        view = true
+                    }
+                }
+                job = sDatabase.getJob()!!
+            } catch (e: Exception) {
+                isServerConnect = when (e) {
+                    is ConnectTimeoutException, is NoRouteToHostException -> false
+                    else -> true
+                }
+            }
         }
-    } catch (e: NoRouteToHostException){
-        isServerConnect = false
     }
     if(!startCreateNewPostFromUser){
         Column (modifier = Modifier
@@ -667,7 +674,9 @@ private fun NewsPaper(){
                     verticalArrangement = Arrangement.Center) {
                     Text(text = stringResource(id = R.string.no_internet2),
                         fontFamily = interFamily, fontWeight = FontWeight.W600,
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(start = 20.dp, end = 20.dp),
                         fontSize = 20.sp, color = colorResource(id = R.color.white))
                     Button(onClick = { isServerConnect = true },
                         modifier = Modifier
