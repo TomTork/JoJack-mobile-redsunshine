@@ -102,6 +102,7 @@ import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.io.File
 import java.net.NoRouteToHostException
 import io.ktor.client.network.sockets.ConnectTimeoutException
+import ru.anotherworld.jojack.database.ChatsData
 
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
@@ -115,10 +116,14 @@ class MainApp : ComponentActivity() {
                 var start by remember { mutableStateOf(false) }
                 try{ //Check first enter or no
                     coroutine.launch {
-                        if(mDatabase.getLogin() == null) context.startActivity(Intent(context, LoginActivity::class.java))
+                        if(mDatabase.getLogin() == null || mDatabase.getLogin()!! == ""){
+                            start = false
+                            context.startActivity(Intent(context, LoginActivity::class.java))
+                        }
                         else start = true
                     }
                 } catch (io: Exception){
+                    start = false
                     context.startActivity(Intent(context, LoginActivity::class.java))
                 }
                 if(start){
@@ -496,7 +501,13 @@ private fun Content(){ //Main Activity
                                 Row(modifier = Modifier
                                     .fillMaxWidth(1f)
                                     .clickable {
-                                        if (!checkedSwitch) TODO() else chBox = !chBox
+                                        if (!checkedSwitch) {
+                                            if (checkedSwitch2) { //chat with encryption
+
+                                            } else { //chat without encryption
+
+                                            }
+                                        } else chBox = !chBox
                                     }
                                     .background(
                                         color = colorResource(id = R.color.background_field),
@@ -529,6 +540,10 @@ private fun Content(){ //Main Activity
                                         )
                                     }
                                 }
+                                Divider(modifier = Modifier
+                                    .padding(top = 4.dp, bottom = 4.dp)
+                                    .alpha(0.3f),
+                                    thickness = 2.dp, color = colorResource(id = R.color.white))
                             }
                         }
 
@@ -598,7 +613,6 @@ private fun NewsPaper(){
     if(isServerConnect){
         coroutine.launch {
             try {
-                Log.d("LOG", "TRUE")
                 if (!view2) {
                     maxId = getInfo.getMaxId()
                     view2 = true
@@ -748,6 +762,7 @@ private fun NewsPaper(){
 private fun Messenger(){
 //    val scrollState = rememberScrollState()
     val context = LocalContext.current
+    val array = remember { listOf<ChatsData>().toMutableStateList() }
     Column (modifier = Modifier
         .padding(top = 60.dp, bottom = 60.dp)
         .clip(
@@ -763,6 +778,10 @@ private fun Messenger(){
             item {
                 ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
                     action = { context.startActivity(Intent(context, ChatActivity::class.java)) })
+            }
+            itemsIndexed(array){ index, item ->
+                ChatMessage(name = item.name, previewMessage = "", username = "",
+                    action = {  }) //show chats
             }
         }
     }

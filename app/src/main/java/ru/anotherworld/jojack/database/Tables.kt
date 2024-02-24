@@ -39,6 +39,23 @@ object LikesTable : Table("likes"){
     override val primaryKey: PrimaryKey = PrimaryKey(id)
 }
 
+object ChatsTable : Table("chats"){
+    val id = integer("id").autoIncrement()
+    val chat = varchar("chat", 32)  //Ссылка на чат
+    val name = varchar("name", 128) //Имя чата
+    val users = varchar("users", 2048) //Списиок пользователей
+    val icon = varchar("icon", 128) //Ссылка на изображение
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+data class ChatsData(
+    val chat: String,
+    val name: String,
+    val users: String,
+    val icon: String
+)
+
 data class LikesData(
     val originalUrl: String,
     val liked: Boolean

@@ -3,6 +3,7 @@ package ru.anotherworld.jojack.database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteAll
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
@@ -234,5 +235,93 @@ class DAOLikesDatabase{
             .update({ LikesTable.originalUrl eq originalUrl1 }) {
                 it[liked] = liked1
             }
+    }
+}
+
+class DAOChatsDatabase{
+    private fun resultToChatsDatabase(row: ResultRow) = ChatsData(
+        chat = row[ChatsTable.chat],
+        name = row[ChatsTable.name],
+        users = row[ChatsTable.users],
+        icon = row[ChatsTable.icon]
+    )
+    suspend fun addNewChatsDatabase(data: ChatsData) = dbQuery{
+        ChatsTable.insert {
+            it[chat] = data.chat
+            it[name] = data.name
+            it[users] = data.users
+            it[icon] = data.icon
+        }
+    }
+    suspend fun editChatsDatabase(id: Int, data: ChatsData) = dbQuery {
+        ChatsTable.update({ ChatsTable.id eq id }) {
+            it[chat] = data.chat
+            it[name] = data.name
+            it[users] = data.users
+            it[icon] = data.icon
+        }
+    }
+    suspend fun deleteAll() = dbQuery{
+        ChatsTable.deleteAll()
+    }
+    suspend fun delete(id: Int) = dbQuery{
+        ChatsTable.deleteWhere { ChatsTable.id eq id }
+    }
+    suspend fun getChat(id: Int): String? = dbQuery{
+        return@dbQuery ChatsTable
+            .selectAll()
+            .where { ChatsTable.id eq id }
+            .map(::resultToChatsDatabase)
+            .singleOrNull()
+            ?.chat
+    }
+    suspend fun setChat(value: String, id: Int): Boolean = dbQuery {
+        return@dbQuery ChatsTable.update({ ChatsTable.id eq id }) {
+            it[chat] = value
+        } > 0
+    }
+    suspend fun getName(id: Int): String? = dbQuery{
+        return@dbQuery ChatsTable
+            .selectAll()
+            .where { ChatsTable.id eq id }
+            .map(::resultToChatsDatabase)
+            .singleOrNull()
+            ?.name
+    }
+    suspend fun setName(value: String, id: Int): Boolean = dbQuery {
+        return@dbQuery ChatsTable.update({ ChatsTable.id eq id }) {
+            it[name] = value
+        } > 0
+    }
+    suspend fun getUsers(id: Int): String? = dbQuery{
+        return@dbQuery ChatsTable
+            .selectAll()
+            .where { ChatsTable.id eq id }
+            .map(::resultToChatsDatabase)
+            .singleOrNull()
+            ?.users
+    }
+    suspend fun setUsers(value: String, id: Int): Boolean = dbQuery {
+        return@dbQuery ChatsTable.update({ ChatsTable.id eq id }) {
+            it[users] = value
+        } > 0
+    }
+    suspend fun getIcon(id: Int): String? = dbQuery{
+        return@dbQuery ChatsTable
+            .selectAll()
+            .where { ChatsTable.id eq id }
+            .map(::resultToChatsDatabase)
+            .singleOrNull()
+            ?.icon
+    }
+    suspend fun setIcon(value: String, id: Int): Boolean = dbQuery {
+        return@dbQuery ChatsTable.update({ ChatsTable.id eq id }) {
+            it[icon] = value
+        } > 0
+    }
+    suspend fun getAll(): List<ChatsData> = dbQuery {
+        return@dbQuery ChatsTable
+            .selectAll()
+            .map(::resultToChatsDatabase)
     }
 }
