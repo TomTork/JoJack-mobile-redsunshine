@@ -787,7 +787,6 @@ private fun Messenger(){
     }
 }
 
-@OptIn(ExperimentalPermissionsApi::class)
 @SuppressLint("UnrememberedMutableState", "CoroutineCreationDuringComposition")
 @Composable
 private fun Account(){
