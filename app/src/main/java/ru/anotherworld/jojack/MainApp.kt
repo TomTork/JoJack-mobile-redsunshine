@@ -104,6 +104,7 @@ import java.net.NoRouteToHostException
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import ru.anotherworld.jojack.database.ChatsData
 
+
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
     @OptIn(ExperimentalPermissionsApi::class)
