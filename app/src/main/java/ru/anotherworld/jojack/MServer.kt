@@ -16,11 +16,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.InternalAPI
 import io.ktor.utils.io.readUTF8Line
