@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -103,6 +104,10 @@ import java.io.File
 import java.net.NoRouteToHostException
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import ru.anotherworld.jojack.database.ChatsData
+import ru.anotherworld.jojack.elements.Chat2
+import ru.anotherworld.jojack.elements.iconChat2
+import ru.anotherworld.jojack.elements.idChat2
+import ru.anotherworld.jojack.elements.nameChat2
 
 
 class MainApp : ComponentActivity() {
@@ -438,6 +443,11 @@ private fun Content(){ //Main Activity
             var checkedSwitch by remember { mutableStateOf(false) }
             var checkedSwitch2 by remember { mutableStateOf(false) }
             val arrayPeopleIds = remember { listOf<String>().toMutableStateList() }
+            var myId by remember { mutableIntStateOf(-1) }
+
+            coroutine.launch {
+                myId = mDatabase.getServerId()!!
+            }
 
             Column(modifier = Modifier
                 .fillMaxWidth(1f)
@@ -504,9 +514,14 @@ private fun Content(){ //Main Activity
                                     .clickable {
                                         if (!checkedSwitch) {
                                             if (checkedSwitch2) { //chat with encryption
-
+                                                Toast.makeText(context, "IN WORK!", Toast.LENGTH_SHORT).show()
                                             } else { //chat without encryption
-
+                                                val number = arrayOf(myId.toString(), item.second)
+                                                number.sort()
+                                                idChat2 = "chat" + number.joinToString("x")
+                                                nameChat2 = "ChatTest"
+                                                iconChat2 = ""
+                                                context.startActivity(Intent(context, Chat2::class.java))
                                             }
                                         } else chBox = !chBox
                                     }
@@ -536,8 +551,8 @@ private fun Content(){ //Main Activity
                                             modifier = Modifier
                                                 .align(Alignment.CenterVertically)
                                                 .weight(0.1f), colors = CheckboxDefaults.colors(
-                                                    checkedColor = colorResource(id = R.color.subscribe)
-                                                )
+                                                checkedColor = colorResource(id = R.color.subscribe)
+                                            )
                                         )
                                     }
                                 }
@@ -564,19 +579,13 @@ private fun Content(){ //Main Activity
 
         }
         else{
-            CrossSlide(targetState = contentManager, reverseAnimation = false){ screen ->
-                when(screen){
-                    0 -> { NewsPaper() }
-                    1 -> { Messenger() }
-                    2 -> { Account() }
-                }
+            when(contentManager){
+                0 -> { NewsPaper() }
+                1 -> { Messenger() }
+                2 -> { Account() }
             }
-
         }
-
     }
-
-
 }
 
 private data class SNews(
@@ -681,7 +690,7 @@ private fun NewsPaper(){
                     })
                 }
             }
-            else{ //show activity-no-internet
+            else if(!isServerConnect){ //show activity-no-internet
                 Column(modifier = Modifier
                     .fillMaxWidth(1f)
                     .fillMaxHeight(1f)
@@ -808,7 +817,7 @@ private fun Account(){
         .padding(top = 70.dp, bottom = 60.dp)) {
 
         coroutine.launch {
-            if(mDatabase.getJob() == -1){
+            if(mDatabase.getServerId() == -1){
                 coroutine.launch {
                     val initUser = InitUser()
                     val data = initUser.getInit(mDatabase.getLogin()!!, mDatabase.getToken()!!)

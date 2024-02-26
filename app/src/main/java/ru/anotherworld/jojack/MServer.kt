@@ -282,7 +282,7 @@ class ChatTwo(private val nameDb: String){
     suspend fun initSession(token: String): Resource<Unit> {
         return try {
             socket = client.webSocketSession {
-                url("$BASE_WS/chat-socket?namedb=$nameDb&token2=${token}")
+                url("$BASE_WS/chat2?namedb=$nameDb&token2=${token}")
             }
             if (socket?.isActive == true){
                 Resource.Success(Unit)
@@ -315,20 +315,29 @@ class ChatTwo(private val nameDb: String){
     }
     @OptIn(InternalAPI::class)
     suspend fun getRangeMessages(startIndex: Int, endIndex: Int): List<TMessage>{
-        val response = client.post("$BASE_URL/getchat2"){
-            contentType(ContentType.Application.Json)
-            setBody(Indexes(startIndex, endIndex))
+        return try{
+            val response = client.post("$BASE_URL/getchat2?namedb=$nameDb"){
+                contentType(ContentType.Application.Json)
+                setBody(Indexes(startIndex, endIndex))
+            }
+            val result = response.content.readUTF8Line().toString()
+            Json.decodeFromString<List<TMessage>>(result)
+        } catch (e: Exception){
+            listOf()
         }
-        val result = response.content.readUTF8Line().toString()
-        return Json.decodeFromString<TTMessages>(result).list
     }
     @OptIn(InternalAPI::class)
-    suspend fun getCountMessages(): Int{
-        val response = client.get("$BASE_URL/chatmessages"){
-            contentType(ContentType.Application.Json)
+    suspend fun getCountMessages(): Int?{
+        return try {
+            val response = client.get("$BASE_URL/chatmessages?namedb=$nameDb"){
+                contentType(ContentType.Application.Json)
+            }
+            Json.decodeFromString<GetLengthMessages>(
+                response.content.readUTF8Line().toString()).length
+        } catch (e: Exception){
+            null
         }
-        return Json.decodeFromString<GetLengthMessages>(response
-            .content.readUTF8Line().toString()).length
+
     }
 }
 
@@ -336,7 +345,6 @@ class SearchIdOrName{
     //Configure searching -> "id:" for search only by id; "name:" for search only by login
     private companion object{
         private val client = HttpClient()
-        private var socket: WebSocketSession? = null
     }
     @OptIn(InternalAPI::class)
     suspend fun search(query: String): SearchP{
@@ -444,7 +452,7 @@ data class ChatOnJoin(
     val username: String,
     val text: String,
     val nameDB: String,
-    val oKey: String = cipher.generatePassword()
+    val oKey: String
 )
 
 @Serializable

@@ -82,8 +82,8 @@ class Cipher {
 }
 
 class RSAKotlin {
-    var privateKey: PrivateKey
-    var publicKey: PublicKey
+    private var privateKey: PrivateKey
+    private var publicKey: PublicKey
 
     companion object {
 

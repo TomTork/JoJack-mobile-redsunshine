@@ -3,31 +3,29 @@ package ru.anotherworld.jojack.elements
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.os.StrictMode
-import android.os.StrictMode.ThreadPolicy
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -38,7 +36,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
-import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -58,50 +55,58 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.ChatController
+import ru.anotherworld.jojack.ChatOnJoin
+import ru.anotherworld.jojack.ChatTwo
+import ru.anotherworld.jojack.Cipher
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
+import ru.anotherworld.jojack.TMessage
 import ru.anotherworld.jojack.chatcontroller.Message
-import ru.anotherworld.jojack.sDatabase
+import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
+import ru.anotherworld.jojack.cipher
+import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
-import kotlin.concurrent.thread
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
+import ru.anotherworld.jojack.sDatabase
 
+var idChat2: String = ""
+var nameChat2: String = ""
+var iconChat2: String = ""
 
-class ChatActivity : ComponentActivity(){
-    @OptIn(DelicateCoroutinesApi::class)
+class Chat2 : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         GlobalScope.launch {
-            destroyMServer!!.closeSession()
+            destroy!!.closeSession()
         }
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             JoJackTheme {
-                Chat()
+                Chat2(
+                    idChat2, iconChat2, nameChat2
+                )
             }
         }
     }
 }
-private var destroyMServer: ChatController? = null
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview
+
+private var destroy: ChatTwo? = null
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<String>? = null,
-         iconChat: String? = "", messages: List<Pair<String, String>>? = null){
+fun Chat2(idChat: String, iconChat: String?, nameChat: String){
     val context = LocalContext.current
     val nunitoFamily = FontFamily(Font(R.font.nunito_medium500, FontWeight.W500))
     var state by remember { mutableStateOf("Онлайн") } //Состояние в чате: кто-то печатает и т.д.
     var message by remember { mutableStateOf("") }
     val coroutine = rememberCoroutineScope()
-    val chatController = ChatController()
+    val chatController = ChatTwo(idChat)
+    val database = MainDatabase()
     Scaffold(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -112,7 +117,8 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 .fillMaxWidth(1f)
                 .background(color = colorResource(id = R.color.background2))) {
                 IconButton(onClick = { context.startActivity(Intent(context, MainApp::class.java)) }){
-                    Icon(painterResource(id = R.drawable.arrow_back), null,
+                    Icon(
+                        painterResource(id = R.drawable.arrow_back), null,
                         tint = colorResource(id = R.color.white),
                         modifier = Modifier
                             .size(30.dp)
@@ -136,7 +142,8 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                     .align(Alignment.CenterVertically)
                     .padding(start = 10.dp)) {
                     Text(text = nameChat, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                        fontSize = 23.sp, color = colorResource(id = R.color.white))
+                        fontSize = 23.sp, color = colorResource(id = R.color.white)
+                    )
                     Text(text = state, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
                         fontSize = 17.sp, modifier = Modifier
                             .offset(y = (-6).dp)
@@ -163,11 +170,12 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
 
-                ),
+                    ),
                 modifier = Modifier.fillMaxWidth(1f),
                 leadingIcon = {
                     IconButton(onClick = { /*Вложения*/ }) {
-                        Icon(painterResource(id = R.drawable.attach), null,
+                        Icon(
+                            painterResource(id = R.drawable.attach), null,
                             modifier = Modifier
                                 .padding(start = 7.dp)
                                 .size(30.dp))
@@ -176,11 +184,19 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 trailingIcon = {
                     IconButton(onClick = {
                         coroutine.launch {
-                            chatController.sendMessage(message)
+                            chatController.sendMessage(
+                                TMessage(
+                                id = 0,
+                                author = database.getLogin()!!,
+                                message = message,
+                                time = System.currentTimeMillis()
+                            )
+                            )
                             message = ""
                         }
                     }) {
-                        Icon(painterResource(id = R.drawable.send2), null,
+                        Icon(
+                            painterResource(id = R.drawable.send2), null,
                             modifier = Modifier
                                 .padding(end = 7.dp)
                                 .size(28.dp))
@@ -192,13 +208,16 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
         Column(
             modifier = Modifier.padding(top = 60.dp, bottom = 60.dp)
         ) {
-            val messagesList = remember { listOf<Message>().toMutableStateList() }
+            val messagesList = remember { listOf<TMessage>().toMutableStateList() }
             var ready by remember { mutableStateOf(false) }
             coroutine.launch {
                 if(!ready){
-                    chatController.initSession(sDatabase.getLogin()!!, sDatabase.getToken()!!)
-                    destroyMServer = chatController
-                    messagesList.addAll(chatController.getAllMessages().toMutableStateList())
+                    chatController.initSession(sDatabase.getToken()!!)
+                    destroy = chatController
+                    val countMessages = chatController.getCountMessages()
+                    Log.d("INFO", countMessages.toString())
+                    messagesList.addAll(chatController.getRangeMessages(1, countMessages!!).toMutableStateList())
+                    Log.d("INFO4", messagesList.toList().toString())
                 }
                 ready = true
 
@@ -215,57 +234,13 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 ){
                     itemsIndexed(messagesList){ _, message ->
                         MessageIn(
-                            login = message.username,
-                            text = message.text,
-                            time = message.formattedTime)
+                            login = message.author,
+                            text = message.message,
+                            time = getCurrentTimeStamp(message.time)!!)
                         Spacer(modifier = Modifier.padding(top = 5.dp))
                     }
                 }
             }
-        }
-    }
-}
-
-@SuppressLint("CoroutineCreationDuringComposition")
-@Composable
-fun MessageIn(login: String, text: String, time: String){
-    val coroutine = rememberCoroutineScope()
-    var login1 by remember { mutableStateOf("") }
-    coroutine.launch {
-        login1 = sDatabase.getLogin()!!
-    }
-    var eq by remember { mutableStateOf(false) }
-    eq = (login1 == login) //true if user you
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_medium500, FontWeight.W500),
-        Font(R.font.nunito_light400, FontWeight.W400)
-    )
-    Row(
-        modifier = Modifier
-            .padding(start = 10.dp, end = 10.dp, top = 1.dp, bottom = 1.dp)
-            .fillMaxWidth(1f),
-        horizontalArrangement = if (eq) Arrangement.End else Arrangement.Start
-    ) {
-        Column(
-            modifier = Modifier
-                .background(
-                    if (eq) colorResource(id = R.color.my_message_color) else colorResource(id = R.color.message_color),
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .clip(RoundedCornerShape(20.dp))
-                .widthIn(min = 100.dp),
-            horizontalAlignment = if (eq) AbsoluteAlignment.Right else AbsoluteAlignment.Left
-        ) {
-            Text(text = login, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
-            Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
-                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
-            Text(text = time, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
-                modifier = Modifier
-                    .padding(end = 12.dp, start = 12.dp)
-                    .alpha(0.5f),
-                fontSize = 10.sp)
-            
         }
     }
 }
