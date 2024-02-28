@@ -175,9 +175,8 @@ private fun LoginContent2(){
                                     mDatabase.setServerId(data.id)
                                     mDatabase.setJob(data.job)
                                     mDatabase.setTrustLevel(data.trustLevel)
+                                    context.startActivity(Intent(context, MainApp::class.java))
                                 }
-
-                                context.startActivity(Intent(context, MainApp::class.java))
                             }
                             else Toast.makeText(context, context.getText(R.string.error),
                                 Toast.LENGTH_SHORT).show()

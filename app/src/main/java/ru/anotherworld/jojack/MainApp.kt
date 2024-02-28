@@ -104,6 +104,7 @@ import java.io.File
 import java.net.NoRouteToHostException
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import ru.anotherworld.jojack.database.ChatsData
+import ru.anotherworld.jojack.database.ChatsDatabase
 import ru.anotherworld.jojack.elements.Chat2
 import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
@@ -141,6 +142,8 @@ class MainApp : ComponentActivity() {
         }
     }
 }
+
+val chatsDatabase = ChatsDatabase()
 
 @SuppressLint("PermissionLaunchedDuringComposition")
 @OptIn(ExperimentalPermissionsApi::class)
@@ -274,17 +277,6 @@ private fun Content(){ //Main Activity
                                     .align(Alignment.CenterVertically)
                                     .fillMaxWidth(1f)
                                     .padding(end = 20.dp)) {
-//                                    if (contentManager == 1){
-//                                        IconButton(onClick = {
-//                                            showSearchUser = !showSearchUser
-//                                        }) {
-//                                            Image(painterResource(id = R.drawable.add_circle),
-//                                                null,
-//                                                modifier = Modifier
-//                                                    .align(Alignment.CenterVertically)
-//                                                    .size(35.dp))
-//                                        }
-//                                    }
                                 if(contentManager != 1) {
                                     IconButton(onClick = { /*TODO*/ }) {
                                         Column(modifier = Modifier
@@ -514,14 +506,37 @@ private fun Content(){ //Main Activity
                                     .clickable {
                                         if (!checkedSwitch) {
                                             if (checkedSwitch2) { //chat with encryption
-                                                Toast.makeText(context, "IN WORK!", Toast.LENGTH_SHORT).show()
+                                                Toast
+                                                    .makeText(
+                                                        context,
+                                                        "IN WORK!",
+                                                        Toast.LENGTH_SHORT
+                                                    )
+                                                    .show()
                                             } else { //chat without encryption
                                                 val number = arrayOf(myId.toString(), item.second)
                                                 number.sort()
                                                 idChat2 = "chat" + number.joinToString("x")
-                                                nameChat2 = "ChatTest"
+                                                nameChat2 = item.first
                                                 iconChat2 = ""
-                                                context.startActivity(Intent(context, Chat2::class.java))
+
+                                                coroutine.launch {
+                                                    chatsDatabase.insertAll(
+                                                        ChatsData(
+                                                            idChat2,
+                                                            nameChat2,
+                                                            item.first,
+                                                            ""
+                                                        )
+                                                    )
+                                                }
+
+                                                context.startActivity(
+                                                    Intent(
+                                                        context,
+                                                        Chat2::class.java
+                                                    )
+                                                )
                                             }
                                         } else chBox = !chBox
                                     }
@@ -768,11 +783,18 @@ private fun NewsPaper(){
     
 }
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 private fun Messenger(){
 //    val scrollState = rememberScrollState()
     val context = LocalContext.current
     val array = remember { listOf<ChatsData>().toMutableStateList() }
+    val coroutine = rememberCoroutineScope()
+    var previewName by remember { mutableStateOf("") }
+    var previewMessage by remember { mutableStateOf("") }
+    coroutine.launch {
+        array.addAll(chatsDatabase.getAll())
+    }
     Column (modifier = Modifier
         .padding(top = 60.dp, bottom = 60.dp)
         .clip(
@@ -790,8 +812,24 @@ private fun Messenger(){
                     action = { context.startActivity(Intent(context, ChatActivity::class.java)) })
             }
             itemsIndexed(array){ index, item ->
-                ChatMessage(name = item.name, previewMessage = "", username = "",
-                    action = {  }) //show chats
+                coroutine.launch {
+                    val chatTwo = ChatTwo(item.chat)
+                    try{
+                        val count = chatTwo.getCountMessages()!!
+                        val value = chatTwo.getRangeMessages(count, count)
+                        previewMessage = value[0].message
+                        previewName = value[0].author
+                    } catch (e: Exception){
+                        //TODO
+                    }
+                }
+                ChatMessage(name = item.name, previewMessage = previewMessage, username = previewName,
+                    action = {
+                        idChat2 = item.chat
+                        nameChat2 = item.name
+                        iconChat2 = item.icon
+                        context.startActivity(Intent(context, Chat2::class.java))
+                    }) //show chats
             }
         }
     }

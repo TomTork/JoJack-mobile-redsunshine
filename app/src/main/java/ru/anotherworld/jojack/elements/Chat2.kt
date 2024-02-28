@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,9 +17,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -36,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -64,6 +68,7 @@ import ru.anotherworld.jojack.Cipher
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.TMessage
+import ru.anotherworld.jojack.TMessage2
 import ru.anotherworld.jojack.chatcontroller.Message
 import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
 import ru.anotherworld.jojack.cipher
@@ -95,6 +100,7 @@ class Chat2 : ComponentActivity() {
 }
 
 private var destroy: ChatTwo? = null
+private var login1: String = ""
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,6 +113,9 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String){
     val coroutine = rememberCoroutineScope()
     val chatController = ChatTwo(idChat)
     val database = MainDatabase()
+    coroutine.launch {
+        login1 = sDatabase.getLogin()!!
+    }
     Scaffold(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -185,11 +194,11 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String){
                     IconButton(onClick = {
                         coroutine.launch {
                             chatController.sendMessage(
-                                TMessage(
+                                TMessage2(
                                 id = 0,
                                 author = database.getLogin()!!,
                                 message = message,
-                                time = System.currentTimeMillis()
+                                timestamp = System.currentTimeMillis()
                             )
                             )
                             message = ""
@@ -208,7 +217,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String){
         Column(
             modifier = Modifier.padding(top = 60.dp, bottom = 60.dp)
         ) {
-            val messagesList = remember { listOf<TMessage>().toMutableStateList() }
+            val messagesList = remember { listOf<TMessage2>().toMutableStateList() }
             var ready by remember { mutableStateOf(false) }
             coroutine.launch {
                 if(!ready){
@@ -236,11 +245,52 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String){
                         MessageIn(
                             login = message.author,
                             text = message.message,
-                            time = getCurrentTimeStamp(message.time)!!)
+                            time = getCurrentTimeStamp(message.timestamp)!!)
                         Spacer(modifier = Modifier.padding(top = 5.dp))
                     }
                 }
             }
+        }
+    }
+}
+
+@SuppressLint("CoroutineCreationDuringComposition")
+@Composable
+private fun MessageIn(login: String, text: String, time: String){
+    val coroutine = rememberCoroutineScope()
+    val login1 by remember { mutableStateOf(login1) }
+    var eq by remember { mutableStateOf(false) }
+    eq = (login1 == login) //true if user you
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_medium500, FontWeight.W500),
+        Font(R.font.nunito_light400, FontWeight.W400)
+    )
+    Row(
+        modifier = Modifier
+            .padding(start = 10.dp, end = 10.dp, top = 1.dp, bottom = 1.dp)
+            .fillMaxWidth(1f),
+        horizontalArrangement = if (eq) Arrangement.End else Arrangement.Start
+    ) {
+        Column(
+            modifier = Modifier
+                .background(
+                    if (eq) colorResource(id = R.color.my_message_color) else colorResource(id = R.color.message_color),
+                    shape = RoundedCornerShape(20.dp)
+                )
+                .clip(RoundedCornerShape(20.dp))
+                .widthIn(min = 100.dp),
+            horizontalAlignment = if (eq) AbsoluteAlignment.Right else AbsoluteAlignment.Left
+        ) {
+            Text(text = login, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+            Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+            Text(text = time, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                modifier = Modifier
+                    .padding(end = 12.dp, start = 12.dp)
+                    .alpha(0.5f),
+                fontSize = 10.sp)
+
         }
     }
 }

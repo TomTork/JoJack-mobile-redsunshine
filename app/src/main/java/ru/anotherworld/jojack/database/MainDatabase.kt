@@ -13,7 +13,6 @@ import java.io.FileNotFoundException
 val daoMain = DAOMainDatabase()
 
 class MainDatabase(){
-    //ВОЗМОЖНА ОШИБКА ИЗ-ЗА runBlocking!
     init {
         DatabaseHelper.init()
     }
@@ -45,7 +44,8 @@ class MainDatabase(){
     suspend fun setDevice(value: String) = daoMain.setDevice(value)
     suspend fun setInfo(value: String) = daoMain.setInfo(value)
     suspend fun getInfo(): String? = daoMain.getInfo()
-    suspend fun collapseDatabase() = daoMain.deleteMainDatabase()
+    suspend fun collapseDatabase() = editAll(data = MainData("", "", 0, 0, -1,
+        "", "", "", "", ""))
 }
 
 val daoLikes = DAOLikesDatabase()
@@ -76,6 +76,9 @@ val daoChatsDatabase = DAOChatsDatabase()
 
 class ChatsDatabase{
     suspend fun insertAll(data: ChatsData){
+        for (i in getAll()){
+            if (i.chat == data.chat) return;
+        }
         daoChatsDatabase.addNewChatsDatabase(data)
     }
     suspend fun deleteAll(){

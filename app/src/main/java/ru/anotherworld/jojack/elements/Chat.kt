@@ -90,6 +90,7 @@ class ChatActivity : ComponentActivity(){
     }
 }
 private var destroyMServer: ChatController? = null
+private var login1: String = ""
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
@@ -102,6 +103,9 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
     var message by remember { mutableStateOf("") }
     val coroutine = rememberCoroutineScope()
     val chatController = ChatController()
+    coroutine.launch {
+        login1 = sDatabase.getLogin()!!
+    }
     Scaffold(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -228,12 +232,9 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun MessageIn(login: String, text: String, time: String){
+private fun MessageIn(login: String, text: String, time: String){
     val coroutine = rememberCoroutineScope()
-    var login1 by remember { mutableStateOf("") }
-    coroutine.launch {
-        login1 = sDatabase.getLogin()!!
-    }
+    val login1 by remember { mutableStateOf(login1) }
     var eq by remember { mutableStateOf(false) }
     eq = (login1 == login) //true if user you
     val nunitoFamily = FontFamily(

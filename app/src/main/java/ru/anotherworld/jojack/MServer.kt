@@ -282,18 +282,18 @@ class ChatTwo(private val nameDb: String){
             Resource.Error(e.localizedMessage ?: "Unknown error ::ChatSocketServiceImpl")
         }
     }
-    suspend fun sendMessage(message: TMessage) {
+    suspend fun sendMessage(message: TMessage2) {
         try {
-            socket?.send(Frame.Text(Json.encodeToString<TMessage>(message)))
+            socket?.send(Frame.Text(Json.encodeToString<TMessage2>(message)))
         } catch (e: Exception){
             e.printStackTrace()
         }
     }
-    suspend fun waitNewData(): TMessage?{
+    suspend fun waitNewData(): TMessage2?{
         for(element in socket?.incoming!!){
             element as? Frame.Text ?: continue
             val json = element.readBytes().decodeToString()
-            return Json.decodeFromString<TMessage>(json)
+            return Json.decodeFromString<TMessage2>(json)
         }
         return null
     }
@@ -301,14 +301,14 @@ class ChatTwo(private val nameDb: String){
         socket?.close()
     }
     @OptIn(InternalAPI::class)
-    suspend fun getRangeMessages(startIndex: Int, endIndex: Int): List<TMessage>{
+    suspend fun getRangeMessages(startIndex: Int, endIndex: Int): List<TMessage2>{
         return try{
             val response = client.post("$BASE_URL/getchat2?namedb=$nameDb"){
                 contentType(ContentType.Application.Json)
                 setBody(Indexes(startIndex, endIndex))
             }
             val result = response.content.readUTF8Line().toString()
-            Json.decodeFromString<List<TMessage>>(result)
+            Json.decodeFromString<List<TMessage2>>(result)
         } catch (e: Exception){
             listOf()
         }
@@ -448,6 +448,14 @@ data class TMessage(
     val author: String,
     val message: String,
     val time: Long
+)
+
+@Serializable
+data class TMessage2(
+    val id: Int,
+    val author: String,
+    val message: String,
+    val timestamp: Long
 )
 
 @Serializable
