@@ -159,7 +159,7 @@ private fun LoginContent2(){
                         val initUser = InitUser()
                         coroutine.launch {
                             mDatabase.init(MainData("", "", 0, 0, -1,
-                                "", "", "", "", ""))
+                                false, "", "", "", "", "", ""))
                             val token = log.log(login, password, coroutine).substringAfter(":\"")
                                 .substringBefore("\"}")
                             if(token == "NF") Toast.makeText(context, context.getText(R.string.nf),

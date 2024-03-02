@@ -2,11 +2,13 @@ package ru.anotherworld.jojack.elements
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.graphics.drawable.ShapeDrawable
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,6 +23,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.shape.CircleShape
@@ -75,6 +80,17 @@ import ru.anotherworld.jojack.VkImageAndVideo
 import ru.anotherworld.jojack.database.LikesDatabase
 import ru.anotherworld.jojack.database.MainDatabase
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.style.TextAlign
+import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
+import ru.anotherworld.jojack.database.Comments
+import ru.anotherworld.jojack.mDatabase
 
 val constructorMessenger = ConstructorMessenger(null, null, null, null,
     null, null, null, null, null, null, null)
@@ -89,12 +105,17 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
+    val interFamily = FontFamily(
+        Font(R.font.inter600, FontWeight.W600),
+        Font(R.font.inter_medium500, FontWeight.W500)
+    )
     val likesDatabase = LikesDatabase()
     val context = LocalContext.current
     val likeController = LikeController()
     val coroutine = rememberCoroutineScope()
     val pagerState = rememberPagerState { images.images.size }
     var checked by remember { mutableStateOf(false) }
+    var startComments by remember { mutableStateOf(false) }
 
     coroutine.launch {
         val previewChecked = likesDatabase.getLikedByOriginalUrl(originalUrl)
@@ -186,17 +207,19 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
             }
             if(!inMessenger){
                 IconButton(onClick = {
-                    constructorMessenger.idPost = idPost
-                    constructorMessenger.text = text
-                    constructorMessenger.nameGroup = text
-                    constructorMessenger.iconGroup = text
-                    constructorMessenger.typeGroup = text
-                    constructorMessenger.images = images
-                    constructorMessenger.originalUrl = originalUrl
-                    constructorMessenger.like = like
-                    constructorMessenger.exclusive = exclusive
-                    constructorMessenger.inMessenger = true
-                    context.startActivity(Intent(context, MessengerPostActivity::class.java))
+                    startComments = true
+                    //DEPRECATED
+//                    constructorMessenger.idPost = idPost
+//                    constructorMessenger.text = text
+//                    constructorMessenger.nameGroup = text
+//                    constructorMessenger.iconGroup = text
+//                    constructorMessenger.typeGroup = text
+//                    constructorMessenger.images = images
+//                    constructorMessenger.originalUrl = originalUrl
+//                    constructorMessenger.like = like
+//                    constructorMessenger.exclusive = exclusive
+//                    constructorMessenger.inMessenger = true
+//                    context.startActivity(Intent(context, MessengerPostActivity::class.java))
                 }) {
                     Icon(painterResource(id=R.drawable.comments), "Comments",
                         tint = colorResource(id = R.color.icon_color))
@@ -241,6 +264,119 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     }
                 }
                 Spacer(modifier = Modifier.fillMaxHeight(0.05f))
+            }
+        }
+        if(startComments){ //Отобразить ветку комментариев
+            //LOAD COMMENTS FROM SERVER
+            val comments = remember { listOf<Comments>().toMutableStateList() }
+            val checked2 by remember { mutableStateOf(false) }
+//            val lazyScroll = rememberLazyListState()
+            Column(modifier = Modifier
+                .fillMaxWidth(1f)) {
+                Row(modifier = Modifier.fillMaxWidth(1f)) {
+                    IconButton(onClick = {
+                        startComments = false
+                    }, modifier = Modifier.align(Alignment.CenterVertically)) {
+                        Icon(painter = painterResource(id = R.drawable.arrow_down),
+                            contentDescription = null)
+                    }
+                    Text(text = stringResource(id = R.string.comments),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        fontSize = 18.sp, modifier = Modifier.align(Alignment.CenterVertically))
+                }
+//                LazyColumn{
+//
+//                    itemsIndexed(comments){ _, item ->
+//                        Column(
+//                            modifier = Modifier
+//                                .fillMaxWidth(1f)
+//                                .padding(start = 10.dp, end = 10.dp)
+//                        ) {
+//                            Text(text = item.author,
+//                                fontFamily = interFamily,
+//                                fontWeight = FontWeight.W600,
+//                                fontSize = 18.sp)
+//                            Text(text = item.text,
+//                                fontFamily = interFamily,
+//                                fontWeight = FontWeight.W600,
+//                                fontSize = 16.sp,
+//                                modifier = Modifier.combinedClickable {
+//                                    //На удержании, копируем текст в оперативную память
+//                                    clipboardManager.setText(AnnotatedString(
+//                                        "[${item.id}|${item.author}: ${getCurrentTimeStamp(item.time)}]\n${item.text}"))
+//                                })
+//                            Row(modifier = Modifier
+//                                .fillMaxWidth(1f)) {
+//                                Button(onClick = { /*REPLY*/ },
+//                                    modifier = Modifier.weight(0.2f),
+//                                    colors = ButtonDefaults.buttonColors(
+//                                        containerColor = Color.Transparent
+//                                    )) {
+//                                    Text(text = stringResource(id = R.string.reply),
+//                                        fontFamily = interFamily,
+//                                        fontWeight = FontWeight.W600,
+//                                        fontSize = 16.sp)
+//                                }
+//                                IconButton(onClick = { /*LIKE COMMENT*/ },
+//                                    modifier = Modifier.weight(0.8f)) {
+//                                    Icon(painterResource(id=R.drawable.like), "Like",
+//                                        tint = if(checked2) colorResource(id = R.color.cred) else colorResource(id = R.color.icon_color))
+//                                }
+//                            }
+//
+//                        }
+//                    }
+//                }
+                Row(modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .padding(start = 10.dp, end = 10.dp)) {
+                    //Ввод комментариев
+                    var data = remember { byteArrayOf() }
+                    var comment by remember { mutableStateOf("") }
+                    coroutine.launch {
+                        val now = mDatabase.getIcon()
+                        if(now != null) data = now
+                    }
+
+                    TextField(value = comment, onValueChange = { comment = it },
+                        placeholder = {
+                            Text(text = stringResource(id = R.string.my_opinion),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 3.dp)
+                                    .alpha(0.5f),
+                                textAlign = TextAlign.Start,
+                                color = colorResource(id = R.color.white))
+                        },
+                        leadingIcon = {
+                            if(data.isNotEmpty()) Icon(bitmap = BitmapFactory.decodeByteArray(data, 0, data.size).asImageBitmap(),
+                                null, modifier = Modifier.size(30.dp))
+                            else Icon(painter = painterResource(id = R.drawable.account_circle), contentDescription = null,
+                                modifier = Modifier.size(30.dp))
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                coroutine.launch {
+                                    //Отправка комментария
+                                    comment = ""
+                                }
+                            }) {
+                                Icon(
+                                    painterResource(id = R.drawable.send2), null,
+                                    modifier = Modifier
+                                        .padding(end = 7.dp)
+                                        .size(28.dp))
+                            }
+                        },
+                        colors = TextFieldDefaults.textFieldColors(
+                            containerColor = Color.Transparent,
+                            cursorColor = Color.White,
+                            disabledLabelColor = colorResource(id = R.color.ghost_white),
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ))
+
+                }
             }
         }
     }

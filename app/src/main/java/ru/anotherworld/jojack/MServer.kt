@@ -348,6 +348,22 @@ class SearchIdOrName{
     }
 }
 
+class UpdatePrivacy{
+    private companion object{
+        private val client = HttpClient(){
+            install(ContentNegotiation){
+                json()
+            }
+        }
+    }
+    suspend fun updatePrivacy(privacy: Boolean, token: String){
+        client.post("$BASE_URL/update-privacy"){
+            contentType(ContentType.Application.Json)
+            setBody(Privacy(token, privacy))
+        }
+    }
+}
+
 @Serializable
 data class SearchP(
     val arr: List<Pair<String, String>>
@@ -423,6 +439,8 @@ data class VkImageAndVideo(
 data class InitRemote(
     val id: Int,
     val job: Int,
+    val privacy: Boolean,
+    val icon: String,
     val trustLevel: Int,
     val info: String? = ""
 )
@@ -485,3 +503,6 @@ data class Indexes(
 data class TTMessages(
     val list: List<TMessage>
 )
+
+@Serializable
+data class Privacy(val token: String, val privacy: Boolean)

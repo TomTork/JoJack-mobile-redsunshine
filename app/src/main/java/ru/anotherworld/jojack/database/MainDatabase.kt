@@ -23,8 +23,10 @@ class MainDatabase(){
             Log.e("DATABASE ::MainDatabase", e.message.toString())
         }
     }
-    suspend fun editAll(id: Int = 1, data: MainData) = daoMain.editMainDatabase(id, data)
+    private suspend fun editAll(id: Int = 1, data: MainData) = daoMain.editMainDatabase(id, data)
     suspend fun getLogin(): String? = daoMain.getLogin()
+    suspend fun getPrivacy(): Boolean? = daoMain.getPrivacy()
+    suspend fun setPrivacy(value: Boolean): Boolean = daoMain.setPrivacy(value)
     suspend fun setLogin(value: String): Boolean = daoMain.setLogin(value)
     suspend fun getToken(): String? = daoMain.getToken()
     suspend fun setToken(value: String) = daoMain.setToken(value)
@@ -34,6 +36,8 @@ class MainDatabase(){
     suspend fun setJob(value: Int) = daoMain.setJob(value)
     suspend fun getServerId(): Int? = daoMain.getServerId()
     suspend fun setServerId(value: Int) = daoMain.setServerId(value)
+    suspend fun getIcon(): ByteArray? = strToByteArray(daoMain.getIcon())
+    suspend fun setIcon(value: String) = daoMain.setIcon(value.replace(" ", ""))
     suspend fun getClosedKey(): String? = daoMain.getClosedKey()
     suspend fun setClosedKey(value: String) = daoMain.setClosedKey(value)
     suspend fun getOpenedKey(): String? = daoMain.getOpenedKey()
@@ -45,7 +49,13 @@ class MainDatabase(){
     suspend fun setInfo(value: String) = daoMain.setInfo(value)
     suspend fun getInfo(): String? = daoMain.getInfo()
     suspend fun collapseDatabase() = editAll(data = MainData("", "", 0, 0, -1,
-        "", "", "", "", ""))
+        false, "","", "", "", "", ""))
+}
+
+private fun strToByteArray(value: String?): ByteArray {
+    if (value == null || value == "") return byteArrayOf()
+    return value.substringAfter("[").substringBefore("]")
+        .split(",").map { it.toByte() }.toByteArray()
 }
 
 val daoLikes = DAOLikesDatabase()

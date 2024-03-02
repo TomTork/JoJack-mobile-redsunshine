@@ -9,6 +9,8 @@ object MainTable : Table("main"){
     val trustLevel = integer("trustLevel")
     val job = integer("job")
     val serverId = integer("serverId")
+    val privacy = bool("privacy")
+    val icon = varchar("icon", 8388608)
     val closedKey = varchar("closedKey", 2048)
     val openedKey = varchar("openedKey", 2048)
     val controlSum = varchar("controlSum", 512)
@@ -24,6 +26,8 @@ data class MainData(
     val trustLevel: Int,
     val job: Int,
     val serverId: Int,
+    val privacy: Boolean,
+    val icon: String,
     val closedKey: String,
     val openedKey: String,
     val controlSum: String,
@@ -59,4 +63,13 @@ data class ChatsData(
 data class LikesData(
     val originalUrl: String,
     val liked: Boolean
+)
+
+data class Comments(
+    val id: Int,
+    val author: String,
+    val text: String,
+    val likes: Int,
+    val time: Long,
+    val answer: String = ""
 )

@@ -61,6 +61,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
@@ -166,7 +167,7 @@ private fun RegistrationContent2(){
                     val reg = Register()
                     coroutine.launch {
                         mDatabase.init(MainData("", "", 0, 0, -1,
-                            "", "", "", "", ""))
+                            false, "", "", "", "", "", ""))
                         val token1 = reg.reg(login, password, coroutine).substringAfter(":\"")
                             .substringBefore("\"}")
                         if(token1 != ""){

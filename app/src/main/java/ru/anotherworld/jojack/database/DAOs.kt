@@ -15,6 +15,8 @@ class DAOMainDatabase{
         trustLevel = row[MainTable.trustLevel],
         job = row[MainTable.job],
         serverId = row[MainTable.serverId],
+        privacy = row[MainTable.privacy],
+        icon = row[MainTable.icon],
         closedKey = row[MainTable.closedKey],
         openedKey = row[MainTable.openedKey],
         controlSum = row[MainTable.controlSum],
@@ -28,6 +30,8 @@ class DAOMainDatabase{
             it[trustLevel] = data.trustLevel
             it[job] = data.job
             it[serverId] = data.serverId
+            it[privacy] = data.privacy
+            it[icon] = data.icon
             it[closedKey] = data.closedKey
             it[openedKey] = data.openedKey
             it[controlSum] = data.controlSum
@@ -43,6 +47,8 @@ class DAOMainDatabase{
             it[trustLevel] = data.trustLevel
             it[job] = data.job
             it[serverId] = data.serverId
+            it[privacy] = data.privacy
+            it[icon] = data.icon
             it[closedKey] = data.closedKey
             it[openedKey] = data.openedKey
             it[controlSum] = data.controlSum
@@ -60,6 +66,34 @@ class DAOMainDatabase{
             .map(::resultRowToMainDatabase)
             .singleOrNull()
             ?.login
+    }
+    suspend fun getPrivacy(): Boolean? = dbQuery {
+        return@dbQuery MainTable
+            .selectAll()
+            .where { MainTable.id eq 1 }
+            .map(::resultRowToMainDatabase)
+            .singleOrNull()
+            ?.privacy
+    }
+    suspend fun getIcon(): String? = dbQuery {
+        return@dbQuery MainTable
+            .selectAll()
+            .where { MainTable.id eq 1 }
+            .map(::resultRowToMainDatabase)
+            .singleOrNull()
+            ?.icon
+    }
+    suspend fun setPrivacy(value: Boolean): Boolean = dbQuery {
+        MainTable
+            .update({ MainTable.id eq 1 }) {
+                it[privacy] = value
+            } > 0
+    }
+    suspend fun setIcon(value: String): Boolean = dbQuery {
+        MainTable
+            .update({ MainTable.id eq 1 }) {
+                it[icon] = value
+            } > 0
     }
     suspend fun setLogin(value: String): Boolean = dbQuery {
         MainTable

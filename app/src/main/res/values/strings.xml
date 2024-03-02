@@ -70,4 +70,8 @@
     <string name="write_something">What\'s new?</string>
     <string name="publish">Publish</string>
     <string name="title_activity_chat2">Chat2</string>
+    <string name="dont_disturb">Don\'t disturb.</string>
+    <string name="dont_disturb_common">Standard users will not be able to write to you.</string>
+    <string name="reply">Reply</string>
+    <string name="my_opinion">My opinion is...</string>
 </resources>

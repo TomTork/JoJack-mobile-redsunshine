@@ -1,7 +1,6 @@
 package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,7 +8,6 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
@@ -32,7 +30,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -61,12 +58,13 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -79,6 +77,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,10 +88,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.animation.CrossSlide
 import ru.anotherworld.jojack.database.MainDatabase
@@ -109,7 +112,7 @@ import ru.anotherworld.jojack.elements.Chat2
 import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
 import ru.anotherworld.jojack.elements.nameChat2
-
+import java.io.ByteArrayOutputStream
 
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
@@ -127,7 +130,7 @@ class MainApp : ComponentActivity() {
                             start = false
                             context.startActivity(Intent(context, LoginActivity::class.java))
                         }
-                        else start = true
+                        else {start = true}
                     }
                 } catch (io: Exception){
                     start = false
@@ -277,7 +280,7 @@ private fun Content(){ //Main Activity
                                     .align(Alignment.CenterVertically)
                                     .fillMaxWidth(1f)
                                     .padding(end = 20.dp)) {
-                                if(contentManager != 1) {
+                                if(contentManager == 0) {
                                     IconButton(onClick = { /*TODO*/ }) {
                                         Column(modifier = Modifier
                                             .padding(end = 15.dp)
@@ -623,6 +626,7 @@ private fun NewsPaper(){
     )
     val context = LocalContext.current
     var isServerConnect by remember { mutableStateOf(true) }
+    var update by remember { mutableStateOf(false) }
     val coroutine = rememberCoroutineScope()
     var maxId by remember { mutableIntStateOf(1) }
     var view by remember { mutableStateOf(false) }
@@ -635,7 +639,13 @@ private fun NewsPaper(){
     )
     var job by remember { mutableIntStateOf(0) }
     var startCreateNewPostFromUser by remember { mutableStateOf(false) }
-    if(isServerConnect){
+    if(isServerConnect || update){
+        if(update){
+            update = false
+            view2 = false
+            view = false
+        }
+
         coroutine.launch {
             try {
                 if (!view2) {
@@ -671,38 +681,54 @@ private fun NewsPaper(){
             .fillMaxWidth(1f)
             .background(color = colorResource(id = R.color.background2)),
             verticalArrangement = Arrangement.Center) {
-
             if(view){
-                LazyColumn(state = listState){
-                    if(job >= 2){ //Функция создания постов доступна не для всех пользователей
-                        item { //View listener to create new post from user
-                            Row(modifier = Modifier
-                                .fillMaxWidth(1f)
-                                .clickable { startCreateNewPostFromUser = true }) {
-                                Icon(painter = painterResource(id = R.drawable.account_circle),
-                                    null, tint = colorResource(id = R.color.white),
-                                    modifier = Modifier.size(30.dp))
-                                Text(text = stringResource(id = R.string.write_something),
-                                    modifier = Modifier.align(Alignment.CenterVertically),
-                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
-                                    fontSize = 14.sp)
-                            }
-                        }
-                    }
+                val viewModel = viewModel<MainViewModel>()
+                val isLoading by viewModel.isLoading.collectAsState()
 
-                    itemsIndexed(items = array, itemContent = {index, value ->
-                        PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
-                            iconGroup = value.icon, existsImages = true, images = value.images,
-                            originalUrl = value.originalUrl, like = value.like, exclusive = value.exclusive)
-                        if(index == array.size - 2 && maxId > 1){
-                            coroutine.launch {
-                                maxId -= 1
-                                for(i in getPostVk.getPostVk(maxId, maxId).post)
-                                    array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
-                                        i.originalUrl, i.like, i.exclusive))
+                val state = rememberSwipeRefreshState(isRefreshing = isLoading)
+
+                SwipeRefresh(state = state, onRefresh = { viewModel.loadStuff(); update = true },
+                    indicator = { _state, refreshTrigger ->
+                        SwipeRefreshIndicator(state = _state, refreshTriggerDistance = refreshTrigger,
+                            contentColor = colorResource(id = R.color.subscribe))
+                    }) {
+                    LazyColumn(state = listState){
+                        if(job >= 2){ //Функция создания постов доступна не для всех пользователей
+                            item { //View listener to create new post from user
+                                Row(modifier = Modifier
+                                    .fillMaxWidth(1f)
+                                    .clickable { startCreateNewPostFromUser = true }
+                                    .background(color = colorResource(id = R.color.black))
+                                    .padding(top = 22.dp, start = 10.dp, end = 10.dp, bottom = 10.dp)
+                                ) {
+                                    Icon(painter = painterResource(id = R.drawable.account_circle),
+                                        null, tint = colorResource(id = R.color.white),
+                                        modifier = Modifier.size(37.dp))
+                                    Text(text = stringResource(id = R.string.write_something),
+                                        modifier = Modifier
+                                            .align(Alignment.CenterVertically)
+                                            .alpha(0.8f)
+                                            .padding(start = 10.dp),
+                                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                        fontSize = 18.sp)
+                                }
                             }
                         }
-                    })
+
+                        itemsIndexed(items = array, itemContent = {index, value ->
+                            PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
+                                iconGroup = value.icon, existsImages = true, images = value.images,
+                                originalUrl = value.originalUrl, like = value.like, exclusive = value.exclusive)
+                            if(index == array.size - 2 && maxId > 1){
+                                coroutine.launch {
+                                    maxId -= 1
+                                    for(i in getPostVk.getPostVk(maxId, maxId).post)
+                                        array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
+                                            i.originalUrl, i.like, i.exclusive))
+                                }
+                            }
+                        })
+                    }
                 }
             }
             else if(!isServerConnect){ //show activity-no-internet
@@ -735,50 +761,58 @@ private fun NewsPaper(){
     }
     else { //show create-new-post-activity-from-user
         var textPost by remember { mutableStateOf("") }
+        val keyboardController = LocalSoftwareKeyboardController.current
         Column(modifier = Modifier
             .fillMaxWidth(1f)
             .fillMaxHeight(1f)
+            .padding(top = 20.dp, bottom = 60.dp)
             .background(color = colorResource(id = R.color.background2))) {
-            IconButton(onClick = { startCreateNewPostFromUser = false },
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .align(Alignment.Start)) {
-                Icon(painter = painterResource(id = R.drawable.clear), contentDescription = null,
-                    tint = colorResource(id = R.color.white))
-            }
-            Button(onClick = { /*Опубликовать пост*/ },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent),
-                modifier = Modifier.align(Alignment.End)) {
-                Text(text = stringResource(id = R.string.publish),
-                    color = colorResource(id = R.color.white),
-                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
-            }
-        }
-        Divider(thickness = 2.dp, color = colorResource(id = R.color.white),
-            modifier = Modifier
-                .alpha(0.5f)
-                .padding(bottom = 10.dp))
-        TextField(value = textPost, onValueChange = { textPost = it },
-            placeholder = {
-                Text(text = stringResource(id = R.string.write_something),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 3.dp)
-                        .alpha(0.5f),
-                    textAlign = TextAlign.Start,
-                    color = colorResource(id = R.color.white))
-            },
-            modifier = Modifier
+
+            Row(modifier = Modifier
+                .padding(top = 30.dp)
                 .fillMaxWidth(1f)
-                .fillMaxHeight(1f),
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = Color.Transparent,
-                cursorColor = Color.White,
-                disabledLabelColor = colorResource(id = R.color.ghost_white),
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ))
+                .align(Alignment.End)) {
+                IconButton(onClick = { startCreateNewPostFromUser = false },
+                    modifier = Modifier
+                        .padding(start = 10.dp)) {
+                    Icon(painter = painterResource(id = R.drawable.clear), contentDescription = null,
+                        tint = colorResource(id = R.color.white))
+                }
+                Spacer(modifier = Modifier.weight(0.8f))
+                Button(onClick = { /*Опубликовать пост*/ },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent)) {
+                    Text(text = stringResource(id = R.string.publish),
+                        color = colorResource(id = R.color.white),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
+                }
+            }
+            Divider(thickness = 2.dp, color = colorResource(id = R.color.white),
+                modifier = Modifier
+                    .alpha(0.5f)
+                    .padding(bottom = 10.dp))
+            TextField(value = textPost, onValueChange = { textPost = it },
+                placeholder = {
+                    Text(text = stringResource(id = R.string.write_something),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 3.dp)
+                            .alpha(0.5f),
+                        textAlign = TextAlign.Start,
+                        color = colorResource(id = R.color.white))
+                },
+                modifier = Modifier
+                    .fillMaxWidth(1f),
+                colors = TextFieldDefaults.textFieldColors(
+                    containerColor = Color.Transparent,
+                    cursorColor = Color.White,
+                    disabledLabelColor = colorResource(id = R.color.ghost_white),
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ))
+
+        }
+
     }
     
 }
@@ -841,11 +875,12 @@ private fun Account(){
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    val bitmap =  remember { mutableStateOf<Bitmap?>(null) }
+    val bitmap =  rememberSaveable { mutableStateOf<Bitmap?>(null) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var privacy by rememberSaveable { mutableStateOf(false) }
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_semibold600, FontWeight.W600),
+        Font(R.font.nunito_light400, FontWeight.W400),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
     Column(modifier = Modifier
@@ -856,13 +891,16 @@ private fun Account(){
 
         coroutine.launch {
             if(mDatabase.getServerId() == -1){
-                coroutine.launch {
-                    val initUser = InitUser()
-                    val data = initUser.getInit(mDatabase.getLogin()!!, mDatabase.getToken()!!)
-                    mDatabase.setServerId(data.id)
-                    mDatabase.setJob(data.job)
-                    mDatabase.setTrustLevel(data.trustLevel)
-                }
+                val initUser = InitUser()
+                val data = initUser.getInit(mDatabase.getLogin()!!, mDatabase.getToken()!!)
+                mDatabase.setServerId(data.id)
+                mDatabase.setJob(data.job)
+                mDatabase.setTrustLevel(data.trustLevel)
+            }
+            privacy = mDatabase.getPrivacy()!!
+            val bitF = mDatabase.getIcon()
+            if (bitF != null) {
+                if(bitF.toString() != "") bitmap.value = BitmapFactory.decodeByteArray(bitF, 0, bitF.size)
             }
         }
 
@@ -871,9 +909,9 @@ private fun Account(){
         ActivityResultContracts.GetContent()) { uri: Uri? ->
             imageUri = uri
         }
-        var job_ by remember { mutableIntStateOf(0) }
-        var login_ by remember { mutableStateOf("") }
-        var serverId_ by remember { mutableIntStateOf(0) }
+        var job_ by rememberSaveable { mutableIntStateOf(0) }
+        var login_ by rememberSaveable { mutableStateOf("") }
+        var serverId_ by rememberSaveable { mutableIntStateOf(0) }
         coroutine.launch {
             job_ = mDatabase.getJob()!!
             login_ = mDatabase.getLogin()!!
@@ -902,23 +940,37 @@ private fun Account(){
                             .size(150.dp)
                             .clip(RoundedCornerShape(10.dp)))
                 }
-                else {
-                    Image(bitmap = bitmap.value!!.asImageBitmap(), null,
+                if(bitmap.value != null){
+                    Log.d("APP", "TRUE")
+                    Icon(bitmap = bitmap.value!!.asImageBitmap(), null,
                     modifier = Modifier
                         .size(150.dp)
-                        .clip(RoundedCornerShape(10.dp)),
-                        contentScale = ContentScale.Crop)
+                        .clip(RoundedCornerShape(10.dp)))
                 }
             }
             imageUri?.let {
                 if(Build.VERSION.SDK_INT < 28){
                     bitmap.value = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
                     ready = true
+                    coroutine.launch {
+                        val stream = ByteArrayOutputStream()
+                        val b2 = bitmap.value!!
+                        b2.compress(Bitmap.CompressFormat.PNG, 90, stream)
+                        mDatabase.setIcon(stream.toByteArray().toList().toString())
+                        //Save image to memory server
+                    }
                 }
                 else {
                     val source = ImageDecoder.createSource(context.contentResolver, it)
                     bitmap.value = ImageDecoder.decodeBitmap(source)
                     ready = true
+                    coroutine.launch { //Сохранение изображения в бд пользователя
+                        val stream = ByteArrayOutputStream()
+                        val b2 = bitmap.value!!
+                        b2.compress(Bitmap.CompressFormat.PNG, 90, stream)
+                        mDatabase.setIcon(stream.toByteArray().toList().toString())
+                        //Save image to memory server
+                    }
                 }
             }
             Column(modifier= Modifier.align(Alignment.CenterHorizontally)) {
@@ -979,6 +1031,38 @@ private fun Account(){
                     fontSize = 20.sp,
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
             }
+            Row (modifier = Modifier
+                .padding(start = 30.dp, end = 30.dp, top = 10.dp)
+                .background(
+                    colorResource(id = R.color.background2),
+                    shape = RoundedCornerShape(14.dp)
+                )
+                .height(50.dp)) {
+                Row(modifier = Modifier
+                    .fillMaxWidth(1f)) {
+                    Text(text = stringResource(id = R.string.dont_disturb),
+                        fontSize = 20.sp,
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        modifier = Modifier
+                            .weight(0.8f)
+                            .align(Alignment.CenterVertically)
+                            .padding(start = 10.dp))
+//                        Text(text = stringResource(id = R.string.dont_disturb_common),
+//                            fontSize = 12.sp,
+//                            fontFamily = nunitoFamily, fontWeight = FontWeight.W400)
+                    Switch(checked = privacy, onCheckedChange
+                    = {
+                        privacy = it
+                        coroutine.launch {
+                            mDatabase.setPrivacy(privacy)
+                            UpdatePrivacy().updatePrivacy(privacy, mDatabase.getToken()!!)
+                        }
+                      },
+                        colors = SwitchDefaults
+                            .colors(checkedThumbColor = colorResource(id = R.color.subscribe)),
+                        modifier = Modifier.padding(end = 10.dp))
+                }
+            }
             Row(modifier = Modifier
                 .align(Alignment.End)
                 .padding(top = 10.dp, end = 30.dp)) {
@@ -1000,72 +1084,3 @@ private fun Account(){
     }
 }
 
-//DEPRECATED
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//private fun Search(){
-//    val nunitoFamily = FontFamily(
-//        Font(R.font.nunito_semibold600, FontWeight.W600),
-//        Font(R.font.nunito_medium500, FontWeight.W500)
-//    )
-//    var inputSearch by remember { mutableStateOf("") }
-//    val array = remember { listOf<SearchContent>().toMutableStateList() }
-//    val context = LocalContext.current
-//    Column(modifier = Modifier
-//        .fillMaxWidth(1f)
-//        .fillMaxHeight(1f)) {
-//        TopAppBar(title = {
-//            Row(modifier = Modifier
-//                .fillMaxWidth(1f)
-//                .background(colorResource(id = R.color.background2))
-//                .align(Alignment.CenterHorizontally)) {
-//                IconButton(onClick = { context.startActivity(Intent(context, MainApp::class.java)) },
-//                    modifier = Modifier.align(Alignment.CenterVertically)) {
-//                    Icon(painterResource(id = R.drawable.arrow_back), null,
-//                        tint = colorResource(id = R.color.white))
-//                }
-//                Text(text = stringResource(id = R.string.search),
-//                    color = colorResource(id = R.color.white),
-//                    modifier = Modifier.align(Alignment.CenterVertically))
-//            }
-//        }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
-//            colors = TopAppBarDefaults
-//                .topAppBarColors(containerColor = colorResource(id = R.color.background2),
-//                    titleContentColor = colorResource(id = R.color.background2)))
-//        TextField(value = inputSearch, onValueChange = { inputSearch = it },
-//            modifier = Modifier
-//                .fillMaxWidth(1f)
-//                .padding(start = 10.dp, end = 10.dp, top = 10.dp, bottom = 10.dp),
-//            placeholder = { Text(text = stringResource(id = R.string.start_search),
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(start = 3.dp)
-//                    .alpha(0.5f),
-//                textAlign = TextAlign.Start,
-//                color = colorResource(id = R.color.white)) })
-//        //START SEARCHING
-//        LazyColumn(modifier = Modifier
-//            .fillMaxWidth(1f)
-//            .fillMaxHeight(1f)
-//            .padding(start = 10.dp, end = 10.dp)
-//            .background(
-//                color = colorResource(id = R.color.background2),
-//                shape = RoundedCornerShape(10.dp)
-//            )){
-//            items(array){ arr ->
-//                Column(modifier = Modifier.fillMaxWidth(1f)) {
-//                    Text(text = arr.head, fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-//                        color = colorResource(id = R.color.white))
-//                    Text(text = arr.text, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-//                        color = colorResource(id = R.color.white))
-//                }
-//            }
-//        }
-//    }
-//}
-
-private data class SearchContent(
-    val head: String,
-    val text: String,
-    val unit: () -> Unit
-)
