@@ -56,6 +56,7 @@ import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.VkImageAndVideo
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
+//DEPRECATED
 class MessengerPostActivity
     : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

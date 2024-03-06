@@ -75,4 +75,7 @@
     <string name="dont_disturb_common">Обычные пользователи не смогут вам написать.</string>
     <string name="reply">Ответить</string>
     <string name="my_opinion">Я считаю, что...</string>
+    <string name="title_activity_post_to_messenger">PostToMessenger</string>
+    <string name="invalid_input">Недопустимый ввод</string>
+    <string name="no_permission">У вас нет доступа к терминалу. Недостаточно прав!</string>
 </resources>

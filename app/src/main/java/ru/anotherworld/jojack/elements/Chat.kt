@@ -6,15 +6,18 @@ import android.os.Bundle
 import android.os.StrictMode
 import android.os.StrictMode.ThreadPolicy
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -61,6 +64,7 @@ import coil.request.ImageRequest
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
@@ -180,7 +184,13 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                 trailingIcon = {
                     IconButton(onClick = {
                         coroutine.launch {
-                            chatController.sendMessage(message)
+                            if ("[|START|]" in message || "[|END|]" in message){
+                                Toast.makeText(context, context.getText(R.string.invalid_input),
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                            else{
+                                chatController.sendMessage(message)
+                            }
                             message = ""
                         }
                     }) {
@@ -257,10 +267,37 @@ private fun MessageIn(login: String, text: String, time: String){
                 .widthIn(min = 100.dp),
             horizontalAlignment = if (eq) AbsoluteAlignment.Right else AbsoluteAlignment.Left
         ) {
-            Text(text = login, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
-            Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
-                modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+            if(!eq){ //Отображаем имя только не у себя
+                Text(text = login, fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                    modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+            }
+            if("[|START|]" in text && "[|END|]" in text){
+                val data = Json.decodeFromString<CopyPost>(
+                    text.substringAfter("[|START|]").substringBefore("[|END|]"))
+                Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                    Divider(
+                        color = colorResource(id = R.color.type_group),
+                        thickness = 2.dp,
+                        modifier = Modifier.padding(start = 5.dp)
+                    )
+                    PostBase2(
+                        idPost = data.idPost,
+                        text = data.text,
+                        nameGroup = data.nameGroup,
+                        iconGroup = data.iconGroup,
+                        typeGroup = data.typeGroup,
+                        images = data.images,
+                        originalUrl = data.originalUrl,
+                        like = data.like,
+                        exclusive = data.exclusive
+                    )
+                }
+            }
+            else {
+                Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                    modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+            }
+
             Text(text = time, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
                 modifier = Modifier
                     .padding(end = 12.dp, start = 12.dp)

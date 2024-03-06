@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
@@ -60,12 +61,13 @@ class Terminal : ComponentActivity() {
 }
 
 @Preview
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(){
     var output by remember { mutableStateOf("") }
     var command by remember { mutableStateOf("") }
+    var job by rememberSaveable { mutableStateOf(true) }
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
     val nunitoFamily = FontFamily(
@@ -73,6 +75,9 @@ private fun Content(){
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
     val array = remember { listOf<String>().toMutableStateList() }
+    coroutine.launch { 
+        if(mDatabase.getJob()!! >= 4) job = false
+    }
     Column(modifier = Modifier
         .fillMaxHeight(1f)
         .fillMaxWidth(1f)
@@ -132,16 +137,31 @@ private fun Content(){
                     .fillMaxHeight(1f)
                     .fillMaxWidth(1f)
                     .background(color = colorResource(id = R.color.black2))){
-                    itemsIndexed(array){ index, item ->
-                        Text(text = item, modifier = Modifier
-                            .padding(top = 30.dp)
-                            .fillMaxWidth(1f)
-                            .background(
-                                color = colorResource(id = R.color.black2),
-                                shape = RoundedCornerShape(10.dp)
-                            ),
-                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+                    if(!job){
+                        item {
+                            Text(text = stringResource(id = R.string.no_permission), modifier = Modifier
+                                .padding(top = 30.dp)
+                                .fillMaxWidth(1f)
+                                .background(
+                                    color = colorResource(id = R.color.black2),
+                                    shape = RoundedCornerShape(10.dp)
+                                ),
+                                fontFamily = nunitoFamily, fontWeight = FontWeight.W500)    
+                        }
                     }
+                    else{
+                        itemsIndexed(array){ index, item ->
+                            Text(text = item, modifier = Modifier
+                                .padding(top = 30.dp)
+                                .fillMaxWidth(1f)
+                                .background(
+                                    color = colorResource(id = R.color.black2),
+                                    shape = RoundedCornerShape(10.dp)
+                                ),
+                                fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
+                        }    
+                    }
+                    
                 }
 
             }

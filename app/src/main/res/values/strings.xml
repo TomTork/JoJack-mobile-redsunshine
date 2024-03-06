@@ -74,4 +74,7 @@
     <string name="dont_disturb_common">Standard users will not be able to write to you.</string>
     <string name="reply">Reply</string>
     <string name="my_opinion">My opinion is...</string>
+    <string name="title_activity_post_to_messenger">PostToMessenger</string>
+    <string name="invalid_input">Invalid input</string>
+    <string name="no_permission">You do not have access to the terminal. Not enough rights!</string>
 </resources>

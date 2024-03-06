@@ -1,6 +1,7 @@
 package ru.anotherworld.jojack.elements
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.drawable.ShapeDrawable
@@ -84,6 +85,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -104,10 +106,6 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
-    )
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-        Font(R.font.inter_medium500, FontWeight.W500)
     )
     val likesDatabase = LikesDatabase()
     val context = LocalContext.current
@@ -228,7 +226,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
 
             IconButton(onClick = {
                 if (exclusive) sendToMessenger(idPost, text, nameGroup, iconGroup, typeGroup,
-                    existsImages, images, originalUrl, like, exclusive)
+                    existsImages, images, originalUrl, like, true, context)
                 else showBottomSheet = true
             }) {
                 Icon(painterResource(id=R.drawable.repost), "Repost",
@@ -257,7 +255,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     }
                     IconButton(onClick = {
                         sendToMessenger(idPost, text, nameGroup, iconGroup, typeGroup, existsImages,
-                            images, originalUrl, like, exclusive)
+                            images, originalUrl, like, exclusive, context)
                     }) {
                         Icon(painterResource(id = R.drawable.repost), null,
                             tint = colorResource(id = R.color.icon_color))
@@ -269,8 +267,6 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         if(startComments){ //Отобразить ветку комментариев
             //LOAD COMMENTS FROM SERVER
             val comments = remember { listOf<Comments>().toMutableStateList() }
-            val checked2 by remember { mutableStateOf(false) }
-//            val lazyScroll = rememberLazyListState()
             Column(modifier = Modifier
                 .fillMaxWidth(1f)) {
                 Row(modifier = Modifier.fillMaxWidth(1f)) {
@@ -284,49 +280,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                         fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
                         fontSize = 18.sp, modifier = Modifier.align(Alignment.CenterVertically))
                 }
-//                LazyColumn{
-//
-//                    itemsIndexed(comments){ _, item ->
-//                        Column(
-//                            modifier = Modifier
-//                                .fillMaxWidth(1f)
-//                                .padding(start = 10.dp, end = 10.dp)
-//                        ) {
-//                            Text(text = item.author,
-//                                fontFamily = interFamily,
-//                                fontWeight = FontWeight.W600,
-//                                fontSize = 18.sp)
-//                            Text(text = item.text,
-//                                fontFamily = interFamily,
-//                                fontWeight = FontWeight.W600,
-//                                fontSize = 16.sp,
-//                                modifier = Modifier.combinedClickable {
-//                                    //На удержании, копируем текст в оперативную память
-//                                    clipboardManager.setText(AnnotatedString(
-//                                        "[${item.id}|${item.author}: ${getCurrentTimeStamp(item.time)}]\n${item.text}"))
-//                                })
-//                            Row(modifier = Modifier
-//                                .fillMaxWidth(1f)) {
-//                                Button(onClick = { /*REPLY*/ },
-//                                    modifier = Modifier.weight(0.2f),
-//                                    colors = ButtonDefaults.buttonColors(
-//                                        containerColor = Color.Transparent
-//                                    )) {
-//                                    Text(text = stringResource(id = R.string.reply),
-//                                        fontFamily = interFamily,
-//                                        fontWeight = FontWeight.W600,
-//                                        fontSize = 16.sp)
-//                                }
-//                                IconButton(onClick = { /*LIKE COMMENT*/ },
-//                                    modifier = Modifier.weight(0.8f)) {
-//                                    Icon(painterResource(id=R.drawable.like), "Like",
-//                                        tint = if(checked2) colorResource(id = R.color.cred) else colorResource(id = R.color.icon_color))
-//                                }
-//                            }
-//
-//                        }
-//                    }
-//                }
+                ShowComments(comments = comments, clipboardManager)
                 Row(modifier = Modifier
                     .fillMaxWidth(1f)
                     .padding(start = 10.dp, end = 10.dp)) {
@@ -382,6 +336,61 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ShowComments(comments: SnapshotStateList<Comments>,
+                         clipboardManager: ClipboardManager){ //Отобразить комментарии
+    val interFamily = FontFamily(
+        Font(R.font.inter600, FontWeight.W600),
+        Font(R.font.inter_medium500, FontWeight.W500)
+    )
+    Column(modifier = Modifier
+        .fillMaxWidth(1f)
+        .padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 5.dp)) {
+        for(item in comments){
+            val checked2 by remember { mutableStateOf(false) }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .padding(start = 10.dp, end = 10.dp)
+            ) {
+                Text(text = item.author,
+                    fontFamily = interFamily,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 18.sp)
+                Text(text = item.text,
+                    fontFamily = interFamily,
+                    fontWeight = FontWeight.W600,
+                    fontSize = 16.sp,
+                    modifier = Modifier.combinedClickable {
+                        //На удержании, копируем текст в оперативную память
+                        clipboardManager.setText(AnnotatedString(
+                            "[${item.id}|${item.author}: ${getCurrentTimeStamp(item.time)}]\n${item.text}"))
+                    })
+                Row(modifier = Modifier
+                    .fillMaxWidth(1f)) {
+                    Button(onClick = { /*REPLY*/ },
+                        modifier = Modifier.weight(0.2f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent
+                        )) {
+                        Text(text = stringResource(id = R.string.reply),
+                            fontFamily = interFamily,
+                            fontWeight = FontWeight.W600,
+                            fontSize = 16.sp)
+                    }
+                    IconButton(onClick = { /*LIKE COMMENT*/ },
+                        modifier = Modifier.weight(0.8f)) {
+                        Icon(painterResource(id=R.drawable.like), "Like",
+                            tint = if(checked2) colorResource(id = R.color.cred) else colorResource(id = R.color.icon_color))
+                    }
+                }
+
+            }
+        }
+    }
+}
+
 private fun standardLikes(like: Int): String{
     if(like <= 999) return like.toString()
     else if(like <= 9999){
@@ -395,8 +404,11 @@ private fun standardLikes(like: Int): String{
 
 private fun sendToMessenger(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                             typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo,
-                            originalUrl: String, like: Int, exclusive: Boolean){
-
+                            originalUrl: String, like: Int, exclusive: Boolean, context: Context
+){
+    copyPost = CopyPost(idPost, text, nameGroup, iconGroup, typeGroup, existsImages, images,
+        originalUrl, like, exclusive)
+    context.startActivity(Intent(context, PostToMessenger::class.java))
 }
 
 @Composable

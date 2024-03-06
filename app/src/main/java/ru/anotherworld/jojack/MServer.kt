@@ -1,7 +1,12 @@
 package ru.anotherworld.jojack
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
+import androidx.compose.ui.text.input.KeyboardType.Companion.Uri
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.android.Android
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -15,10 +20,13 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
+import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
+import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.InternalAPI
+import io.ktor.util.toByteArray
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
@@ -27,9 +35,11 @@ import io.ktor.websocket.readBytes
 import io.ktor.websocket.readText
 import io.ktor.websocket.serialization.receiveDeserializedBase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -39,6 +49,8 @@ import ru.anotherworld.jojack.chatcontroller.Message
 import ru.anotherworld.jojack.chatcontroller.MessageDto
 import ru.anotherworld.jojack.chatcontroller.Resource
 import ru.anotherworld.jojack.database.MainDatabase
+import java.io.ByteArrayInputStream
+import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -364,6 +376,39 @@ class UpdatePrivacy{
     }
 }
 
+class Icon{
+    private val database = MainDatabase()
+    private companion object{
+        private val client = HttpClient(){
+            install(ContentNegotiation){
+                json()
+            }
+        }
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun getIcon(): Bitmap?{
+        try{
+            val response = client.get("$BASE_URL/icon"){
+                contentType(ContentType.Application.Json)
+                setBody(IconRemote(database.getLogin()!!))
+            }
+            if(response.content.readUTF8Line() == "null") return null
+            val data = response.content.toByteArray()
+            return BitmapFactory.decodeByteArray(data, 0, data.size)
+        } catch (e: Exception){
+            Log.e("ICON-ERROR", e.message.toString())
+            return null
+        }
+    }
+    suspend fun setIcon(byteArray: ByteArray){
+        client.post("$BASE_URL/set-icon?login3=${database.getLogin()}&token3=${database.getToken()}"){
+            contentType(ContentType.Application.Any)
+            setBody(byteArray)
+        }
+//        database.setIcon()
+    }
+}
+
 @Serializable
 data class SearchP(
     val arr: List<Pair<String, String>>
@@ -506,3 +551,13 @@ data class TTMessages(
 
 @Serializable
 data class Privacy(val token: String, val privacy: Boolean)
+
+@Serializable
+data class IconRemote(
+    val login: String
+)
+
+@Serializable
+data class ImageRemote(
+    val name: String
+)

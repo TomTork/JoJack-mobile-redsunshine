@@ -10,7 +10,7 @@ object MainTable : Table("main"){
     val job = integer("job")
     val serverId = integer("serverId")
     val privacy = bool("privacy")
-    val icon = varchar("icon", 8388608)
+    val icon = varchar("icon", 256)
     val closedKey = varchar("closedKey", 2048)
     val openedKey = varchar("openedKey", 2048)
     val controlSum = varchar("controlSum", 512)

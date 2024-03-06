@@ -202,13 +202,12 @@ fun MissingPermissionsComponent(
                     modifier = Modifier
                         .padding(start = 20.dp, end = 20.dp, top = 30.dp)
                         .align(Alignment.CenterHorizontally)
-                        .weight(0.1f)
                         .fillMaxWidth(0.9f)) {
                     Text(text = stringResource(id = R.string.yet), fontFamily = nunitoFamily,
                         fontWeight = FontWeight.W500, modifier = Modifier,
                         color = colorResource(id = R.color.white))
                 }
-                Spacer(modifier = Modifier.weight(0.4f))
+                Spacer(modifier = Modifier.weight(0.5f))
             }
             Text(text = stringResource(id = R.string.no_permissions),
                 modifier = Modifier
@@ -225,7 +224,7 @@ fun MissingPermissionsComponent(
 val mDatabase = MainDatabase()
 val getInfo = GetInfo()
 val getPostVk = GetPostVk()
-@Preview
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
     "UnrememberedMutableState"
@@ -281,7 +280,9 @@ private fun Content(){ //Main Activity
                                     .fillMaxWidth(1f)
                                     .padding(end = 20.dp)) {
                                 if(contentManager == 0) {
-                                    IconButton(onClick = { /*TODO*/ }) {
+                                    IconButton(onClick = {
+                                        context.startActivity(Intent(context, NotificationActivity::class.java))
+                                    }) {
                                         Column(modifier = Modifier
                                             .padding(end = 15.dp)
                                             .align(Alignment.CenterVertically)
@@ -714,7 +715,6 @@ private fun NewsPaper(){
                                 }
                             }
                         }
-
                         itemsIndexed(items = array, itemContent = {index, value ->
                             PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
                                 iconGroup = value.icon, existsImages = true, images = value.images,
