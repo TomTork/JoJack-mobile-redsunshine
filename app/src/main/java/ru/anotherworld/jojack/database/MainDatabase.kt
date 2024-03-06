@@ -36,7 +36,7 @@ class MainDatabase(){
     suspend fun setJob(value: Int) = daoMain.setJob(value)
     suspend fun getServerId(): Int? = daoMain.getServerId()
     suspend fun setServerId(value: Int) = daoMain.setServerId(value)
-    suspend fun getIcon(): ByteArray? = strToByteArray(daoMain.getIcon())
+    suspend fun getIcon(): String? = daoMain.getIcon()
     suspend fun setIcon(value: String) = daoMain.setIcon(value.replace(" ", ""))
     suspend fun getClosedKey(): String? = daoMain.getClosedKey()
     suspend fun setClosedKey(value: String) = daoMain.setClosedKey(value)

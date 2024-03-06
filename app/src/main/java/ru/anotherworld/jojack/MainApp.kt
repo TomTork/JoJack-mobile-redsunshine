@@ -1,6 +1,7 @@
 package ru.anotherworld.jojack
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -74,6 +76,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -85,10 +88,10 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -96,25 +99,27 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import kotlinx.coroutines.launch
-import ru.anotherworld.jojack.animation.CrossSlide
-import ru.anotherworld.jojack.database.MainDatabase
-import ru.anotherworld.jojack.elements.ChatActivity
-import ru.anotherworld.jojack.elements.ChatMessage
-import ru.anotherworld.jojack.elements.PostBase2
-import ru.anotherworld.jojack.ui.theme.JoJackTheme
-import java.io.File
-import java.net.NoRouteToHostException
 import io.ktor.client.network.sockets.ConnectTimeoutException
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.database.ChatsData
 import ru.anotherworld.jojack.database.ChatsDatabase
+import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.elements.Chat2
+import ru.anotherworld.jojack.elements.ChatActivity
+import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.CopyPost
+import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
 import ru.anotherworld.jojack.elements.nameChat2
+import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.net.NoRouteToHostException
+
 
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
@@ -702,7 +707,12 @@ private fun NewsPaper(){
                                     .fillMaxWidth(1f)
                                     .clickable { startCreateNewPostFromUser = true }
                                     .background(color = colorResource(id = R.color.black))
-                                    .padding(top = 22.dp, start = 10.dp, end = 10.dp, bottom = 10.dp)
+                                    .padding(
+                                        top = 22.dp,
+                                        start = 10.dp,
+                                        end = 10.dp,
+                                        bottom = 10.dp
+                                    )
                                 ) {
                                     Icon(painter = painterResource(id = R.drawable.account_circle),
                                         null, tint = colorResource(id = R.color.white),
@@ -850,7 +860,6 @@ private fun Messenger(){
             itemsIndexed(array){ index, item ->
                 coroutine.launch {
                     try{
-                        Log.d("WHAT", "TRUE")
                         val chatTwo = ChatTwo(item.chat)
                         val count = chatTwo.getCountMessages()!!
                         val value = chatTwo.getRangeMessages(count, count)
@@ -861,7 +870,7 @@ private fun Messenger(){
                         } else previewMessage = value[0].message
                         previewName = value[0].author
                     } catch (e: Exception){
-                        //TODO
+                        Log.e("ERROR ::MainApp", e.message.toString())
                     }
                 }
                 ChatMessage(name = item.name, previewMessage = previewMessage, username = previewName,
@@ -882,7 +891,8 @@ private fun Account(){
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    val bitmap =  rememberSaveable { mutableStateOf<Bitmap?>(null) }
+    val bitmap =  remember { mutableStateOf<Bitmap?>(null) }
+    var updateImage by remember { mutableStateOf(false) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var privacy by rememberSaveable { mutableStateOf(false) }
     val nunitoFamily = FontFamily(
@@ -890,6 +900,7 @@ private fun Account(){
         Font(R.font.nunito_light400, FontWeight.W400),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
+    val past = File("data/data/ru.anotherworld.jojack/icon.png")
     Column(modifier = Modifier
         .fillMaxWidth(1f)
         .fillMaxHeight(1f)
@@ -906,15 +917,21 @@ private fun Account(){
             }
             privacy = mDatabase.getPrivacy()!!
             val bitF = mDatabase.getIcon()
-            if (bitF != null) {
-                if(bitF.toString() != "") bitmap.value = BitmapFactory.decodeByteArray(bitF, 0, bitF.size)
-            }
+            if(bitF != null) imageUri = Uri.parse(bitF.toString())
         }
 
         var ready by remember { mutableStateOf(false) }
+        val mIcon = MIcon()
         val launcher = rememberLauncherForActivityResult(contract =
         ActivityResultContracts.GetContent()) { uri: Uri? ->
             imageUri = uri
+            if(past.exists()) past.delete()
+            createFileFromContentUri(imageUri!!, context).copyTo(past)
+            ready = true
+            updateImage = true
+            coroutine.launch {
+                mIcon.uploadImage("112", context.contentResolver.openInputStream(uri!!)?.readBytes())
+            }
         }
         var job_ by rememberSaveable { mutableIntStateOf(0) }
         var login_ by rememberSaveable { mutableStateOf("") }
@@ -923,6 +940,19 @@ private fun Account(){
             job_ = mDatabase.getJob()!!
             login_ = mDatabase.getLogin()!!
             serverId_ = mDatabase.getServerId()!!
+
+            if(!past.exists()){
+                try {
+                    Log.d("STAGE2", "TRUE-0")
+                    mIcon.getIcon(login_)
+                    Log.d("STAGE2", "TRUE-1")
+                    updateImage = true
+                    Log.d("STAGE2", "TRUE-2")
+                } catch (e: java.lang.IllegalStateException){
+                    Log.e("ERROR", e.message.toString())
+                }
+
+            }
         }
         val job = when(job_){
             -1 -> stringResource(id = R.string.blocked_user)
@@ -947,40 +977,18 @@ private fun Account(){
                             .size(150.dp)
                             .clip(RoundedCornerShape(10.dp)))
                 }
-                if(bitmap.value != null){
-                    Log.d("APP", "TRUE")
-                    Icon(bitmap = bitmap.value!!.asImageBitmap(), null,
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(10.dp)))
+                if(ready || past.exists()){
+                    AsyncImage(model = BitmapFactory.decodeFile(past.absolutePath), contentDescription = null,
+                        contentScale = ContentScale.Crop)
+                }
+                if(updateImage){
+                    AsyncImage(model = BitmapFactory.decodeFile(past.absolutePath), contentDescription = null,
+                        contentScale = ContentScale.Crop)
+                    updateImage = false
+
                 }
             }
-            imageUri?.let {
-                if(Build.VERSION.SDK_INT < 28){
-                    bitmap.value = MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-                    ready = true
-                    coroutine.launch {
-                        val stream = ByteArrayOutputStream()
-                        val b2 = bitmap.value!!
-                        b2.compress(Bitmap.CompressFormat.PNG, 90, stream)
-                        mDatabase.setIcon(stream.toByteArray().toList().toString())
-                        //Save image to memory server
-                    }
-                }
-                else {
-                    val source = ImageDecoder.createSource(context.contentResolver, it)
-                    bitmap.value = ImageDecoder.decodeBitmap(source)
-                    ready = true
-                    coroutine.launch { //Сохранение изображения в бд пользователя
-                        val stream = ByteArrayOutputStream()
-                        val b2 = bitmap.value!!
-                        b2.compress(Bitmap.CompressFormat.PNG, 90, stream)
-                        mDatabase.setIcon(stream.toByteArray().toList().toString())
-                        //Save image to memory server
-                    }
-                }
-            }
-            Column(modifier= Modifier.align(Alignment.CenterHorizontally)) {
+            Column(modifier = Modifier.align(Alignment.CenterHorizontally)) {
                 Text(text = stringResource(id = R.string.login) + ": " + login_,
                     fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
                 Text(text = stringResource(id = R.string.job) + " " + job,
@@ -1054,9 +1062,6 @@ private fun Account(){
                             .weight(0.8f)
                             .align(Alignment.CenterVertically)
                             .padding(start = 10.dp))
-//                        Text(text = stringResource(id = R.string.dont_disturb_common),
-//                            fontSize = 12.sp,
-//                            fontFamily = nunitoFamily, fontWeight = FontWeight.W400)
                     Switch(checked = privacy, onCheckedChange
                     = {
                         privacy = it
@@ -1091,3 +1096,41 @@ private fun Account(){
     }
 }
 
+fun createFileFromContentUri(fileUri : Uri, context: Context) : File {
+    var fileName = ""
+
+    fileUri.let { returnUri ->
+        context.contentResolver.query(returnUri,null,null,null)
+    }?.use { cursor ->
+        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        cursor.moveToFirst()
+        fileName = cursor.getString(nameIndex)
+    }
+
+    val fileType: String? = fileUri.let { returnUri ->
+        context.contentResolver.getType(returnUri)
+    }
+
+    val iStream : InputStream =
+        context.contentResolver.openInputStream(fileUri)!!
+    val outputDir : File = context.cacheDir!!
+    val outputFile : File = File(outputDir,fileName)
+    copyStreamToFile(iStream, outputFile)
+    iStream.close()
+    return outputFile
+}
+
+fun copyStreamToFile(inputStream: InputStream, outputFile: File) {
+    inputStream.use { input ->
+        val outputStream = FileOutputStream(outputFile)
+        outputStream.use { output ->
+            val buffer = ByteArray(4 * 1024) // buffer size
+            while (true) {
+                val byteCount = input.read(buffer)
+                if (byteCount < 0) break
+                output.write(buffer, 0, byteCount)
+            }
+            output.flush()
+        }
+    }
+}

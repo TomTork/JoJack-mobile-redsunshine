@@ -277,6 +277,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         if(startComments){ //Отобразить ветку комментариев
             //LOAD COMMENTS FROM SERVER
             val comments = remember { listOf<Comments>().toMutableStateList() }
+            var now by remember { mutableStateOf<String?>(null) }
             Column(modifier = Modifier
                 .fillMaxWidth(1f)) {
                 Row(modifier = Modifier.fillMaxWidth(1f)) {
@@ -295,11 +296,10 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     .fillMaxWidth(1f)
                     .padding(start = 10.dp, end = 10.dp)) {
                     //Ввод комментариев
-                    var data = remember { byteArrayOf() }
                     var comment by remember { mutableStateOf("") }
                     coroutine.launch {
-                        val now = mDatabase.getIcon()
-                        if(now != null) data = now
+                        now = mDatabase.getIcon()
+//                        if(now != null) data = now
                     }
 
                     TextField(value = comment, onValueChange = { comment = it },
@@ -313,8 +313,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                                 color = colorResource(id = R.color.white))
                         },
                         leadingIcon = {
-                            if(data.isNotEmpty()) Icon(bitmap = BitmapFactory.decodeByteArray(data, 0, data.size).asImageBitmap(),
-                                null, modifier = Modifier.size(30.dp))
+                            if(now != null) AsyncImage(model = now, contentDescription = null)
                             else Icon(painter = painterResource(id = R.drawable.account_circle), contentDescription = null,
                                 modifier = Modifier.size(30.dp))
                         },

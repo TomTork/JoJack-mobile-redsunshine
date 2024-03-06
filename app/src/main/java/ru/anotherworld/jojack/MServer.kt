@@ -15,19 +15,28 @@ import io.ktor.client.plugins.logging.DEFAULT
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.onUpload
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.client.plugins.websocket.webSocketSession
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.request.url
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.InternalAPI
+import io.ktor.util.cio.writeChannel
 import io.ktor.util.toByteArray
+import io.ktor.utils.io.copyAndClose
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
@@ -297,7 +306,6 @@ class ChatTwo(private val nameDb: String){
     }
     suspend fun sendMessage(message: TMessage2) {
         try {
-            Log.d("PRO-MESSAGE", Json.encodeToString<TMessage2>(message))
             socket?.send(Frame.Text(Json.encodeToString<TMessage2>(message)))
         } catch (e: Exception){
             e.printStackTrace()
@@ -378,8 +386,9 @@ class UpdatePrivacy{
     }
 }
 
-class Icon{
+class MIcon{
     private val database = MainDatabase()
+    val file = File("data/data/ru.anotherworld.jojack/icon.png")
     private companion object{
         private val client = HttpClient(){
             install(ContentNegotiation){
@@ -387,27 +396,49 @@ class Icon{
             }
         }
     }
-    @OptIn(InternalAPI::class)
-    suspend fun getIcon(): Bitmap?{
-        try{
-            val response = client.get("$BASE_URL/icon"){
-                contentType(ContentType.Application.Json)
-                setBody(IconRemote(database.getLogin()!!))
+    private val client2 = HttpClient()
+    suspend fun getIcon(login: String): File{
+        return try{
+            val response = client2.get("$BASE_URL/icon?login4=$login"){
             }
-            if(response.content.readUTF8Line() == "null") return null
-            val data = response.content.toByteArray()
-            return BitmapFactory.decodeByteArray(data, 0, data.size)
-        } catch (e: Exception){
+            if(file.exists()) file.delete()
+            response.bodyAsChannel().copyAndClose(file.writeChannel())
+            Log.d("STAGE", "TRUE")
+            file
+        } catch (e: java.lang.IllegalStateException){
             Log.e("ICON-ERROR", e.message.toString())
-            return null
+            file
         }
     }
-    suspend fun setIcon(byteArray: ByteArray){
-        client.post("$BASE_URL/set-icon?login3=${database.getLogin()}&token3=${database.getToken()}"){
+    suspend fun setIcon(file: File){
+        client2.post("$BASE_URL/set-icon?login3=${database.getLogin()}&token3=${database.getToken()}"){
             contentType(ContentType.Application.Any)
-            setBody(byteArray)
+            setBody(file)
         }
-//        database.setIcon()
+    }
+
+    suspend fun uploadImage(text: String, byteArray: ByteArray?): Boolean {
+        return try {
+            if (byteArray != null) {
+                val response: HttpResponse = client.submitFormWithBinaryData(
+                    url = "$BASE_URL/set-icon?login3=${database.getLogin()}&token3=${database.getToken()}",
+                    formData = formData {
+                        append("text", text)
+                        append("image", byteArray, Headers.build {
+                            append(HttpHeaders.ContentType, "image/*")
+                            append(HttpHeaders.ContentDisposition, "filename=icon.png")
+                        })
+                    }
+                ) {
+                    onUpload { bytesSentTotal, contentLength ->
+                        println("Sent $bytesSentTotal bytes from $contentLength")
+                    }
+                }
+            }
+            true
+        } catch (ex: Exception) {
+            false
+        }
     }
 }
 
