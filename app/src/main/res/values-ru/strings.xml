@@ -78,4 +78,5 @@
     <string name="title_activity_post_to_messenger">PostToMessenger</string>
     <string name="invalid_input">Недопустимый ввод</string>
     <string name="no_permission">У вас нет доступа к терминалу. Недостаточно прав!</string>
+    <string name="access_is_allowed">Доступ разрешён</string>
 </resources>

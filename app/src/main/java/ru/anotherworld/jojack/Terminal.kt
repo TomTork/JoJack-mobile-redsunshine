@@ -4,9 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -67,17 +71,21 @@ class Terminal : ComponentActivity() {
 private fun Content(){
     var output by remember { mutableStateOf("") }
     var command by remember { mutableStateOf("") }
-    var job by rememberSaveable { mutableStateOf(true) }
+    var job by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600),
         Font(R.font.nunito_medium500, FontWeight.W500)
     )
+    val terminal = MTerminal()
     val array = remember { listOf<String>().toMutableStateList() }
     coroutine.launch { 
-        if(mDatabase.getJob()!! >= 4) job = false
+        if(mDatabase.getJob()!! >= 4) job = true
     }
+    val state = rememberLazyListState()
+    val cipher = Cipher()
+    var password by remember { mutableStateOf("") }
     Column(modifier = Modifier
         .fillMaxHeight(1f)
         .fillMaxWidth(1f)
@@ -111,7 +119,20 @@ private fun Content(){
                     trailingIcon = {
                         IconButton(onClick = {
                             coroutine.launch {
-                                //SEND RESULT TO ARRAY
+                                if(!job &&
+                                    (cipher.hash(command) == "58a7273cae5316586bbd412d8d15f7b74b8885974400b9a84453d1a4c497831d39d16552370a18f36454eb44c78e1b6eaacd84fd51b240872ceeba85311e4f5e") ||
+                                    cipher.hash(command) == "8b53086ae560a67b0263f2ce6e9321b8afd28e01ce9001096f44a2ac6a4a8f0dea4d943783b7c307d2e95df9bf4fbc617f953abfd6446f242b710ce6d5a2648e"){
+                                    password = cipher.encrypt(command, cipher.md52(command))
+                                    array.add(context.getText(R.string.access_is_allowed).toString())
+                                    job = true
+                                }
+                                else if(job){
+                                    array.add(terminal.sendQuery(command, password))
+                                    state.animateScrollToItem(array.size)
+                                }
+                                else{
+                                    array.add(context.getText(R.string.no_permission).toString())
+                                }
                                 command = ""
                             }
                         }) {
@@ -136,7 +157,10 @@ private fun Content(){
                 LazyColumn(modifier = Modifier
                     .fillMaxHeight(1f)
                     .fillMaxWidth(1f)
-                    .background(color = colorResource(id = R.color.black2))){
+                    .background(color = colorResource(id = R.color.black2))
+                    .padding(top = 40.dp, start = 10.dp, end = 10.dp, bottom = 80.dp),
+                    state = state
+                ){
                     if(!job){
                         item {
                             Text(text = stringResource(id = R.string.no_permission), modifier = Modifier
@@ -149,18 +173,18 @@ private fun Content(){
                                 fontFamily = nunitoFamily, fontWeight = FontWeight.W500)    
                         }
                     }
-                    else{
-                        itemsIndexed(array){ index, item ->
-                            Text(text = item, modifier = Modifier
-                                .padding(top = 30.dp)
-                                .fillMaxWidth(1f)
-                                .background(
-                                    color = colorResource(id = R.color.black2),
-                                    shape = RoundedCornerShape(10.dp)
-                                ),
-                                fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
-                        }    
+
+                    itemsIndexed(array){ index, item ->
+                        Text(text = item, modifier = Modifier
+                            .padding(top = 30.dp)
+                            .fillMaxWidth(1f)
+                            .background(
+                                color = colorResource(id = R.color.black2),
+                                shape = RoundedCornerShape(10.dp)
+                            ),
+                            fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
                     }
+
                     
                 }
 

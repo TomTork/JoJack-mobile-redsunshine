@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Divider
@@ -63,6 +64,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.ChatOnJoin
@@ -76,12 +78,14 @@ import ru.anotherworld.jojack.chatcontroller.Message
 import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
 import ru.anotherworld.jojack.cipher
 import ru.anotherworld.jojack.database.MainDatabase
+import ru.anotherworld.jojack.mDatabase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import ru.anotherworld.jojack.sDatabase
 
 var idChat2: String = ""
 var nameChat2: String = ""
 var iconChat2: String = ""
+var repost: String = ""
 
 class Chat2 : ComponentActivity() {
     override fun onDestroy() {
@@ -119,6 +123,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String){
     coroutine.launch {
         login1 = sDatabase.getLogin()!!
     }
+    val lazyState = rememberLazyListState()
     Scaffold(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -225,11 +230,23 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String){
             coroutine.launch {
                 if(!ready){
                     chatController.initSession(sDatabase.getToken()!!)
+
+                    if(repost != ""){
+                        chatController.sendMessage(TMessage2(
+                            id = 0,
+                            author = sDatabase.getLogin()!!,
+                            message = "[|START|]${repost}[|END|]",
+                            timestamp = System.currentTimeMillis()
+                        ))
+                        repost = ""
+                    }
+
                     destroy = chatController
                     val countMessages = chatController.getCountMessages()
                     Log.d("INFO", countMessages.toString())
                     messagesList.addAll(chatController.getRangeMessages(1, countMessages!!).toMutableStateList())
                     Log.d("INFO4", messagesList.toList().toString())
+
                 }
                 ready = true
 
@@ -241,10 +258,9 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String){
             }
             if (ready){
                 Divider(thickness = 2.dp, color = Color.Black)
-                LazyColumn(
-                    reverseLayout = true
-                ){
-                    itemsIndexed(messagesList){ _, message ->
+                LazyColumn(state = lazyState,
+                    reverseLayout = true){
+                    itemsIndexed(messagesList.sortedBy { it.timestamp }.reversed()){ _, message ->
                         MessageIn(
                             login = message.author,
                             text = message.message,
@@ -285,26 +301,21 @@ private fun MessageIn(login: String, text: String, time: String){
             horizontalAlignment = if (eq) AbsoluteAlignment.Right else AbsoluteAlignment.Left
         ) {
             if("[|START|]" in text && "[|END|]" in text){
+                Log.d("DATA", text.substringAfter("[|START|]").substringBefore("[|END|]"))
                 val data = Json.decodeFromString<CopyPost>(
                     text.substringAfter("[|START|]").substringBefore("[|END|]"))
-                Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                    Divider(
-                        color = colorResource(id = R.color.type_group),
-                        thickness = 2.dp,
-                        modifier = Modifier.padding(start = 5.dp)
-                    )
-                    PostBase2(
-                        idPost = data.idPost,
-                        text = data.text,
-                        nameGroup = data.nameGroup,
-                        iconGroup = data.iconGroup,
-                        typeGroup = data.typeGroup,
-                        images = data.images,
-                        originalUrl = data.originalUrl,
-                        like = data.like,
-                        exclusive = data.exclusive
-                    )
-                }
+                PostBase3(
+                    idPost = data.idPost,
+                    text = data.text,
+                    nameGroup = data.nameGroup,
+                    iconGroup = data.iconGroup,
+                    typeGroup = data.typeGroup,
+                    images = data.images,
+                    originalUrl = data.originalUrl,
+                    like = data.like,
+                    exclusive = data.exclusive,
+                    myMessage = eq
+                )
             }
             else {
                 Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,

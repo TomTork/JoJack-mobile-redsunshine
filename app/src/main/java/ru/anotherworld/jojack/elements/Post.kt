@@ -237,16 +237,26 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
             ModalBottomSheet(onDismissRequest = { showBottomSheet = false },
                 sheetState = sheetState) {
                 Row(modifier = Modifier.fillMaxWidth(1f)) {
-                    Column {
+                    Column() {
                         Text(text = nameGroup,
                             fontFamily = nunitoFamily,
                             fontWeight = FontWeight.W600,
                             color = colorResource(id = R.color.white))
-                        Text(text = text.substring(0, 27) + "...",
-                            fontFamily = nunitoFamily,
-                            fontWeight = FontWeight.W600,
-                            color = colorResource(id = R.color.white))
+                        if(text.length > 27){
+                            Text(text = text.substring(0, 27) + "...",
+                                fontFamily = nunitoFamily,
+                                fontWeight = FontWeight.W600,
+                                color = colorResource(id = R.color.white))
+                        }
+                        else{
+                            Text(text = text,
+                                fontFamily = nunitoFamily,
+                                fontWeight = FontWeight.W600,
+                                color = colorResource(id = R.color.white))
+                        }
+
                     }
+                    Spacer(modifier = Modifier.weight(0.7f))
                     IconButton(onClick = {
                         clipboardManager.setText(AnnotatedString(originalUrl))
                     }) {
@@ -481,4 +491,106 @@ fun HashtagsMentionsTextView(text: String, modifier: Modifier = Modifier, onClic
             if (annotatedStringRange.tag == "link") onClick(annotatedStringRange.item)
         }
     )
+}
+
+@SuppressLint("CoroutineCreationDuringComposition")
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@Composable
+fun PostBase3(idPost: Int, text: String, nameGroup: String, iconGroup: String,
+              typeGroup: String, existsImages: Boolean = true, images: VkImageAndVideo,
+              originalUrl: String, like: Int, exclusive: Boolean, inMessenger: Boolean = false,
+              myMessage: Boolean = true){
+    val nunitoFamily = FontFamily(
+        Font(R.font.nunito_semibold600, FontWeight.W600),
+        Font(R.font.nunito_medium500, FontWeight.W500)
+    )
+    val likesDatabase = LikesDatabase()
+    val coroutine = rememberCoroutineScope()
+    val pagerState = rememberPagerState { images.images.size }
+    var checked by remember { mutableStateOf(false) }
+
+    coroutine.launch {
+        val previewChecked = likesDatabase.getLikedByOriginalUrl(originalUrl)
+        if (previewChecked != null){
+            if(previewChecked == true){
+                checked = true
+            }
+        }
+    }
+
+    Column(modifier= Modifier
+        .padding(bottom = 7.dp)
+        .fillMaxWidth(0.8f)
+        .fillMaxHeight(0.8f)
+        .background(
+            color = if (myMessage) colorResource(id = R.color.my_message_color) else colorResource(
+                id = R.color.message_color
+            )
+        )) {
+        Spacer(modifier = Modifier.padding(top = 21.dp))
+        Row(Modifier.padding(start = 10.dp)) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(iconGroup)
+                    .crossfade(true)
+                    .build(),
+                placeholder = painterResource(R.drawable.preview),
+                contentDescription = stringResource(R.string.app_name),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+            )
+            Column(modifier = Modifier.padding(start = 10.dp)) {
+                Text(
+                    text = nameGroup, color = colorResource(id = R.color.white),
+                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                    lineHeight = 20.sp
+                )
+                Text(
+                    text = typeGroup, color = colorResource(id = R.color.type_group),
+                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                    modifier = Modifier.offset(y = (-4).dp)
+                )
+            }
+        }
+        HashtagsMentionsTextView(
+            text = text,
+            onClick = {},
+            modifier = Modifier.padding(bottom = 4.dp, start = 10.dp, end = 10.dp),
+            fontFamily = nunitoFamily,
+            fontWeight = FontWeight.W500
+        )
+        if (existsImages && images.images.isNotEmpty()) {
+            Log.d("HHH", "TRUE")
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(images.images[0])
+                    .crossfade(true)
+                    .build(),
+
+                contentDescription = stringResource(R.string.app_name),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+//            HorizontalPager(
+//                state = pagerState,
+//                key = { images.images[it] },
+//                pageSize = PageSize.Fill,
+//                modifier = Modifier
+//                    .fillMaxWidth(1f)
+//                    .align(Alignment.CenterHorizontally)
+//            ) { index ->
+//                AsyncImage(
+//                    model = ImageRequest.Builder(LocalContext.current)
+//                        .data(images.images[index])
+//                        .crossfade(true)
+//                        .build(),
+//
+//                    contentDescription = stringResource(R.string.app_name),
+//                    modifier = Modifier.align(Alignment.CenterHorizontally)
+//                )
+//            }
+
+        }
+    }
 }

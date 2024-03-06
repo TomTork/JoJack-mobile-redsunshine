@@ -95,21 +95,12 @@ private fun Content(){ //Отображение перессылки сообщ�
                 bottomStart = 0.dp
             )
         )
-        .background(colorResource(id = R.color.background2)), verticalArrangement = Arrangement.Center) {
+        .background(colorResource(id = R.color.black2))) {
         LazyColumn{
             item {
                 ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
                     action = {
-                        val chatController = ChatController()
-                        coroutine.launch {
-                            chatController.sendMessage(
-                                """
-                           [|START|]
-                            ${Json.encodeToString<CopyPost>(copyPost)}
-                            [|END|] 
-                        """.trimIndent()
-                            )
-                        }
+                        repost_base_chat = "[|START|]${Json.encodeToString<CopyPost>(copyPost)}[|END|]"
                         context.startActivity(Intent(context, ChatActivity::class.java))
                     })
             }
@@ -119,7 +110,11 @@ private fun Content(){ //Отображение перессылки сообщ�
                     try{
                         val count = chatTwo.getCountMessages()!!
                         val value = chatTwo.getRangeMessages(count, count)
-                        previewMessage = value[0].message
+                        if("[|START|]" in value[0].message){
+                            val dd = Json.decodeFromString<CopyPost>(value[0].message
+                                .substringAfter("[|START|]").substringBefore("[|END|]"))
+                            previewMessage = dd.nameGroup + " " + dd.text.substring(0, 16) + "..."
+                        } else previewMessage = value[0].message
                         previewName = value[0].author
                     } catch (e: Exception){
                         Log.e("ERROR", e.message.toString())
@@ -128,22 +123,13 @@ private fun Content(){ //Отображение перессылки сообщ�
                 ChatMessage(name = item.name, previewMessage = previewMessage, username = previewName,
                     action = {
                         coroutine.launch {
-                            val chatTwo = ChatTwo(item.chat)
-                            chatTwo.sendMessage(TMessage2(
-                                id = 0,
-                                author = login,
-                                message = """
-                                [|START|]
-                                ${Json.encodeToString<CopyPost>(copyPost)}
-                                [|END|]
-                            """.trimIndent(),
-                                timestamp = System.currentTimeMillis()
-                            ))
+                            idChat2 = item.chat
+                            nameChat2 = item.name
+                            iconChat2 = item.icon
+                            repost = Json.encodeToString<CopyPost>(copyPost)
+                            context.startActivity(Intent(context, Chat2::class.java))
                         }
-                        idChat2 = item.chat
-                        nameChat2 = item.name
-                        iconChat2 = item.icon
-                        context.startActivity(Intent(context, Chat2::class.java))
+
                     }) //show chats
             }
         }

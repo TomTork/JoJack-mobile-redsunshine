@@ -49,7 +49,8 @@ fun ChatMessage(name: String, previewMessage: String, username: String, idChat: 
                     painterResource(id = R.drawable.account_circle), null,
                     modifier = Modifier
                         .size(70.dp)
-                        .padding(start = 10.dp))
+                        .padding(start = 10.dp),
+                    tint = Color.White)
             }
             else{
                 Icon(image, null, Modifier
@@ -60,16 +61,18 @@ fun ChatMessage(name: String, previewMessage: String, username: String, idChat: 
                 Text(text = name, fontWeight = FontWeight.W600, fontSize = 18.sp,
                     fontFamily = nunitoFamily,
                     modifier = Modifier
-                        .padding(start = 5.dp))
+                        .padding(start = 5.dp),
+                    color = colorResource(id = R.color.white))
                 if (countMessage != 0){
                     Text(text = countMessage.toString(), modifier = Modifier
                         .background(colorResource(id = R.color.grey),
-                            shape = RoundedCornerShape(20.dp))
+                            shape = RoundedCornerShape(20.dp)),
+                        color = Color.White
                     )
                 }
                 Text(text = "$username: $previewMessage", modifier = Modifier.padding(start = 5.dp,
                         bottom = 5.dp), fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
-                    fontSize = 16.sp)
+                    fontSize = 16.sp, color = colorResource(id = R.color.white))
                 Spacer(modifier = Modifier.padding(bottom=4.dp))
             }
 

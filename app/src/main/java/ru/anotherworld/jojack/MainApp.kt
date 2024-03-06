@@ -106,9 +106,11 @@ import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.io.File
 import java.net.NoRouteToHostException
 import io.ktor.client.network.sockets.ConnectTimeoutException
+import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.database.ChatsData
 import ru.anotherworld.jojack.database.ChatsDatabase
 import ru.anotherworld.jojack.elements.Chat2
+import ru.anotherworld.jojack.elements.CopyPost
 import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
 import ru.anotherworld.jojack.elements.nameChat2
@@ -847,11 +849,16 @@ private fun Messenger(){
             }
             itemsIndexed(array){ index, item ->
                 coroutine.launch {
-                    val chatTwo = ChatTwo(item.chat)
                     try{
+                        Log.d("WHAT", "TRUE")
+                        val chatTwo = ChatTwo(item.chat)
                         val count = chatTwo.getCountMessages()!!
                         val value = chatTwo.getRangeMessages(count, count)
-                        previewMessage = value[0].message
+                        if("[|START|]" in value[0].message){
+                            val dd = Json.decodeFromString<CopyPost>(value[0].message
+                                .substringAfter("[|START|]").substringBefore("[|END|]"))
+                            previewMessage = dd.nameGroup + " " + dd.text.substring(0, 16) + "..."
+                        } else previewMessage = value[0].message
                         previewName = value[0].author
                     } catch (e: Exception){
                         //TODO

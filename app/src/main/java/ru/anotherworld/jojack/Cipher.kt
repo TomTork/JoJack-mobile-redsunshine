@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.wifi.WifiInfo
 import android.content.Context.WIFI_SERVICE
+import android.util.Log
 import java.io.IOException
 import java.math.BigInteger
 import java.security.GeneralSecurityException
@@ -36,6 +37,14 @@ class Cipher {
             sb.append(((digest[i].toInt() and 0xff) + 0x100).toString(16).substring(1))
         }
         return sb.toString()
+    }
+    fun md52(input: String): String{
+        val md = BigInteger(1, MessageDigest.getInstance("MD5").digest(input.toByteArray())).toString(16)
+            .padStart(32, '0').toCharArray()
+        for (i in 0..15){
+            md[i] = (md[i].code + md[i + 16].code).toChar()
+        }
+        return Base64.getEncoder().encodeToString(md.joinToString("").toByteArray(charset = Charsets.UTF_8)).substring(0, 16)
     }
     fun md5(input:String): String {
         val md = MessageDigest.getInstance("MD5")

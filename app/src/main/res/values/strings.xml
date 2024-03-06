@@ -77,4 +77,5 @@
     <string name="title_activity_post_to_messenger">PostToMessenger</string>
     <string name="invalid_input">Invalid input</string>
     <string name="no_permission">You do not have access to the terminal. Not enough rights!</string>
+    <string name="access_is_allowed">Access is allowed</string>
 </resources>

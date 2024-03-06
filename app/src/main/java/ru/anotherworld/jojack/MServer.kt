@@ -1,5 +1,6 @@
 package ru.anotherworld.jojack
 
+import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -296,6 +297,7 @@ class ChatTwo(private val nameDb: String){
     }
     suspend fun sendMessage(message: TMessage2) {
         try {
+            Log.d("PRO-MESSAGE", Json.encodeToString<TMessage2>(message))
             socket?.send(Frame.Text(Json.encodeToString<TMessage2>(message)))
         } catch (e: Exception){
             e.printStackTrace()
@@ -408,6 +410,37 @@ class Icon{
 //        database.setIcon()
     }
 }
+
+class MTerminal{
+    private val database = MainDatabase()
+    private companion object{
+        private val client = HttpClient(){
+            install(ContentNegotiation){
+                json()
+            }
+        }
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun sendQuery(query: String, password: String? = null): String{
+        val receive = client.get("$BASE_URL/terminal"){
+            contentType(ContentType.Application.Json)
+            setBody(CommandLine(query, database.getToken()!!, password))
+        }
+        return Json.decodeFromString<Answer>(receive.content.readUTF8Line().toString()).answer
+    }
+}
+
+@Serializable
+data class CommandLine(
+    val query: String,
+    val token: String,
+    val password: String? = ""
+)
+
+@Serializable
+data class Answer(
+    val answer: String
+)
 
 @Serializable
 data class SearchP(

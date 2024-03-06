@@ -76,6 +76,7 @@
             android:name=".Terminal"
             android:exported="false"
             android:label="@string/title_activity_terminal"
+            android:windowSoftInputMode="adjustResize"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.JoJack" />
         <activity

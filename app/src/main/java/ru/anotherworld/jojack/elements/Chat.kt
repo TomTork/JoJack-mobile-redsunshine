@@ -75,6 +75,7 @@ import kotlin.concurrent.thread
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
+var repost_base_chat: String = ""
 
 class ChatActivity : ComponentActivity(){
     @OptIn(DelicateCoroutinesApi::class)
@@ -213,6 +214,14 @@ fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<Str
                     chatController.initSession(sDatabase.getLogin()!!, sDatabase.getToken()!!)
                     destroyMServer = chatController
                     messagesList.addAll(chatController.getAllMessages().toMutableStateList())
+
+                    if(repost_base_chat != ""){
+                        chatController.sendMessage(
+                            repost_base_chat
+                        )
+                        repost_base_chat = ""
+                    }
+
                 }
                 ready = true
 
@@ -274,24 +283,19 @@ private fun MessageIn(login: String, text: String, time: String){
             if("[|START|]" in text && "[|END|]" in text){
                 val data = Json.decodeFromString<CopyPost>(
                     text.substringAfter("[|START|]").substringBefore("[|END|]"))
-                Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                    Divider(
-                        color = colorResource(id = R.color.type_group),
-                        thickness = 2.dp,
-                        modifier = Modifier.padding(start = 5.dp)
-                    )
-                    PostBase2(
-                        idPost = data.idPost,
-                        text = data.text,
-                        nameGroup = data.nameGroup,
-                        iconGroup = data.iconGroup,
-                        typeGroup = data.typeGroup,
-                        images = data.images,
-                        originalUrl = data.originalUrl,
-                        like = data.like,
-                        exclusive = data.exclusive
-                    )
-                }
+                PostBase3(
+                    idPost = data.idPost,
+                    text = data.text,
+                    nameGroup = data.nameGroup,
+                    iconGroup = data.iconGroup,
+                    typeGroup = data.typeGroup,
+                    images = data.images,
+                    originalUrl = data.originalUrl,
+                    like = data.like,
+                    exclusive = data.exclusive,
+                    myMessage = eq
+                )
+
             }
             else {
                 Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,

@@ -11,9 +11,9 @@ class MainViewModel: ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    init {
-        loadStuff()
-    }
+//    init {
+//        loadStuff()
+//    }
 
     fun loadStuff(){
         viewModelScope.launch {
