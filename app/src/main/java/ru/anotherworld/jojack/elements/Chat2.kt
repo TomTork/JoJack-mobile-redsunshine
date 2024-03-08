@@ -67,7 +67,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.ChatController
-import ru.anotherworld.jojack.ChatOnJoin
 import ru.anotherworld.jojack.ChatTwo
 import ru.anotherworld.jojack.Cipher
 import ru.anotherworld.jojack.MainApp

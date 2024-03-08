@@ -388,7 +388,7 @@ class UpdatePrivacy{
 
 class MIcon{
     private val database = MainDatabase()
-    val file = File("data/data/ru.anotherworld.jojack/icon.png")
+    private val file = File("data/data/ru.anotherworld.jojack/icon.png")
     private companion object{
         private val client = HttpClient(){
             install(ContentNegotiation){
@@ -403,17 +403,10 @@ class MIcon{
             }
             if(file.exists()) file.delete()
             response.bodyAsChannel().copyAndClose(file.writeChannel())
-            Log.d("STAGE", "TRUE")
             file
         } catch (e: java.lang.IllegalStateException){
             Log.e("ICON-ERROR", e.message.toString())
             file
-        }
-    }
-    suspend fun setIcon(file: File){
-        client2.post("$BASE_URL/set-icon?login3=${database.getLogin()}&token3=${database.getToken()}"){
-            contentType(ContentType.Application.Any)
-            setBody(file)
         }
     }
 
@@ -427,6 +420,56 @@ class MIcon{
                         append("image", byteArray, Headers.build {
                             append(HttpHeaders.ContentType, "image/*")
                             append(HttpHeaders.ContentDisposition, "filename=icon.png")
+                        })
+                    }
+                ) {
+                    onUpload { bytesSentTotal, contentLength ->
+                        println("Sent $bytesSentTotal bytes from $contentLength")
+                    }
+                }
+            }
+            true
+        } catch (ex: Exception) {
+            false
+        }
+    }
+}
+
+class MImage{
+    private val cipher = Cipher()
+    private val database = MainDatabase()
+    private companion object{
+        private val client = HttpClient(){
+            install(ContentNegotiation){
+                json()
+            }
+        }
+    }
+    private val client2 = HttpClient()
+    suspend fun getImage(name: String): File?{
+        return try{
+            val response = client2.get("$BASE_URL/image?name=$name"){
+            }
+            val file = File("data/data/ru.anotherworld.jojack/$name.png")
+            response.bodyAsChannel().copyAndClose(file.writeChannel())
+            file
+        } catch (e: java.lang.IllegalStateException){
+            Log.e("IMAGE-ERROR", e.message.toString())
+            null
+        }
+    }
+
+    suspend fun uploadImage(text: String, byteArray: ByteArray?): Boolean {
+        return try {
+            if (byteArray != null) {
+                val name = cipher.generateUniqueName()
+                val response: HttpResponse = client.submitFormWithBinaryData(
+                    url = "$BASE_URL/add-image?name=${name}&tokenx2=${database.getToken()!!}",
+                    formData = formData {
+                        append("text", text)
+                        append("image", byteArray, Headers.build {
+                            append(HttpHeaders.ContentType, "image/*")
+                            append(HttpHeaders.ContentDisposition, "filename=${name}.png")
                         })
                     }
                 ) {
@@ -562,14 +605,6 @@ data class RegisterLike(
 )
 
 @Serializable
-data class ChatOnJoin(
-    val username: String,
-    val text: String,
-    val nameDB: String,
-    val oKey: String
-)
-
-@Serializable
 data class TMessage(
     val id: Int,
     val author: String,
@@ -586,18 +621,6 @@ data class TMessage2(
 )
 
 @Serializable
-data class TInitPair(
-    val nameDB: String,
-    val oKey: String,
-    val token: String
-)
-
-@Serializable
-data class NameDB2(
-    val nameDB: String
-)
-
-@Serializable
 data class GetLengthMessages(
     val length: Int
 )
@@ -608,10 +631,6 @@ data class Indexes(
     val endIndex: Int
 )
 
-@Serializable
-data class TTMessages(
-    val list: List<TMessage>
-)
 
 @Serializable
 data class Privacy(val token: String, val privacy: Boolean)

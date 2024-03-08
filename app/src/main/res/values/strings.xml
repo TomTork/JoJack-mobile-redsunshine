@@ -78,4 +78,6 @@
     <string name="invalid_input">Invalid input</string>
     <string name="no_permission">You do not have access to the terminal. Not enough rights!</string>
     <string name="access_is_allowed">Access is allowed</string>
+    <string name="unread">Messages unread</string>
+    <string name="read">Messages read</string>
 </resources>

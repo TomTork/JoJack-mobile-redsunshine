@@ -359,3 +359,43 @@ class DAOChatsDatabase{
             .map(::resultToChatsDatabase)
     }
 }
+
+class DAONotifications{
+    private fun resultToNotificationsDatabase(row: ResultRow) = NotificationData(
+        label = row[NotificationsTable.label],
+        text = row[NotificationsTable.text],
+        read = row[NotificationsTable.read],
+        action = row[NotificationsTable.action]
+    )
+    private fun resultTo2(row: ResultRow) = NData(
+        id = row[NotificationsTable.id],
+        label = row[NotificationsTable.label],
+        text = row[NotificationsTable.text],
+        read = row[NotificationsTable.read],
+        action = row[NotificationsTable.action]
+    )
+    suspend fun addNewNotification(data: NotificationData) = dbQuery{
+        NotificationsTable.insert {
+            it[label] = data.label
+            it[text] = data.text
+            it[read] = data.read
+            it[action] = data.action
+        }
+    }
+    suspend fun editNotification(id: Int, data: NotificationData) = dbQuery {
+        NotificationsTable.update({ NotificationsTable.id eq id }) {
+            it[label] = data.label
+            it[text] = data.text
+            it[read] = data.read
+            it[action] = data.action
+        }
+    }
+    suspend fun getAllNotifications(): List<NData> = dbQuery{
+        return@dbQuery NotificationsTable.selectAll().map(::resultTo2)
+    }
+    suspend fun updateRead(id: Int, read: Boolean) = dbQuery{
+        NotificationsTable.update({ NotificationsTable.id eq id }) {
+            it[NotificationsTable.read] = read
+        }
+    }
+}

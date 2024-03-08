@@ -5,10 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.drawable.ShapeDrawable
+import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,12 +89,15 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextAlign
 import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
 import ru.anotherworld.jojack.database.Comments
 import ru.anotherworld.jojack.mDatabase
+import ru.anotherworld.jojack.showBars
+import java.io.File
 
 val constructorMessenger = ConstructorMessenger(null, null, null, null,
     null, null, null, null, null, null, null)
@@ -114,6 +119,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
     val pagerState = rememberPagerState { images.images.size }
     var checked by remember { mutableStateOf(false) }
     var startComments by remember { mutableStateOf(false) }
+    val past = File("data/data/ru.anotherworld.jojack/icon.png")
 
     coroutine.launch {
         val previewChecked = likesDatabase.getLikedByOriginalUrl(originalUrl)
@@ -206,18 +212,6 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
             if(!inMessenger){
                 IconButton(onClick = {
                     startComments = true
-                    //DEPRECATED
-//                    constructorMessenger.idPost = idPost
-//                    constructorMessenger.text = text
-//                    constructorMessenger.nameGroup = text
-//                    constructorMessenger.iconGroup = text
-//                    constructorMessenger.typeGroup = text
-//                    constructorMessenger.images = images
-//                    constructorMessenger.originalUrl = originalUrl
-//                    constructorMessenger.like = like
-//                    constructorMessenger.exclusive = exclusive
-//                    constructorMessenger.inMessenger = true
-//                    context.startActivity(Intent(context, MessengerPostActivity::class.java))
                 }) {
                     Icon(painterResource(id=R.drawable.comments), "Comments",
                         tint = colorResource(id = R.color.icon_color))
@@ -297,12 +291,11 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     .padding(start = 10.dp, end = 10.dp)) {
                     //Ввод комментариев
                     var comment by remember { mutableStateOf("") }
-                    coroutine.launch {
-                        now = mDatabase.getIcon()
-//                        if(now != null) data = now
-                    }
 
                     TextField(value = comment, onValueChange = { comment = it },
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .onFocusChanged { showBars.value = !it.isFocused },
                         placeholder = {
                             Text(text = stringResource(id = R.string.my_opinion),
                                 modifier = Modifier
@@ -313,7 +306,12 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                                 color = colorResource(id = R.color.white))
                         },
                         leadingIcon = {
-                            if(now != null) AsyncImage(model = now, contentDescription = null)
+                            if(past.exists()) AsyncImage(model = BitmapFactory.decodeFile(past.absolutePath),
+                                contentDescription = null, contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .align(Alignment.CenterVertically)
+                                    .clip(RoundedCornerShape(30.dp)))
                             else Icon(painter = painterResource(id = R.drawable.account_circle), contentDescription = null,
                                 modifier = Modifier.size(30.dp))
                         },

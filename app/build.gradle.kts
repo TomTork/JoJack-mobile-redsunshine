@@ -70,6 +70,7 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.6.0")
     implementation("androidx.navigation:navigation-compose:2.7.6")
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+    implementation("androidx.wear.compose:compose-material:1.3.0")
     val composeBom = platform("androidx.compose:compose-bom:2024.01.00")
     implementation(composeBom)
     debugImplementation("androidx.compose.ui:ui-tooling")

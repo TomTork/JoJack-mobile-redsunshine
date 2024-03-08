@@ -53,6 +53,23 @@ object ChatsTable : Table("chats"){
     override val primaryKey = PrimaryKey(id)
 }
 
+object NotificationsTable : Table("notifications"){
+    val id = integer("id").autoIncrement()
+    val label = varchar("label", 128)
+    val text = varchar("text", 8192)
+    val read = bool("read")
+    val action = varchar("action", 128)
+
+    override val primaryKey: PrimaryKey = PrimaryKey(id)
+}
+
+data class NotificationData(
+    val label: String,
+    val text: String,
+    val read: Boolean,
+    val action: String
+)
+
 data class ChatsData(
     val chat: String,
     val name: String,

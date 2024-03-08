@@ -24,6 +24,9 @@ import java.security.*
 
 
 class Cipher {
+    suspend fun generateUniqueName(): String =
+        List(16){ (('a'..'z') + ('A'..'Z') + ('0'..'9')).random() }
+            .joinToString("") + "+${mDatabase.getLogin()}"
     fun generatePassword(size: Int = 16): String{
         val alp: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
         alp.plus("!@#$%^&*(0_+-=/|\\~".map { it }.toCharArray())
@@ -143,5 +146,6 @@ class RSAKotlin {
         publicKey = pair.public
     }
 }
+
 
 

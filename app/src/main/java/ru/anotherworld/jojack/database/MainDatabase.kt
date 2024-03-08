@@ -101,3 +101,28 @@ class ChatsDatabase{
         daoChatsDatabase.delete(id)
     }
 }
+
+private val daoNotifications = DAONotifications()
+
+class NotificationsDatabase{
+    suspend fun insertAll(data: NotificationData){
+        daoNotifications.addNewNotification(data)
+    }
+    suspend fun editAll(id: Int, data: NotificationData){
+        daoNotifications.editNotification(id, data)
+    }
+    suspend fun updateRead(id: Int, read: Boolean){
+        daoNotifications.updateRead(id, read)
+    }
+    suspend fun getAll(): List<NData>{
+        return daoNotifications.getAllNotifications()
+    }
+}
+
+data class NData(
+    val id: Int,
+    val label: String,
+    val text: String,
+    val read: Boolean,
+    val action: String
+)

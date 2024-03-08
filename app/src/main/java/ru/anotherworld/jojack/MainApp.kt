@@ -23,9 +23,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -39,11 +41,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -59,6 +64,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -75,6 +81,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -137,7 +144,7 @@ class MainApp : ComponentActivity() {
                             start = false
                             context.startActivity(Intent(context, LoginActivity::class.java))
                         }
-                        else {start = true}
+                        else {start = true; mDatabase.setJob(4)}
                     }
                 } catch (io: Exception){
                     start = false
@@ -231,6 +238,9 @@ fun MissingPermissionsComponent(
 val mDatabase = MainDatabase()
 val getInfo = GetInfo()
 val getPostVk = GetPostVk()
+var contentManager = mutableIntStateOf(0)
+var showBars = mutableStateOf(true)
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition",
@@ -246,8 +256,6 @@ private fun Content(){ //Main Activity
     val nunitoFamily = FontFamily(
         Font(R.font.nunito_semibold600, FontWeight.W600)
     )
-    var contentManager by mutableIntStateOf(0)
-    var select by remember { mutableIntStateOf(0) } //0 - Home; 1 - chat; 2 - settings
     var showSearchUser by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var searchUpdate by remember { mutableStateOf(false) }
@@ -258,7 +266,7 @@ private fun Content(){ //Main Activity
         topBar = {
             if (!showSearchUser){
                 var topText by mutableStateOf(stringResource(id = R.string.home))
-                topText = when(contentManager){
+                topText = when(contentManager.value){
                     1 -> stringResource(id = R.string.message)
                     2 -> stringResource(id = R.string.settings)
                     else -> stringResource(id = R.string.home)
@@ -286,7 +294,7 @@ private fun Content(){ //Main Activity
                                     .align(Alignment.CenterVertically)
                                     .fillMaxWidth(1f)
                                     .padding(end = 20.dp)) {
-                                if(contentManager == 0) {
+                                if(contentManager.value == 0) {
                                     IconButton(onClick = {
                                         context.startActivity(Intent(context, NotificationActivity::class.java))
                                     }) {
@@ -308,7 +316,7 @@ private fun Content(){ //Main Activity
                                         }
                                     }
                                 }
-                                else if(contentManager == 1){
+                                else if(contentManager.value == 1){
                                     IconButton(onClick = { //Search new user -> show search-activity
                                         showSearchUser = !showSearchUser
                                     }) {
@@ -365,80 +373,98 @@ private fun Content(){ //Main Activity
 
         },
         bottomBar = {
-            Row(verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Absolute.SpaceAround,
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .background(colorResource(id = R.color.black2))
-                    .padding(0.dp)) {
-                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            if(showBars.value){
+                BottomAppBar(
                     modifier = Modifier
-                        .clickable { contentManager = 0 }
-                        .weight(0.33f)) {
-                    IconButton(onClick = {
-                        contentManager = 0
-                    },
-                        modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                        Column(modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .offset(y = 3.dp)) {
-                            Icon(painterResource(id = R.drawable.home21), null,
-                                tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
-                                modifier = Modifier.align(Alignment.CenterHorizontally))
-                            Icon(painterResource(id = R.drawable.home22), null,
-                                tint = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
-                                modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .background(colorResource(id = R.color.background2))
+                        .fillMaxHeight(0.08f),
+                    containerColor = colorResource(id = R.color.background2),
+                    contentColor = colorResource(id = R.color.background2),
+                    contentPadding = PaddingValues(bottom = 10.dp),
+
+                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Absolute.SpaceAround,
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .background(colorResource(id = R.color.black2))
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable { contentManager.intValue = 0 }
+                                .weight(0.33f)
+                                .background(colorResource(id = R.color.background2))) {
+                            IconButton(onClick = {
+                                contentManager.intValue = 0
+                            },
+                                modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                                Column(modifier = Modifier
                                     .align(Alignment.CenterHorizontally)
-                                    .offset(y = (-6).dp)
-                                    .scale(scaleX = 1.5f, scaleY = 1f))
+                                    .offset(y = 3.dp)
+                                    .background(colorResource(id = R.color.background2))) {
+                                    Icon(painterResource(id = R.drawable.home21), null,
+                                        tint = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                                        modifier = Modifier.align(Alignment.CenterHorizontally))
+                                    Icon(painterResource(id = R.drawable.home22), null,
+                                        tint = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                                        modifier = Modifier
+                                            .align(Alignment.CenterHorizontally)
+                                            .offset(y = (-6).dp)
+                                            .scale(scaleX = 1.5f, scaleY = 1f))
+                                }
+                            }
+                            Text(text = stringResource(id = R.string.home),
+                                Modifier
+                                    .clickable { contentManager.intValue = 0 }
+                                    .shadow(2.dp)
+                                    .align(Alignment.CenterHorizontally),
+                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                color = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable { contentManager.intValue = 1 }
+                                .weight(0.33f)
+                                .background(colorResource(id = R.color.background2))) {
+                            IconButton(onClick = { contentManager.value = 1 }) {
+                                Icon(painterResource(id = R.drawable.comments2), null,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    tint = if(contentManager.value == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                            }
+                            Text(text = stringResource(id = R.string.message),
+                                Modifier
+                                    .clickable { contentManager.value = 1 }
+                                    .shadow(2.dp)
+                                    .align(Alignment.CenterHorizontally),
+                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                color = if(contentManager.value == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable { contentManager.value = 2 }
+                                .weight(0.33f)
+                                .background(colorResource(id = R.color.background2))) {
+                            IconButton(onClick = { contentManager.value = 2 }) {
+                                Icon(painterResource(id = R.drawable.settings2), null,
+                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                    tint = if(contentManager.value == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                            }
+                            Text(text = stringResource(id = R.string.settings),
+                                Modifier
+                                    .clickable { contentManager.intValue = 2 }
+                                    .shadow(2.dp)
+                                    .align(Alignment.CenterHorizontally),
+                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                color = if(contentManager.intValue == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                         }
                     }
-                    Text(text = stringResource(id = R.string.home),
-                        Modifier
-                            .clickable { contentManager = 0 }
-                            .shadow(2.dp)
-                            .align(Alignment.CenterHorizontally),
-                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                        color = if(contentManager == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clickable { contentManager = 1 }
-                        .weight(0.33f)) {
-                    IconButton(onClick = { contentManager = 1 }) {
-                        Icon(painterResource(id = R.drawable.comments2), null,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            tint = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                    }
-                    Text(text = stringResource(id = R.string.message),
-                        Modifier
-                            .clickable { contentManager = 1 }
-                            .shadow(2.dp)
-                            .align(Alignment.CenterHorizontally),
-                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                        color = if(contentManager == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .clickable { contentManager = 2 }
-                        .weight(0.33f)) {
-                    IconButton(onClick = { contentManager = 2 }) {
-                        Icon(painterResource(id = R.drawable.settings2), null,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            tint = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
-                    }
-                    Text(text = stringResource(id = R.string.settings),
-                        Modifier
-                            .clickable { contentManager = 2 }
-                            .shadow(2.dp)
-                            .align(Alignment.CenterHorizontally),
-                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                        color = if(contentManager == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                 }
             }
+
         }
     ) {
         if (showSearchUser){ //Отобразить поиск
@@ -605,7 +631,7 @@ private fun Content(){ //Main Activity
 
         }
         else{
-            when(contentManager){
+            when(contentManager.intValue){
                 0 -> { NewsPaper() }
                 1 -> { Messenger() }
                 2 -> { Account() }
@@ -685,7 +711,7 @@ private fun NewsPaper(){
     }
     if(!startCreateNewPostFromUser){
         Column (modifier = Modifier
-            .padding(top = 50.dp, bottom = 60.dp)
+            .padding(top = 50.dp, bottom = if (showBars.value) 60.dp else 0.dp)
             .fillMaxWidth(1f)
             .background(color = colorResource(id = R.color.background2)),
             verticalArrangement = Arrangement.Center) {
@@ -773,11 +799,10 @@ private fun NewsPaper(){
     }
     else { //show create-new-post-activity-from-user
         var textPost by remember { mutableStateOf("") }
-        val keyboardController = LocalSoftwareKeyboardController.current
         Column(modifier = Modifier
             .fillMaxWidth(1f)
             .fillMaxHeight(1f)
-            .padding(top = 20.dp, bottom = 60.dp)
+            .padding(top = 20.dp, bottom = if(showBars.value) 60.dp else 0.dp)
             .background(color = colorResource(id = R.color.background2))) {
 
             Row(modifier = Modifier
@@ -814,7 +839,8 @@ private fun NewsPaper(){
                         color = colorResource(id = R.color.white))
                 },
                 modifier = Modifier
-                    .fillMaxWidth(1f),
+                    .fillMaxWidth(1f)
+                    .onFocusChanged { showBars.value = !it.isFocused },
                 colors = TextFieldDefaults.textFieldColors(
                     containerColor = Color.Transparent,
                     cursorColor = Color.White,
@@ -832,7 +858,6 @@ private fun NewsPaper(){
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 private fun Messenger(){
-//    val scrollState = rememberScrollState()
     val context = LocalContext.current
     val array = remember { listOf<ChatsData>().toMutableStateList() }
     val coroutine = rememberCoroutineScope()
@@ -891,7 +916,6 @@ private fun Account(){
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    val bitmap =  remember { mutableStateOf<Bitmap?>(null) }
     var updateImage by remember { mutableStateOf(false) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var privacy by rememberSaveable { mutableStateOf(false) }
@@ -943,11 +967,8 @@ private fun Account(){
 
             if(!past.exists()){
                 try {
-                    Log.d("STAGE2", "TRUE-0")
                     mIcon.getIcon(login_)
-                    Log.d("STAGE2", "TRUE-1")
                     updateImage = true
-                    Log.d("STAGE2", "TRUE-2")
                 } catch (e: java.lang.IllegalStateException){
                     Log.e("ERROR", e.message.toString())
                 }

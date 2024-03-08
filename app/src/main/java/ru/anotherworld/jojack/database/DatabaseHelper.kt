@@ -13,7 +13,7 @@ object DatabaseHelper{
     fun init(){
         transaction(database) {
             SchemaUtils.createMissingTablesAndColumns(
-                tables = arrayOf(MainTable, LikesTable, ChatsTable)
+                tables = arrayOf(MainTable, LikesTable, ChatsTable, NotificationsTable)
             )
         }
     }
