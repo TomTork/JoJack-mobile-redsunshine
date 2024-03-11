@@ -7,8 +7,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -43,7 +45,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.placeholder
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
 class ChangePassword : ComponentActivity() {
@@ -64,7 +65,9 @@ private fun ChangePass(){
     val context = LocalContext.current
     var oldPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
-    Column(modifier = Modifier.fillMaxSize(1f)) {
+    Column(modifier = Modifier
+        .fillMaxWidth(1f)
+        .fillMaxHeight(1f)) {
         TopAppBar(title = {
             Row(modifier = Modifier
                 .fillMaxWidth(1f)
@@ -95,7 +98,10 @@ private fun ChangePass(){
                 ))
         Column(modifier = Modifier
             .fillMaxWidth(1f)
-            .align(Alignment.CenterHorizontally)) {
+            .fillMaxHeight(1f)
+            .padding(bottom = 40.dp)
+            .align(Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.Center) {
             TextField(value = oldPassword,
                 onValueChange = { oldPassword = it },
                 placeholder = { Text(text = stringResource(id = R.string.old_password),
@@ -143,7 +149,7 @@ private fun ChangePass(){
                 shape = RoundedCornerShape(20.dp),
                 singleLine = true,
                 modifier = Modifier
-                    .padding(start = 19.dp, end = 19.dp, top = 30.dp)
+                    .padding(start = 19.dp, end = 19.dp, top = 20.dp)
                     .fillMaxWidth(1f))
             ElevatedButton(onClick = {
                 if(oldPassword == newPassword) Toast.makeText(context,

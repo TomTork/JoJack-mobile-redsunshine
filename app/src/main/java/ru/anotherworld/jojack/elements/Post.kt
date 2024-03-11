@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.ShapeDrawable
 import android.net.Uri
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -85,6 +88,8 @@ import ru.anotherworld.jojack.database.MainDatabase
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -93,7 +98,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.util.lerp
 import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
 import ru.anotherworld.jojack.database.Comments
 import ru.anotherworld.jojack.interFamily
@@ -101,6 +108,7 @@ import ru.anotherworld.jojack.mDatabase
 import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.showBars
 import java.io.File
+import kotlin.math.absoluteValue
 
 val constructorMessenger = ConstructorMessenger(null, null, null, null,
     null, null, null, null, null, null, null)
@@ -137,7 +145,10 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
     Column(modifier= Modifier
         .padding(bottom = 7.dp)
         .fillMaxWidth(1f)
-        .background(color = colorResource(id = R.color.black2))) {
+        .background(
+            color = colorResource(id = R.color.black2),
+            shape = RoundedCornerShape(20.dp)
+        )) {
         Spacer(modifier=Modifier.padding(top=21.dp))
         Row(Modifier.padding(start=10.dp)) {
             AsyncImage(
@@ -164,7 +175,6 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         HashtagsMentionsTextView(text = text, onClick = {}, modifier = Modifier.padding(bottom=4.dp, start=10.dp, end=10.dp),
             fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
         if(existsImages && images.images.isNotEmpty()){
-            //https://developer.android.com/jetpack/compose/layouts/pager
             HorizontalPager(state = pagerState,
                 key = { images.images[it] },
                 pageSize = PageSize.Fill,
@@ -175,29 +185,74 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                     .data(images.images[index])
                     .crossfade(true)
                     .build()
-                Box(modifier = Modifier.fillMaxWidth(1f),
-                    contentAlignment = Alignment.Center) {
-                    Box(modifier = Modifier.fillMaxWidth(1f),
-                        contentAlignment = Alignment.Center) {
-                        ShowCurrentNumber(currentNumber = index + 1, maxNumbers = images.images.size)
-                        AsyncImage(model = model,
+                Card(modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .fillMaxHeight(0.1f)
+                    .padding(start = 10.dp, end = 10.dp, top = 10.dp)
+                    .graphicsLayer {
+                        val pageOffset = (
+                                (pagerState.currentPage - index) + pagerState
+                                    .currentPageOffsetFraction
+                                ).absoluteValue
+                        alpha = lerp(
+                            start = 0.5f,
+                            stop = 1f,
+                            fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                        )
+                    }
+                ) {
+                    Box(modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .align(Alignment.CenterHorizontally)) {
+                        AsyncImage(
+                            model = model,
                             contentDescription = null,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .align(Alignment.Center)
                                 .fillMaxWidth(1f)
-                                .blur(100.dp)
-                                .clip(RoundedCornerShape(20.dp)))
+                                .size(400.dp)
+                                .blur(80.dp)
+                        )
+                        AsyncImage(
+                            model = model,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .size(400.dp)
+                        )
+
+                        Box(modifier = Modifier
+                            .padding(top = 5.dp, end = 5.dp)
+                            .align(Alignment.TopEnd)
+                            .graphicsLayer{
+                                val pageOffset = (
+                                        (pagerState.currentPage - index) + pagerState
+                                            .currentPageOffsetFraction
+                                        ).absoluteValue
+                                alpha = lerp(
+                                    start = 0.4f,
+                                    stop = 0.5f,
+                                    fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                                )
+                            }) {
+                            if(index > 0){
+                                Text(text = " ${index+1} / ${images.images.size} ",
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .background(
+                                            color = colorResource(id = R.color.background_field),
+                                            shape = RoundedCornerShape(10.dp)
+                                        ),
+                                    fontFamily = interFamily, fontWeight = FontWeight.W400,
+                                    fontSize = 15.sp)
+                            }
+
+                        }
+
                     }
-                    AsyncImage(
-                        model = model,
-                        contentDescription = stringResource(R.string.app_name),
-                        modifier = Modifier.align(Alignment.Center)
-                            .clip(RoundedCornerShape(20.dp))
-                    )
                 }
-
             }
-
         }
         Row(modifier=Modifier.padding(top=4.dp, start=10.dp, end=21.dp)) {
             IconButton(onClick = {
@@ -287,7 +342,6 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         if(startComments){ //Отобразить ветку комментариев
             //LOAD COMMENTS FROM SERVER
             val comments = remember { listOf<Comments>().toMutableStateList() }
-            var now by remember { mutableStateOf<String?>(null) }
             Column(modifier = Modifier
                 .fillMaxWidth(1f)) {
                 Row(modifier = Modifier.fillMaxWidth(1f)) {
@@ -583,10 +637,17 @@ fun PostBase3(idPost: Int, text: String, nameGroup: String, iconGroup: String,
 
 @Composable
 private fun ShowCurrentNumber(currentNumber: Int, maxNumbers: Int){
-    Box(modifier = Modifier
-        .background(color = colorResource(id = R.color.background_field), RoundedCornerShape(20.dp))
-        .padding(top = 10.dp, end = 10.dp),
-        contentAlignment = Alignment.TopEnd) {
-        Text(text = "$currentNumber / $maxNumbers")
+    if(currentNumber > 0){
+        Box(modifier = Modifier
+            .background(
+                color = colorResource(id = R.color.background_field),
+                RoundedCornerShape(20.dp)
+            )
+            .padding(top = 10.dp, end = 10.dp),
+            contentAlignment = Alignment.Center) {
+            Text(text = "${currentNumber+1} / $maxNumbers",
+                modifier = Modifier.align(Alignment.Center))
+        }
     }
+
 }

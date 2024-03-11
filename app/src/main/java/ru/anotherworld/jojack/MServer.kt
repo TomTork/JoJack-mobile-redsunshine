@@ -61,12 +61,13 @@ import ru.anotherworld.jojack.chatcontroller.Resource
 import ru.anotherworld.jojack.database.MainDatabase
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.FileInputStream
 import kotlin.time.Duration.Companion.seconds
 
 
 val cipher = Cipher()
-const val BASE_URL = "http://192.168.0.100:8080"
-const val BASE_WS = "ws://192.168.0.100:8080"
+const val BASE_URL = "http://$IP"
+const val BASE_WS = "ws://$IP"
 val sDatabase = MainDatabase()
 class Register{
     @OptIn(InternalAPI::class)
