@@ -128,6 +128,10 @@ import java.io.InputStream
 import java.net.NoRouteToHostException
 
 
+var login = mutableStateOf("")
+var id = mutableIntStateOf(-1)
+var job = mutableIntStateOf(-1)
+
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
     @OptIn(ExperimentalPermissionsApi::class)
@@ -140,11 +144,17 @@ class MainApp : ComponentActivity() {
                 var start by remember { mutableStateOf(false) }
                 try{ //Check first enter or no
                     coroutine.launch {
-                        if(mDatabase.getLogin() == null || mDatabase.getLogin()!! == ""){
+                        val localLogin = mDatabase.getLogin()
+                        if(localLogin == null || localLogin == ""){
                             start = false
                             context.startActivity(Intent(context, LoginActivity::class.java))
                         }
-                        else {start = true; mDatabase.setJob(4)}
+                        else {
+                            start = true
+                            login.value = localLogin
+                            id.intValue = mDatabase.getServerId()!!
+                            job.intValue = mDatabase.getJob()!!
+                        }
                     }
                 } catch (io: Exception){
                     start = false
@@ -240,6 +250,15 @@ val getInfo = GetInfo()
 val getPostVk = GetPostVk()
 var contentManager = mutableIntStateOf(0)
 var showBars = mutableStateOf(true)
+val nunitoFamily = FontFamily(
+    Font(R.font.nunito_semibold600, FontWeight.W600),
+    Font(R.font.nunito_light400, FontWeight.W400),
+    Font(R.font.nunito_medium500, FontWeight.W500)
+)
+val interFamily = FontFamily(
+    Font(R.font.inter600, FontWeight.W600),
+    Font(R.font.inter_medium500, FontWeight.W500)
+)
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
@@ -250,12 +269,6 @@ var showBars = mutableStateOf(true)
 private fun Content(){ //Main Activity
     val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-    )
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600)
-    )
     var showSearchUser by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var searchUpdate by remember { mutableStateOf(false) }
@@ -655,9 +668,6 @@ private data class SNews(
     "UnrememberedMutableState")
 @Composable
 private fun NewsPaper(){
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-    )
     val context = LocalContext.current
     var isServerConnect by remember { mutableStateOf(true) }
     var update by remember { mutableStateOf(false) }
@@ -667,10 +677,6 @@ private fun NewsPaper(){
     var view2 by remember { mutableStateOf(false) }
     val array = remember { listOf<SNews>().toMutableStateList() }
     val listState = rememberLazyListState()
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_light400, FontWeight.W400),
-        Font(R.font.nunito_semibold600, FontWeight.W600)
-    )
     var job by remember { mutableIntStateOf(0) }
     var startCreateNewPostFromUser by remember { mutableStateOf(false) }
     if(isServerConnect || update){
@@ -919,11 +925,7 @@ private fun Account(){
     var updateImage by remember { mutableStateOf(false) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var privacy by rememberSaveable { mutableStateOf(false) }
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_light400, FontWeight.W400),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
+
     val past = File("data/data/ru.anotherworld.jojack/icon.png")
     Column(modifier = Modifier
         .fillMaxWidth(1f)
@@ -961,9 +963,9 @@ private fun Account(){
         var login_ by rememberSaveable { mutableStateOf("") }
         var serverId_ by rememberSaveable { mutableIntStateOf(0) }
         coroutine.launch {
-            job_ = mDatabase.getJob()!!
-            login_ = mDatabase.getLogin()!!
-            serverId_ = mDatabase.getServerId()!!
+            job_ = job.intValue
+            login_ = login.value
+            serverId_ = id.intValue
 
             if(!past.exists()){
                 try {

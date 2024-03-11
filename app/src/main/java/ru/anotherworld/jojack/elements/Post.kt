@@ -89,13 +89,16 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextAlign
 import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
 import ru.anotherworld.jojack.database.Comments
+import ru.anotherworld.jojack.interFamily
 import ru.anotherworld.jojack.mDatabase
+import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.showBars
 import java.io.File
 
@@ -108,10 +111,6 @@ val constructorMessenger = ConstructorMessenger(null, null, null, null,
 fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
               typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo,
               originalUrl: String, like: Int, exclusive: Boolean, inMessenger: Boolean = false){
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     val likesDatabase = LikesDatabase()
     val context = LocalContext.current
     val likeController = LikeController()
@@ -165,21 +164,38 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
         HashtagsMentionsTextView(text = text, onClick = {}, modifier = Modifier.padding(bottom=4.dp, start=10.dp, end=10.dp),
             fontFamily = nunitoFamily, fontWeight = FontWeight.W500)
         if(existsImages && images.images.isNotEmpty()){
+            //https://developer.android.com/jetpack/compose/layouts/pager
             HorizontalPager(state = pagerState,
                 key = { images.images[it] },
                 pageSize = PageSize.Fill,
                 modifier = Modifier
                     .fillMaxWidth(1f)
                     .align(Alignment.CenterHorizontally)) {index ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(images.images[index])
-                        .crossfade(true)
-                        .build(),
+                val model = ImageRequest.Builder(LocalContext.current)
+                    .data(images.images[index])
+                    .crossfade(true)
+                    .build()
+                Box(modifier = Modifier.fillMaxWidth(1f),
+                    contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier.fillMaxWidth(1f),
+                        contentAlignment = Alignment.Center) {
+                        ShowCurrentNumber(currentNumber = index + 1, maxNumbers = images.images.size)
+                        AsyncImage(model = model,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .fillMaxWidth(1f)
+                                .blur(100.dp)
+                                .clip(RoundedCornerShape(20.dp)))
+                    }
+                    AsyncImage(
+                        model = model,
+                        contentDescription = stringResource(R.string.app_name),
+                        modifier = Modifier.align(Alignment.Center)
+                            .clip(RoundedCornerShape(20.dp))
+                    )
+                }
 
-                    contentDescription = stringResource(R.string.app_name),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
             }
 
         }
@@ -347,10 +363,6 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
 @Composable
 private fun ShowComments(comments: SnapshotStateList<Comments>,
                          clipboardManager: ClipboardManager){ //Отобразить комментарии
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-        Font(R.font.inter_medium500, FontWeight.W500)
-    )
     Column(modifier = Modifier
         .fillMaxWidth(1f)
         .padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 5.dp)) {
@@ -497,10 +509,6 @@ fun PostBase3(idPost: Int, text: String, nameGroup: String, iconGroup: String,
               typeGroup: String, existsImages: Boolean = true, images: VkImageAndVideo,
               originalUrl: String, like: Int, exclusive: Boolean, inMessenger: Boolean = false,
               myMessage: Boolean = true){
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     val likesDatabase = LikesDatabase()
     val coroutine = rememberCoroutineScope()
     val pagerState = rememberPagerState { images.images.size }
@@ -559,7 +567,6 @@ fun PostBase3(idPost: Int, text: String, nameGroup: String, iconGroup: String,
             fontWeight = FontWeight.W500
         )
         if (existsImages && images.images.isNotEmpty()) {
-            Log.d("HHH", "TRUE")
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(images.images[0])
@@ -569,25 +576,17 @@ fun PostBase3(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                 contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-//            HorizontalPager(
-//                state = pagerState,
-//                key = { images.images[it] },
-//                pageSize = PageSize.Fill,
-//                modifier = Modifier
-//                    .fillMaxWidth(1f)
-//                    .align(Alignment.CenterHorizontally)
-//            ) { index ->
-//                AsyncImage(
-//                    model = ImageRequest.Builder(LocalContext.current)
-//                        .data(images.images[index])
-//                        .crossfade(true)
-//                        .build(),
-//
-//                    contentDescription = stringResource(R.string.app_name),
-//                    modifier = Modifier.align(Alignment.CenterHorizontally)
-//                )
-//            }
 
         }
+    }
+}
+
+@Composable
+private fun ShowCurrentNumber(currentNumber: Int, maxNumbers: Int){
+    Box(modifier = Modifier
+        .background(color = colorResource(id = R.color.background_field), RoundedCornerShape(20.dp))
+        .padding(top = 10.dp, end = 10.dp),
+        contentAlignment = Alignment.TopEnd) {
+        Text(text = "$currentNumber / $maxNumbers")
     }
 }

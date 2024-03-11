@@ -81,4 +81,7 @@
     <string name="access_is_allowed">Доступ разрешён</string>
     <string name="unread">Непрочитанные сообщения</string>
     <string name="read">Прочитанные сообщения</string>
+    <string name="old_password">Старый пароль</string>
+    <string name="new_password">Новый пароль</string>
+    <string name="passwords_eq">Пароли совпадают!</string>
 </resources>

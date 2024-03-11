@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,10 +75,6 @@ private fun Content(){
     var job by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     val terminal = MTerminal()
     val array = remember { listOf<String>().toMutableStateList() }
     coroutine.launch { 
@@ -91,20 +88,26 @@ private fun Content(){
         .fillMaxWidth(1f)
         .background(color = colorResource(id = R.color.black2))) {
         Scaffold(topBar = {
-            Row(modifier = Modifier
-                .fillMaxWidth(1f)
-                .background(color = colorResource(id = R.color.background2))) {
-                IconButton(onClick = {
-                    context.startActivity(Intent(context, MainApp::class.java))
-                }) {
-                    Icon(painterResource(id = R.drawable.arrow_back), null,
-                        tint = colorResource(id = R.color.white))
+            TopAppBar(title = {
+                Row(modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .background(color = colorResource(id = R.color.background2))) {
+                    IconButton(onClick = {
+                        context.startActivity(Intent(context, MainApp::class.java))
+                    }) {
+                        Icon(painterResource(id = R.drawable.arrow_back), null,
+                            tint = colorResource(id = R.color.white))
+                    }
+                    Text(text = stringResource(id = R.string.terminal),
+                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                        fontSize = 27.sp, modifier = Modifier.align(Alignment.CenterVertically),
+                        color = colorResource(id = R.color.white))
                 }
-                Text(text = stringResource(id = R.string.terminal),
-                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                    fontSize = 27.sp, modifier = Modifier.align(Alignment.CenterVertically),
-                    color = colorResource(id = R.color.white))
-            }
+            }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
+                colors = TopAppBarDefaults
+                    .topAppBarColors(containerColor = colorResource(id = R.color.background2),
+                        titleContentColor = colorResource(id = R.color.background2)))
+
         },
             modifier = Modifier.background(color = colorResource(id = R.color.black2)),
             bottomBar = {

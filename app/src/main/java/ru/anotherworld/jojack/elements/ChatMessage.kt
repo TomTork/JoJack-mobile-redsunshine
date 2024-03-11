@@ -28,14 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.anotherworld.jojack.R
+import ru.anotherworld.jojack.nunitoFamily
 
 @Composable
 fun ChatMessage(name: String, previewMessage: String, username: String, idChat: Int = 0,
                 image: ImageBitmap? = null, countMessage: Int = 0, action: (id: Int) -> Unit) {
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     Column(modifier = Modifier
         .padding(top = 4.dp)
         .fillMaxWidth(1f)

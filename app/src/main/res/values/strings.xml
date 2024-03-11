@@ -80,4 +80,7 @@
     <string name="access_is_allowed">Access is allowed</string>
     <string name="unread">Messages unread</string>
     <string name="read">Messages read</string>
+    <string name="old_password">Old password</string>
+    <string name="new_password">New password</string>
+    <string name="passwords_eq">Password are equal</string>
 </resources>

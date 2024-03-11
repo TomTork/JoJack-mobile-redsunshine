@@ -69,6 +69,7 @@ import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.chatcontroller.Message
+import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.sDatabase
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import kotlin.concurrent.thread
@@ -103,7 +104,6 @@ private var login1: String = ""
 fun Chat(idChat: Int = 0, nameChat: String = "Флудилка", users: List<String>? = null,
          iconChat: String? = "", messages: List<Pair<String, String>>? = null){
     val context = LocalContext.current
-    val nunitoFamily = FontFamily(Font(R.font.nunito_medium500, FontWeight.W500))
     var state by remember { mutableStateOf("Онлайн") } //Состояние в чате: кто-то печатает и т.д.
     var message by remember { mutableStateOf("") }
     val coroutine = rememberCoroutineScope()
@@ -256,10 +256,6 @@ private fun MessageIn(login: String, text: String, time: String){
     val login1 by remember { mutableStateOf(login1) }
     var eq by remember { mutableStateOf(false) }
     eq = (login1 == login) //true if user you
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_medium500, FontWeight.W500),
-        Font(R.font.nunito_light400, FontWeight.W400)
-    )
     Row(
         modifier = Modifier
             .padding(start = 10.dp, end = 10.dp, top = 1.dp, bottom = 1.dp)

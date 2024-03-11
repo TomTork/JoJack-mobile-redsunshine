@@ -54,6 +54,7 @@ import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.VkImageAndVideo
+import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
 //DEPRECATED
@@ -92,10 +93,6 @@ private fun Content(idPost: Int, text: String, nameGroup: String, iconGroup: Str
     var message by remember { mutableStateOf("") }
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     val scroll = rememberScrollState()
     Column(modifier = Modifier
         .fillMaxWidth(1f)

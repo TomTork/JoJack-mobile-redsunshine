@@ -78,6 +78,7 @@ import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
 import ru.anotherworld.jojack.cipher
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.mDatabase
+import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import ru.anotherworld.jojack.sDatabase
 
@@ -113,7 +114,6 @@ private var login1: String = ""
 @Composable
 fun Chat2(idChat: String, iconChat: String?, nameChat: String){
     val context = LocalContext.current
-    val nunitoFamily = FontFamily(Font(R.font.nunito_medium500, FontWeight.W500))
     var state by remember { mutableStateOf("Онлайн") } //Состояние в чате: кто-то печатает и т.д.
     var message by remember { mutableStateOf("") }
     val coroutine = rememberCoroutineScope()
@@ -279,10 +279,6 @@ private fun MessageIn(login: String, text: String, time: String){
     val login1 by remember { mutableStateOf(login1) }
     var eq by remember { mutableStateOf(false) }
     eq = (login1 == login) //true if user you
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_medium500, FontWeight.W500),
-        Font(R.font.nunito_light400, FontWeight.W400)
-    )
     Row(
         modifier = Modifier
             .padding(start = 10.dp, end = 10.dp, top = 1.dp, bottom = 1.dp)

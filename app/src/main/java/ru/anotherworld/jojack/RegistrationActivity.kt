@@ -92,10 +92,6 @@ class RegistrationActivity : ComponentActivity() {
 private fun RegistrationContent2(){
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-        Font(R.font.inter_medium500, FontWeight.W500)
-    )
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
     Column(modifier = Modifier
@@ -214,10 +210,6 @@ private fun RegistrationContent2(){
 }
 @Composable
 fun AnnotatedClickableText2(part1: String, part2: String, action: () -> Unit) {
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-        Font(R.font.inter_medium500, FontWeight.W500)
-    )
     val annotatedText = buildAnnotatedString {
         withStyle(
             style = SpanStyle(

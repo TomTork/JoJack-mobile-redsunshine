@@ -85,10 +85,6 @@ class LoginActivity : ComponentActivity() {
 private fun LoginContent2(){
     var login by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val interFamily = FontFamily(
-        Font(R.font.inter600, FontWeight.W600),
-        Font(R.font.inter_medium500, FontWeight.W500)
-    )
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
     Column(modifier = Modifier

@@ -55,16 +55,11 @@ class Appeal : ComponentActivity() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 private fun Content(){
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var text by remember { mutableStateOf("") }
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     Column(modifier = Modifier
         .fillMaxWidth(1f)
         .fillMaxHeight(1f)

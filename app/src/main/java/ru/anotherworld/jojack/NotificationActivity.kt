@@ -83,10 +83,6 @@ val notificationsDatabase = NotificationsDatabase()
 @Composable
 private fun Content(){
     val context = LocalContext.current
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     val notificationsRead = mutableListOf<NData>()
     val notificationsUnread = mutableListOf<NData>()
     val coroutine = rememberCoroutineScope()
@@ -168,10 +164,6 @@ private fun Notificator(head: String, text: String, id: Int, action: String,
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     val coroutine = rememberCoroutineScope()
-    val nunitoFamily = FontFamily(
-        Font(R.font.nunito_semibold600, FontWeight.W600),
-        Font(R.font.nunito_medium500, FontWeight.W500)
-    )
     Column(modifier = Modifier
         .fillMaxWidth(1f)
         .fillMaxHeight(1f)
