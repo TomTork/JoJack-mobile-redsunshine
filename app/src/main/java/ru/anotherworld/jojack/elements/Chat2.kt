@@ -241,7 +241,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                 val time = System.currentTimeMillis()
                                 for(user in users){
                                     encChatController.sendMessage(DataMessengerEncrypted(
-                                        id = count.toInt(),
+                                        id = count,
                                         author = login.value,
                                         encText = RSAKotlin.encryptMessage(message, user.publicKey),
                                         time = time
@@ -296,8 +296,13 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                 }
                 else{
                     if(!ready){
+                        Log.d("STAGE", "STAGE-1")
+                        encChatController.initUser()
                         encChatController.initSession(sDatabase.getToken()!!)
+                        Log.d("STAGE", "STAGE-2")
+                        Log.d("STAGE", "STAGE-3")
                         users.addAll(encChatController.getAllUsers()?.toMutableStateList() ?: listOf())
+                        Log.d("STAGE", "STAGE-4")
 
                         if(repost != ""){
                             val count = encChatController.getCountMessages()
@@ -305,7 +310,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                 val time = System.currentTimeMillis()
                                 for(user in users){
                                     encChatController.sendMessage(DataMessengerEncrypted(
-                                        id = (count + 1).toInt(),
+                                        id = (count + 1),
                                         author = login.value,
                                         encText = RSAKotlin
                                             .encryptMessage("[|START|]${repost}[|END|]",
@@ -320,7 +325,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                             destroy2 = encChatController
                             val countMessages = encChatController.getCountMessages()
                             if(countMessages != null){
-                                messagesList2.addAll(encChatController.getRangeMessages(1, countMessages.toInt()))
+                                messagesList2.addAll(encChatController.getRangeMessages(1, countMessages))
                             }
                             ready = true
 

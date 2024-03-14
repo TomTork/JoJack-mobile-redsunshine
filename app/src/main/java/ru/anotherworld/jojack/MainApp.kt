@@ -26,12 +26,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -52,6 +54,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -82,6 +85,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -117,6 +121,7 @@ import ru.anotherworld.jojack.elements.ChatActivity
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.CopyPost
 import ru.anotherworld.jojack.elements.PostBase2
+import ru.anotherworld.jojack.elements.encChat
 import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
 import ru.anotherworld.jojack.elements.nameChat2
@@ -278,8 +283,9 @@ private fun Content(){ //Main Activity
         modifier = Modifier.background(Color.White),
         topBar = {
             if (!showSearchUser){
+                showBars.value = true
                 var topText by mutableStateOf(stringResource(id = R.string.home))
-                topText = when(contentManager.value){
+                topText = when(contentManager.intValue){
                     1 -> stringResource(id = R.string.message)
                     2 -> stringResource(id = R.string.settings)
                     else -> stringResource(id = R.string.home)
@@ -307,7 +313,7 @@ private fun Content(){ //Main Activity
                                     .align(Alignment.CenterVertically)
                                     .fillMaxWidth(1f)
                                     .padding(end = 20.dp)) {
-                                if(contentManager.value == 0) {
+                                if(contentManager.intValue == 0) {
                                     IconButton(onClick = {
                                         context.startActivity(Intent(context, NotificationActivity::class.java))
                                     }) {
@@ -329,7 +335,7 @@ private fun Content(){ //Main Activity
                                         }
                                     }
                                 }
-                                else if(contentManager.value == 1){
+                                else if(contentManager.intValue == 1){
                                     IconButton(onClick = { //Search new user -> show search-activity
                                         showSearchUser = !showSearchUser
                                     }) {
@@ -346,6 +352,7 @@ private fun Content(){ //Main Activity
                 }
             }
             else {
+                showBars.value = false
                 TopAppBar(title = {
                     Row(modifier = Modifier
                         .fillMaxWidth(1f)
@@ -390,8 +397,7 @@ private fun Content(){ //Main Activity
                 BottomAppBar(
                     modifier = Modifier
                         .fillMaxWidth(1f)
-                        .background(colorResource(id = R.color.background2))
-                        .fillMaxHeight(0.08f),
+                        .background(colorResource(id = R.color.background2)),
                     containerColor = colorResource(id = R.color.background2),
                     contentColor = colorResource(id = R.color.background2),
                     contentPadding = PaddingValues(bottom = 10.dp),
@@ -403,76 +409,63 @@ private fun Content(){ //Main Activity
                             .fillMaxWidth(1f)
                             .background(colorResource(id = R.color.black2))
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        IconButton(onClick = { contentManager.intValue = 0 },
                             modifier = Modifier
-                                .clickable { contentManager.intValue = 0 }
                                 .weight(0.33f)
+                                .align(Alignment.CenterVertically)
                                 .background(colorResource(id = R.color.background2))) {
-                            IconButton(onClick = {
-                                contentManager.intValue = 0
-                            },
-                                modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                                Column(modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .offset(y = 3.dp)
-                                    .background(colorResource(id = R.color.background2))) {
-                                    Icon(painterResource(id = R.drawable.home21), null,
-                                        tint = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
-                                        modifier = Modifier.align(Alignment.CenterHorizontally))
-                                    Icon(painterResource(id = R.drawable.home22), null,
+                            Column {
+                                Icon(painterResource(id = R.drawable.home21), null,
+                                    tint = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
+                                    modifier = Modifier.align(Alignment.CenterHorizontally))
+                                Icon(painterResource(id = R.drawable.home22), null,
                                         tint = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color),
                                         modifier = Modifier
                                             .align(Alignment.CenterHorizontally)
                                             .offset(y = (-6).dp)
                                             .scale(scaleX = 1.5f, scaleY = 1f))
-                                }
+                                Text(text = stringResource(id = R.string.home),
+                                    Modifier
+                                        .clickable { contentManager.intValue = 0 }
+                                        .align(Alignment.CenterHorizontally),
+                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                    color = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                             }
-                            Text(text = stringResource(id = R.string.home),
-                                Modifier
-                                    .clickable { contentManager.intValue = 0 }
-                                    .shadow(2.dp)
-                                    .align(Alignment.CenterHorizontally),
-                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                                color = if(contentManager.intValue == 0) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                         }
-                        Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        IconButton(onClick = { contentManager.intValue = 1 },
                             modifier = Modifier
-                                .clickable { contentManager.intValue = 1 }
                                 .weight(0.33f)
+                                .align(Alignment.CenterVertically)
                                 .background(colorResource(id = R.color.background2))) {
-                            IconButton(onClick = { contentManager.value = 1 }) {
+                            Column {
                                 Icon(painterResource(id = R.drawable.comments2), null,
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                                    tint = if(contentManager.value == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                                    tint = if(contentManager.intValue == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                                Text(text = stringResource(id = R.string.message),
+                                    Modifier
+                                        .clickable { contentManager.intValue = 1 }
+                                        .align(Alignment.CenterHorizontally),
+                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                    color = if(contentManager.intValue == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                             }
-                            Text(text = stringResource(id = R.string.message),
-                                Modifier
-                                    .clickable { contentManager.value = 1 }
-                                    .shadow(2.dp)
-                                    .align(Alignment.CenterHorizontally),
-                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                                color = if(contentManager.value == 1) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+
                         }
-                        Column(verticalArrangement = Arrangement.spacedBy(-10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        IconButton(onClick = { contentManager.intValue = 2 },
                             modifier = Modifier
-                                .clickable { contentManager.value = 2 }
                                 .weight(0.33f)
+                                .align(Alignment.CenterVertically)
                                 .background(colorResource(id = R.color.background2))) {
-                            IconButton(onClick = { contentManager.value = 2 }) {
+                            Column {
                                 Icon(painterResource(id = R.drawable.settings2), null,
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                                    tint = if(contentManager.value == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                                    tint = if(contentManager.intValue == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
+                                Text(text = stringResource(id = R.string.settings),
+                                    Modifier
+                                        .clickable { contentManager.intValue = 2 }
+                                        .align(Alignment.CenterHorizontally),
+                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                    color = if(contentManager.intValue == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                             }
-                            Text(text = stringResource(id = R.string.settings),
-                                Modifier
-                                    .clickable { contentManager.intValue = 2 }
-                                    .shadow(2.dp)
-                                    .align(Alignment.CenterHorizontally),
-                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                                color = if(contentManager.intValue == 2) colorResource(id = R.color.white) else colorResource(id = R.color.text_color))
                         }
                     }
                 }
@@ -514,7 +507,7 @@ private fun Content(){ //Main Activity
                         colors = SwitchDefaults
                             .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
                 }
-                Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
+                HorizontalDivider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .alpha(0.5f))
@@ -537,7 +530,7 @@ private fun Content(){ //Main Activity
                         colors = SwitchDefaults
                             .colors(checkedThumbColor = colorResource(id = R.color.subscribe)))
                 }
-                Divider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
+                HorizontalDivider(thickness = 2.dp, color = colorResource(id = R.color.text_color),
                     modifier = Modifier
                         .fillMaxWidth(1f)
                         .alpha(0.5f))
@@ -556,19 +549,36 @@ private fun Content(){ //Main Activity
                                     .clickable {
                                         if (!checkedSwitch) {
                                             if (checkedSwitch2) { //chat with encryption
-                                                Toast
-                                                    .makeText(
-                                                        context,
-                                                        "IN WORK!",
-                                                        Toast.LENGTH_SHORT
+                                                val number = arrayOf(myId.toString(), item.second)
+                                                number.sort()
+                                                idChat2 = "e_chat" + number.joinToString("x")
+                                                nameChat2 = item.first
+                                                iconChat2 = ""
+
+                                                coroutine.launch {
+                                                    chatsDatabase.insertAll(
+                                                        ChatsData(
+                                                            idChat2,
+                                                            nameChat2,
+                                                            item.first,
+                                                            ""
+                                                        )
                                                     )
-                                                    .show()
+                                                }
+                                                encChat = true
+                                                context.startActivity(
+                                                    Intent(
+                                                        context,
+                                                        Chat2::class.java
+                                                    )
+                                                )
                                             } else { //chat without encryption
                                                 val number = arrayOf(myId.toString(), item.second)
                                                 number.sort()
                                                 idChat2 = "chat" + number.joinToString("x")
                                                 nameChat2 = item.first
                                                 iconChat2 = ""
+                                                encChat = false
 
                                                 coroutine.launch {
                                                     chatsDatabase.insertAll(
@@ -808,7 +818,7 @@ private fun NewsPaper(){
         Column(modifier = Modifier
             .fillMaxWidth(1f)
             .fillMaxHeight(1f)
-            .padding(top = 20.dp, bottom = if(showBars.value) 60.dp else 0.dp)
+            .padding(top = 20.dp, bottom = if (showBars.value) 60.dp else 0.dp)
             .background(color = colorResource(id = R.color.background2))) {
 
             Row(modifier = Modifier
@@ -909,7 +919,11 @@ private fun Messenger(){
                         idChat2 = item.chat
                         nameChat2 = item.name
                         iconChat2 = item.icon
-                        context.startActivity(Intent(context, Chat2::class.java))
+                        if("e_chat" !in idChat2) context.startActivity(Intent(context, Chat2::class.java))
+                        else{
+                            encChat = true
+                            context.startActivity(Intent(context, Chat2::class.java))
+                        }
                     }) //show chats
             }
         }

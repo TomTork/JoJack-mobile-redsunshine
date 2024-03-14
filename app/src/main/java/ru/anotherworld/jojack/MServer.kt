@@ -147,6 +147,7 @@ class GetPostVk{
             setBody(VkResponseRemote(start, end, "-"))
         }
         val result = response.content.readUTF8Line().toString()
+        Log.d("INFO", result)
         return Json.decodeFromString<GetRPost>(result)
     }
 }
@@ -530,8 +531,8 @@ class EncChatController(private val nameDb: String){
                 url("$BASE_WS/e_chat?namedb=$nameDb&token=${token}")
             }
             if (socket?.isActive == true){
+                Log.d("TEMP", "TRUE-1")
                 Resource.Success(Unit)
-
             } else {
                 Resource.Error("Couldn't establish a connection. ::ChatSocketServiceImpl")
             }
@@ -566,14 +567,15 @@ class EncChatController(private val nameDb: String){
         socket?.close()
     }
     @OptIn(InternalAPI::class)
-    suspend fun getRangeMessages(startIndex: Int, endIndex: Int): List<DataMessengerEncrypted>{
+    suspend fun getRangeMessages(startIndex: Long, endIndex: Long): List<DataMessengerEncrypted>{
         return try{
             val response = client.post("$BASE_URL/get_e_messages?namedb=$nameDb"){
                 contentType(ContentType.Application.Json)
-                setBody(Indexes(startIndex, endIndex))
+                setBody(Indexes2(startIndex, endIndex))
             }
-            val result = response.content.readUTF8Line().toString()
-            Json.decodeFromString<List<DataMessengerEncrypted>>(result)
+            val result = response.content.readUTF8Line()
+            if(result == null) listOf()
+            else Json.decodeFromString<List<DataMessengerEncrypted>>(result)
         } catch (e: Exception){
             listOf()
         }
@@ -604,17 +606,28 @@ class EncChatController(private val nameDb: String){
             null
         }
     }
+    @OptIn(InternalAPI::class)
     suspend fun initUser(){
-
+        val response = client.post("$BASE_URL/init_new_user?namedb=$nameDb"){
+            contentType(ContentType.Application.Json)
+            setBody(InitEncUser(mDatabase.getLogin()!!, mDatabase.getToken()!!, mDatabase.getOpenedKey()!!))
+        }
     }
 }
+
+@Serializable
+data class InitEncUser(
+    val login: String,
+    val token: String,
+    val publicKey: String
+)
 
 @Serializable
 data class DataKeys(val login: String, val publicKey: String)
 
 @Serializable
 data class DataMessengerEncrypted(
-    val id: Int,
+    val id: Long,
     val author: String,
     val encText: String,
     val time: Long
@@ -744,6 +757,12 @@ data class TMessage2(
 @Serializable
 data class GetLengthMessages(
     val length: Int
+)
+
+@Serializable
+data class Indexes2(
+    val startIndex: Long,
+    val endIndex: Long
 )
 
 @Serializable
