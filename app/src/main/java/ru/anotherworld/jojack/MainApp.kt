@@ -148,6 +148,7 @@ class MainApp : ComponentActivity() {
                 val context = LocalContext.current
                 var start by remember { mutableStateOf(false) }
                 try{ //Check first enter or no
+
                     coroutine.launch {
                         val localLogin = mDatabase.getLogin()
                         if(localLogin == null || localLogin == ""){
