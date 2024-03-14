@@ -84,4 +84,6 @@
     <string name="old_password">Старый пароль</string>
     <string name="new_password">Новый пароль</string>
     <string name="passwords_eq">Пароли совпадают!</string>
+    <string name="title_activity_chat3">Chat3</string>
+    <string name="copy_invite">Скопировать пригласительную ссылку</string>
 </resources>

@@ -505,6 +505,126 @@ class MTerminal{
     }
 }
 
+class EncChatController(private val nameDb: String){
+    private companion object {
+        val client = HttpClient(CIO){
+            install(Logging){
+                logger = Logger.DEFAULT
+                level = LogLevel.HEADERS
+            }
+            install(HttpTimeout){
+                requestTimeoutMillis = 5.seconds.inWholeMilliseconds
+            }
+            install(ContentNegotiation){
+                json()
+            }
+            install(WebSockets){
+                pingInterval = 5.seconds.inWholeMilliseconds
+            }
+        }
+        private var socket: WebSocketSession? = null
+    }
+    suspend fun initSession(token: String): Resource<Unit> {
+        return try {
+            socket = client.webSocketSession {
+                url("$BASE_WS/e_chat?namedb=$nameDb&token=${token}")
+            }
+            if (socket?.isActive == true){
+                Resource.Success(Unit)
+
+            } else {
+                Resource.Error("Couldn't establish a connection. ::ChatSocketServiceImpl")
+            }
+        } catch (e: Exception){
+            e.printStackTrace()
+            Resource.Error(e.localizedMessage ?: "Unknown error ::ChatSocketServiceImpl")
+        }
+    }
+    suspend fun sendMessage(message: DataMessengerEncrypted) {
+        try {
+            socket?.send(Frame.Text(Json.encodeToString<DataMessengerEncrypted>(message)))
+        } catch (e: Exception){
+            e.printStackTrace()
+        }
+    }
+    suspend fun waitNewData(myLogin: String, privateKey: String): DataMessengerEncrypted?{
+        for(element in socket?.incoming!!){
+            element as? Frame.Text ?: continue
+            val json = element.readBytes().decodeToString()
+            val data = Json.decodeFromString<DataMessengerEncrypted>(json)
+            if(data.author == myLogin) {
+                val decrypt = RSAKotlin.decryptMessage(data.encText, privateKey)
+                return DataMessengerEncrypted(data.id, data.author, decrypt, data.time)
+            }
+            else if(data.author == "NULL" && data.encText == """{"privacy": false}""")
+                DataMessengerEncrypted(0, "NULL", """{"privacy": false}""", 0)
+
+        }
+        return null
+    }
+    suspend fun closeSession() {
+        socket?.close()
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun getRangeMessages(startIndex: Int, endIndex: Int): List<DataMessengerEncrypted>{
+        return try{
+            val response = client.post("$BASE_URL/get_e_messages?namedb=$nameDb"){
+                contentType(ContentType.Application.Json)
+                setBody(Indexes(startIndex, endIndex))
+            }
+            val result = response.content.readUTF8Line().toString()
+            Json.decodeFromString<List<DataMessengerEncrypted>>(result)
+        } catch (e: Exception){
+            listOf()
+        }
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun getCountMessages(): Long?{
+        return try {
+            val response = client.get("$BASE_URL/e_count?namedb=$nameDb"){
+                contentType(ContentType.Application.Json)
+            }
+            Json.decodeFromString<CountMessages>(
+                response.content.readUTF8Line().toString()).length
+        } catch (e: Exception){
+            null
+        }
+
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun getAllUsers(): List<DataKeys>?{
+        return try{
+            val response = client.get("$BASE_URL/get_enc_users?namedb=$nameDb&token=${sDatabase.getToken()!!}"){
+                contentType(ContentType.Application.Json)
+            }
+            Json.decodeFromString<List<DataKeys>>(
+                response.content.readUTF8Line().toString()
+            )
+        } catch (_: Exception){
+            null
+        }
+    }
+    suspend fun initUser(){
+
+    }
+}
+
+@Serializable
+data class DataKeys(val login: String, val publicKey: String)
+
+@Serializable
+data class DataMessengerEncrypted(
+    val id: Int,
+    val author: String,
+    val encText: String,
+    val time: Long
+)
+
+@Serializable
+data class CountMessages(
+    val length: Long
+)
+
 @Serializable
 data class CommandLine(
     val query: String,

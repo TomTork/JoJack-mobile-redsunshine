@@ -54,10 +54,6 @@ import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
-import androidx.wear.compose.material.FractionalThreshold
-import androidx.wear.compose.material.rememberSwipeableState
-import androidx.wear.compose.material.swipeable
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.database.NData
 import ru.anotherworld.jojack.database.NotificationData
@@ -156,7 +152,6 @@ private fun Content(){
 
 }
 
-@OptIn(ExperimentalWearMaterialApi::class)
 @Composable
 private fun Notificator(head: String, text: String, id: Int, action: String,
                         read: MutableList<NData>, unread: MutableList<NData>,
