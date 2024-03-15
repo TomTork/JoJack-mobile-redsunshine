@@ -1,5 +1,6 @@
 package ru.anotherworld.jojack.database
 
+import android.util.Log
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteAll
@@ -300,6 +301,9 @@ class DAOChatsDatabase{
     }
     suspend fun delete(id: Int) = dbQuery{
         ChatsTable.deleteWhere { ChatsTable.id eq id }
+    }
+    suspend fun deleteByName(name: String) = dbQuery {
+        ChatsTable.deleteWhere { ChatsTable.name eq name }
     }
     suspend fun getChat(id: Int): String? = dbQuery{
         return@dbQuery ChatsTable

@@ -85,4 +85,5 @@
     <string name="passwords_eq">Password are equal</string>
     <string name="title_activity_chat3">Chat3</string>
     <string name="copy_invite">Copy the invitation link</string>
+    <string name="delete_chat">Delete chat</string>
 </resources>

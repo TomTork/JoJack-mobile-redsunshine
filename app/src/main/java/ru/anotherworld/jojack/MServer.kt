@@ -528,10 +528,9 @@ class EncChatController(private val nameDb: String){
     suspend fun initSession(token: String): Resource<Unit> {
         return try {
             socket = client.webSocketSession {
-                url("$BASE_WS/e_chat?namedb=$nameDb&token=${token}")
+                url("$BASE_WS/echat?namedb=$nameDb&token=${token}")
             }
             if (socket?.isActive == true){
-                Log.d("TEMP", "TRUE-1")
                 Resource.Success(Unit)
             } else {
                 Resource.Error("Couldn't establish a connection. ::ChatSocketServiceImpl")
@@ -549,18 +548,22 @@ class EncChatController(private val nameDb: String){
         }
     }
     suspend fun waitNewData(myLogin: String, privateKey: String): DataMessengerEncrypted?{
-        for(element in socket?.incoming!!){
-            element as? Frame.Text ?: continue
-            val json = element.readBytes().decodeToString()
-            val data = Json.decodeFromString<DataMessengerEncrypted>(json)
-            if(data.author == myLogin) {
-                val decrypt = RSAKotlin.decryptMessage(data.encText, privateKey)
-                return DataMessengerEncrypted(data.id, data.author, decrypt, data.time)
-            }
-            else if(data.author == "NULL" && data.encText == """{"privacy": false}""")
-                DataMessengerEncrypted(0, "NULL", """{"privacy": false}""", 0)
+        val elements = socket?.incoming
+        if(elements != null){
+            for(element in elements){
+                element as? Frame.Text ?: continue
+                val json = element.readBytes().decodeToString()
+                val data = Json.decodeFromString<DataMessengerEncrypted>(json)
+                if(data.author == myLogin) {
+                    val decrypt = RSAKotlin.decryptMessage(data.encText, privateKey)
+                    return DataMessengerEncrypted(data.id, data.author, decrypt, data.time)
+                }
+                else if(data.author == "NULL" && data.encText == """{"privacy": false}""")
+                    return DataMessengerEncrypted(0, "NULL", """{"privacy": false}""", 0)
 
+            }
         }
+
         return null
     }
     suspend fun closeSession() {
@@ -569,7 +572,7 @@ class EncChatController(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getRangeMessages(startIndex: Long, endIndex: Long): List<DataMessengerEncrypted>{
         return try{
-            val response = client.post("$BASE_URL/get_e_messages?namedb=$nameDb"){
+            val response = client.post("$BASE_URL/getemessages?namedb=$nameDb"){
                 contentType(ContentType.Application.Json)
                 setBody(Indexes2(startIndex, endIndex))
             }
@@ -583,7 +586,7 @@ class EncChatController(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getCountMessages(): Long?{
         return try {
-            val response = client.get("$BASE_URL/e_count?namedb=$nameDb"){
+            val response = client.get("$BASE_URL/ecount?namedb=$nameDb"){
                 contentType(ContentType.Application.Json)
             }
             Json.decodeFromString<CountMessages>(
@@ -596,7 +599,7 @@ class EncChatController(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getAllUsers(): List<DataKeys>?{
         return try{
-            val response = client.get("$BASE_URL/get_enc_users?namedb=$nameDb&token=${sDatabase.getToken()!!}"){
+            val response = client.get("$BASE_URL/getencusers?namedb=$nameDb&token=${sDatabase.getToken()!!}"){
                 contentType(ContentType.Application.Json)
             }
             Json.decodeFromString<List<DataKeys>>(
@@ -608,7 +611,7 @@ class EncChatController(private val nameDb: String){
     }
     @OptIn(InternalAPI::class)
     suspend fun initUser(){
-        val response = client.post("$BASE_URL/init_new_user?namedb=$nameDb"){
+        val response = client.post("$BASE_URL/initnewuser2?namedb=$nameDb"){
             contentType(ContentType.Application.Json)
             setBody(InitEncUser(mDatabase.getLogin()!!, mDatabase.getToken()!!, mDatabase.getOpenedKey()!!))
         }

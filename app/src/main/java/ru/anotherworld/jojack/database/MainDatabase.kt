@@ -100,6 +100,9 @@ class ChatsDatabase{
     suspend fun delete(id: Int){
         daoChatsDatabase.delete(id)
     }
+    suspend fun deleteByName(name: String){
+        daoChatsDatabase.deleteByName(name)
+    }
 }
 
 private val daoNotifications = DAONotifications()

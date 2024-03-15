@@ -86,4 +86,5 @@
     <string name="passwords_eq">Пароли совпадают!</string>
     <string name="title_activity_chat3">Chat3</string>
     <string name="copy_invite">Скопировать пригласительную ссылку</string>
+    <string name="delete_chat">Удалить чат</string>
 </resources>

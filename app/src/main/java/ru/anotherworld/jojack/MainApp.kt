@@ -550,7 +550,7 @@ private fun Content(){ //Main Activity
                                             if (checkedSwitch2) { //chat with encryption
                                                 val number = arrayOf(myId.toString(), item.second)
                                                 number.sort()
-                                                idChat2 = "e_chat" + number.joinToString("x")
+                                                idChat2 = "echat" + number.joinToString("x")
                                                 nameChat2 = item.first
                                                 iconChat2 = ""
 
@@ -630,7 +630,7 @@ private fun Content(){ //Main Activity
                                         )
                                     }
                                 }
-                                Divider(modifier = Modifier
+                                HorizontalDivider(modifier = Modifier
                                     .padding(top = 4.dp, bottom = 4.dp)
                                     .alpha(0.3f),
                                     thickness = 2.dp, color = colorResource(id = R.color.white))
@@ -839,7 +839,7 @@ private fun NewsPaper(){
                         fontFamily = nunitoFamily, fontWeight = FontWeight.W600)
                 }
             }
-            Divider(thickness = 2.dp, color = colorResource(id = R.color.white),
+            HorizontalDivider(thickness = 2.dp, color = colorResource(id = R.color.white),
                 modifier = Modifier
                     .alpha(0.5f)
                     .padding(bottom = 10.dp))
@@ -876,10 +876,18 @@ private fun Messenger(){
     val context = LocalContext.current
     val array = remember { listOf<ChatsData>().toMutableStateList() }
     val coroutine = rememberCoroutineScope()
+    val listenerUpdateChats = remember { mutableStateOf(false) }
     var previewName by remember { mutableStateOf("") }
     var previewMessage by remember { mutableStateOf("") }
     coroutine.launch {
         array.addAll(chatsDatabase.getAll())
+    }
+    if(listenerUpdateChats.value){
+        coroutine.launch {
+            array.clear()
+            array.addAll(chatsDatabase.getAll())
+            listenerUpdateChats.value = false
+        }
     }
     Column (modifier = Modifier
         .padding(top = 60.dp, bottom = 60.dp)
@@ -895,7 +903,8 @@ private fun Messenger(){
         LazyColumn{
             item {
                 ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
-                    action = { context.startActivity(Intent(context, ChatActivity::class.java)) })
+                    action = { context.startActivity(Intent(context, ChatActivity::class.java)) },
+                    listener = listenerUpdateChats)
             }
             itemsIndexed(array){ index, item ->
                 coroutine.launch {
@@ -918,12 +927,13 @@ private fun Messenger(){
                         idChat2 = item.chat
                         nameChat2 = item.name
                         iconChat2 = item.icon
-                        if("e_chat" !in idChat2) context.startActivity(Intent(context, Chat2::class.java))
+                        if("echat" !in idChat2) context.startActivity(Intent(context, Chat2::class.java))
                         else{
                             encChat = true
                             context.startActivity(Intent(context, Chat2::class.java))
                         }
-                    }) //show chats
+                    },
+                    listener = listenerUpdateChats) //show chats
             }
         }
     }

@@ -289,13 +289,10 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                 }
                 else{
                     if(!ready){
-                        Log.d("STAGE", "STAGE-1")
                         encChatController.initUser()
                         encChatController.initSession(sDatabase.getToken()!!)
-                        Log.d("STAGE", "STAGE-2")
-                        Log.d("STAGE", "STAGE-3")
                         users.addAll(encChatController.getAllUsers()?.toMutableStateList() ?: listOf())
-                        Log.d("STAGE", "STAGE-4")
+                        Log.d("STAGE", users.toList().toString())
 
                         if(repost != ""){
                             val count = encChatController.getCountMessages()
