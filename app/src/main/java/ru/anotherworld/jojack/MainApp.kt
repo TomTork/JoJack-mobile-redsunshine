@@ -117,13 +117,10 @@ import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
 import ru.anotherworld.jojack.elements.nameChat2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.net.NoRouteToHostException
-
-
 
 var login = mutableStateOf("")
 var id = mutableIntStateOf(-1)
