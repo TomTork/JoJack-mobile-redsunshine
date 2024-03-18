@@ -17,7 +17,10 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -64,6 +67,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,7 +83,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -94,6 +100,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -244,6 +251,7 @@ val getInfo = GetInfo()
 val getPostVk = GetPostVk()
 var contentManager = mutableIntStateOf(0)
 var showBars = mutableStateOf(true)
+var showTopBar = mutableStateOf(true)
 val nunitoFamily = FontFamily(
     Font(R.font.nunito_semibold600, FontWeight.W600),
     Font(R.font.nunito_light400, FontWeight.W400),
@@ -271,114 +279,117 @@ private fun Content(){ //Main Activity
     Scaffold(
         modifier = Modifier.background(Color.White),
         topBar = {
-            if (!showSearchUser){
-                showBars.value = true
-                var topText by mutableStateOf(stringResource(id = R.string.home))
-                topText = when(contentManager.intValue){
-                    1 -> stringResource(id = R.string.message)
-                    2 -> stringResource(id = R.string.settings)
-                    else -> stringResource(id = R.string.home)
+            if(showTopBar.value){
+                if (!showSearchUser){
+                    showBars.value = true
+                    var topText by mutableStateOf(stringResource(id = R.string.home))
+                    topText = when(contentManager.intValue){
+                        1 -> stringResource(id = R.string.message)
+                        2 -> stringResource(id = R.string.settings)
+                        else -> stringResource(id = R.string.home)
+                    }
+                    Surface(modifier = Modifier
+                        .background(Color.White)
+                        .fillMaxWidth(1f)) {
+                        Column(modifier = Modifier.fillMaxWidth(1f)) {
+                            Row(modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .background(colorResource(id = R.color.background2))) {
+                                Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
+                                    null, modifier= Modifier
+                                        .size(65.dp)
+                                        .align(Alignment.CenterVertically)
+                                        .padding(start = 20.dp, end = 5.dp))
+                                Text(text = stringResource(id = R.string.app_name),
+                                    fontFamily = interFamily, fontWeight = FontWeight.W600,
+                                    fontSize = 30.sp, modifier = Modifier
+                                        .align(Alignment.CenterVertically))
+                                Spacer(modifier = Modifier.padding(bottom=15.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Absolute.Right,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .fillMaxWidth(1f)
+                                        .padding(end = 20.dp)) {
+                                    if(contentManager.intValue == 0) {
+                                        IconButton(onClick = {
+                                            context.startActivity(Intent(context, NotificationActivity::class.java))
+                                        }) {
+                                            Column(modifier = Modifier
+                                                .padding(end = 15.dp)
+                                                .align(Alignment.CenterVertically)
+                                                .offset(y = 3.dp)) {
+                                                Image(painterResource(id = R.drawable.notificate1),
+                                                    null,
+                                                    modifier = Modifier
+                                                        .align(Alignment.CenterHorizontally)
+                                                        .size(25.dp))
+                                                Image(painterResource(id = R.drawable.notificate2),
+                                                    null,
+                                                    modifier = Modifier
+                                                        .align(Alignment.CenterHorizontally)
+                                                        .size(9.dp)
+                                                        .offset(y = (-3).dp))
+                                            }
+                                        }
+                                    }
+                                    else if(contentManager.intValue == 1){
+                                        IconButton(onClick = { //Search new user -> show search-activity
+                                            showSearchUser = !showSearchUser
+                                        }) {
+                                            Image(painterResource(id = R.drawable.search2),
+                                                null, modifier = Modifier.size(25.dp))
+                                        }
+                                    }
+
+                                }
+                            }
+
+                        }
+
+                    }
                 }
-                Surface(modifier = Modifier
-                    .background(Color.White)
-                    .fillMaxWidth(1f)) {
-                    Column(modifier = Modifier.fillMaxWidth(1f)) {
+                else {
+                    showBars.value = false
+                    TopAppBar(title = {
                         Row(modifier = Modifier
                             .fillMaxWidth(1f)
                             .background(colorResource(id = R.color.background2))) {
-                            Image(painterResource(id = R.drawable.jojacks_fixed_optimized),
-                                null, modifier= Modifier
-                                    .size(65.dp)
-                                    .align(Alignment.CenterVertically)
-                                    .padding(start = 20.dp, end = 5.dp))
-                            Text(text = stringResource(id = R.string.app_name),
-                                fontFamily = interFamily, fontWeight = FontWeight.W600,
-                                fontSize = 30.sp, modifier = Modifier
-                                    .align(Alignment.CenterVertically))
-                            Spacer(modifier = Modifier.padding(bottom=15.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Absolute.Right,
-                                modifier = Modifier
-                                    .align(Alignment.CenterVertically)
-                                    .fillMaxWidth(1f)
-                                    .padding(end = 20.dp)) {
-                                if(contentManager.intValue == 0) {
-                                    IconButton(onClick = {
-                                        context.startActivity(Intent(context, NotificationActivity::class.java))
-                                    }) {
-                                        Column(modifier = Modifier
-                                            .padding(end = 15.dp)
-                                            .align(Alignment.CenterVertically)
-                                            .offset(y = 3.dp)) {
-                                            Image(painterResource(id = R.drawable.notificate1),
-                                                null,
-                                                modifier = Modifier
-                                                    .align(Alignment.CenterHorizontally)
-                                                    .size(25.dp))
-                                            Image(painterResource(id = R.drawable.notificate2),
-                                                null,
-                                                modifier = Modifier
-                                                    .align(Alignment.CenterHorizontally)
-                                                    .size(9.dp)
-                                                    .offset(y = (-3).dp))
-                                        }
-                                    }
-                                }
-                                else if(contentManager.intValue == 1){
-                                    IconButton(onClick = { //Search new user -> show search-activity
-                                        showSearchUser = !showSearchUser
-                                    }) {
-                                        Image(painterResource(id = R.drawable.search2),
-                                            null, modifier = Modifier.size(25.dp))
-                                    }
-                                }
-
+                            IconButton(onClick = { showSearchUser = false },
+                                modifier = Modifier.align(Alignment.CenterVertically)) {
+                                Icon(painterResource(id = R.drawable.arrow_back), null,
+                                    tint = colorResource(id = R.color.white))
                             }
+                            TextField(value = search,
+                                onValueChange = {
+                                    search = it
+                                    coroutine.launch {
+                                        searchExample = searchF.search(search)
+                                        searchUpdate = true
+                                    }
+                                },
+                                placeholder = { Text(text = stringResource(id = R.string.search_user),
+                                    fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                    modifier = Modifier.alpha(0.5f),
+                                    color = colorResource(id = R.color.white)) },
+                                maxLines = 1,
+                                modifier = Modifier
+                                    .align(Alignment.CenterVertically),
+                                colors = TextFieldDefaults.textFieldColors(
+                                    containerColor = colorResource(id = R.color.background2),
+                                    cursorColor = Color.White,
+                                    disabledLabelColor = colorResource(id = R.color.ghost_white),
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                ))
                         }
-
-                    }
-
+                    }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
+                        colors = TopAppBarDefaults
+                            .topAppBarColors(containerColor = colorResource(id = R.color.background2),
+                                titleContentColor = colorResource(id = R.color.background2)))
                 }
             }
-            else {
-                showBars.value = false
-                TopAppBar(title = {
-                    Row(modifier = Modifier
-                        .fillMaxWidth(1f)
-                        .background(colorResource(id = R.color.background2))) {
-                        IconButton(onClick = { showSearchUser = false },
-                            modifier = Modifier.align(Alignment.CenterVertically)) {
-                            Icon(painterResource(id = R.drawable.arrow_back), null,
-                                tint = colorResource(id = R.color.white))
-                        }
-                        TextField(value = search,
-                            onValueChange = {
-                                search = it
-                                coroutine.launch {
-                                    searchExample = searchF.search(search)
-                                    searchUpdate = true
-                                }
-                                            },
-                            placeholder = { Text(text = stringResource(id = R.string.search_user),
-                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                                modifier = Modifier.alpha(0.5f),
-                                color = colorResource(id = R.color.white)) },
-                            maxLines = 1,
-                            modifier = Modifier
-                                .align(Alignment.CenterVertically),
-                            colors = TextFieldDefaults.textFieldColors(
-                                containerColor = colorResource(id = R.color.background2),
-                                cursorColor = Color.White,
-                                disabledLabelColor = colorResource(id = R.color.ghost_white),
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                ))
-                    }
-                }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
-                    colors = TopAppBarDefaults
-                        .topAppBarColors(containerColor = colorResource(id = R.color.background2),
-                            titleContentColor = colorResource(id = R.color.background2)))
-            }
+
 
         },
         bottomBar = {
@@ -662,12 +673,15 @@ private data class SNews(
     val exclusive: Boolean
 )
 
+var showFullScreenImage = mutableStateOf(false)
+var currentImageModel = mutableStateOf<ImageRequest?>(null)
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("CoroutineCreationDuringComposition", "MutableCollectionMutableState",
     "UnrememberedMutableState")
 @Composable
 private fun NewsPaper(){
-    val context = LocalContext.current
     var isServerConnect by remember { mutableStateOf(true) }
     var update by remember { mutableStateOf(false) }
     val coroutine = rememberCoroutineScope()
@@ -720,86 +734,149 @@ private fun NewsPaper(){
             .fillMaxWidth(1f)
             .background(color = colorResource(id = R.color.background2)),
             verticalArrangement = Arrangement.Center) {
-            if(view){
-                val viewModel = viewModel<MainViewModel>()
-                val isLoading by viewModel.isLoading.collectAsState()
 
-                val state = rememberSwipeRefreshState(isRefreshing = isLoading)
-
-                SwipeRefresh(state = state, onRefresh = { viewModel.loadStuff(); update = true },
-                    indicator = { _state, refreshTrigger ->
-                        SwipeRefreshIndicator(state = _state, refreshTriggerDistance = refreshTrigger,
-                            contentColor = colorResource(id = R.color.subscribe))
-                    }) {
-                    LazyColumn(state = listState){
-                        if(job >= 2){ //Функция создания постов доступна не для всех пользователей
-                            item { //View listener to create new post from user
-                                Row(modifier = Modifier
-                                    .fillMaxWidth(1f)
-                                    .clickable { startCreateNewPostFromUser = true }
-                                    .background(color = colorResource(id = R.color.black))
-                                    .padding(
-                                        top = 22.dp,
-                                        start = 10.dp,
-                                        end = 10.dp,
-                                        bottom = 10.dp
-                                    )
-                                ) {
-                                    Icon(painter = painterResource(id = R.drawable.account_circle),
-                                        null, tint = colorResource(id = R.color.white),
-                                        modifier = Modifier.size(37.dp))
-                                    Text(text = stringResource(id = R.string.write_something),
-                                        modifier = Modifier
-                                            .align(Alignment.CenterVertically)
-                                            .alpha(0.8f)
-                                            .padding(start = 10.dp),
-                                        fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                                        fontSize = 18.sp)
-                                }
-                            }
-                        }
-                        itemsIndexed(items = array, itemContent = {index, value ->
-                            PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
-                                iconGroup = value.icon, existsImages = true, images = value.images,
-                                originalUrl = value.originalUrl, like = value.like, exclusive = value.exclusive)
-                            if(index == array.size - 2 && maxId > 1){
-                                coroutine.launch {
-                                    maxId -= 1
-                                    for(i in getPostVk.getPostVk(maxId, maxId).post)
-                                        array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
-                                            i.originalUrl, i.like, i.exclusive))
-                                }
-                            }
-                        })
-                    }
-                }
-            }
-            else if(!isServerConnect){ //show activity-no-internet
+            if(showFullScreenImage.value){
+                showBars.value = false
+                showTopBar.value = false
+                var scale by remember { mutableFloatStateOf(1f) }
+                var offset by remember { mutableStateOf(Offset.Zero) }
                 Column(modifier = Modifier
                     .fillMaxWidth(1f)
                     .fillMaxHeight(1f)
-                    .background(color = colorResource(id = R.color.background2)),
-                    verticalArrangement = Arrangement.Center) {
-                    Text(text = stringResource(id = R.string.no_internet2),
-                        fontFamily = interFamily, fontWeight = FontWeight.W600,
+                    .background(Color.Black)) {
+                    IconButton(onClick = {
+                        showFullScreenImage.value = false
+                        showBars.value = true
+                        showTopBar.value = true
+                    },
                         modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(start = 20.dp, end = 20.dp),
-                        fontSize = 20.sp, color = colorResource(id = R.color.white))
-                    Button(onClick = { isServerConnect = true },
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .padding(top = 10.dp)
-                            .align(Alignment.CenterHorizontally),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(id = R.color.background_lr_button))) {
-                        Text(text = stringResource(id = R.string.try_again),
-                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
-                            color = colorResource(id = R.color.white))
+                            .align(Alignment.Start)
+                            .offset(y = (-50).dp)) {
+                        Icon(painterResource(id = R.drawable.arrow_back), null,
+                            modifier = Modifier.size(25.dp))
                     }
+                    Column(verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                            .fillMaxHeight(1f)
+                            .offset(y = (-50).dp)) {
+                        BoxWithConstraints(modifier = Modifier) {
+                            val state = rememberTransformableState { zoomChange, panChange, rotationChange ->
+                                scale = (scale * zoomChange).coerceIn(1f, 5f)
+
+                                val extraWidth = (scale - 1) * constraints.maxWidth
+                                val extraHeight = (scale - 1) * constraints.maxHeight
+
+                                val maxX = extraWidth / 2
+                                val maxY = extraHeight / 2
+
+                                offset = Offset(
+                                    x = (offset.x + scale * panChange.x).coerceIn(-maxX, maxX),
+                                    y = (offset.y + scale * panChange.y).coerceIn(-maxY, maxY),
+                                )
+                            }
+                            AsyncImage(model = currentImageModel.value,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth(1f)
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                        translationX = offset.x
+                                        translationY = offset.y
+                                    }
+                                    .transformable(state)
+                            )
+                        }
+                    }
+
                 }
 
             }
+            else{
+                if(view){
+                    val viewModel = viewModel<MainViewModel>()
+                    val isLoading by viewModel.isLoading.collectAsState()
+
+                    val state = rememberSwipeRefreshState(isRefreshing = isLoading)
+
+                    SwipeRefresh(state = state, onRefresh = { viewModel.loadStuff(); update = true },
+                        indicator = { _state, refreshTrigger ->
+                            SwipeRefreshIndicator(state = _state, refreshTriggerDistance = refreshTrigger,
+                                contentColor = colorResource(id = R.color.subscribe))
+                        }) {
+                        LazyColumn(state = listState){
+                            if(job >= 2){ //Функция создания постов доступна не для всех пользователей
+                                item { //View listener to create new post from user
+                                    Row(modifier = Modifier
+                                        .fillMaxWidth(1f)
+                                        .clickable { startCreateNewPostFromUser = true }
+                                        .background(color = colorResource(id = R.color.black))
+                                        .padding(
+                                            top = 22.dp,
+                                            start = 10.dp,
+                                            end = 10.dp,
+                                            bottom = 10.dp
+                                        )
+                                    ) {
+                                        Icon(painter = painterResource(id = R.drawable.account_circle),
+                                            null, tint = colorResource(id = R.color.white),
+                                            modifier = Modifier.size(37.dp))
+                                        Text(text = stringResource(id = R.string.write_something),
+                                            modifier = Modifier
+                                                .align(Alignment.CenterVertically)
+                                                .alpha(0.8f)
+                                                .padding(start = 10.dp),
+                                            fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                            fontSize = 18.sp)
+                                    }
+                                }
+                            }
+                            itemsIndexed(items = array, itemContent = {index, value ->
+                                PostBase2(idPost = index, text = value.textPosts, nameGroup = value.nameGroup, typeGroup = "Паблик",
+                                    iconGroup = value.icon, existsImages = true, images = value.images,
+                                    originalUrl = value.originalUrl, like = value.like, exclusive = value.exclusive)
+                                if(index == array.size - 2 && maxId > 1){
+                                    coroutine.launch {
+                                        maxId -= 1
+                                        for(i in getPostVk.getPostVk(maxId, maxId).post)
+                                            array.add(SNews(i.textPost, i.groupName, i.iconUrl, i.imagesUrls,
+                                                i.originalUrl, i.like, i.exclusive))
+                                    }
+                                }
+                            })
+                        }
+                    }
+                }
+                else if(!isServerConnect){ //show activity-no-internet
+                    Column(modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .fillMaxHeight(1f)
+                        .background(color = colorResource(id = R.color.background2)),
+                        verticalArrangement = Arrangement.Center) {
+                        Text(text = stringResource(id = R.string.no_internet2),
+                            fontFamily = interFamily, fontWeight = FontWeight.W600,
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(start = 20.dp, end = 20.dp),
+                            fontSize = 20.sp, color = colorResource(id = R.color.white))
+                        Button(onClick = { isServerConnect = true },
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .padding(top = 10.dp)
+                                .align(Alignment.CenterHorizontally),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorResource(id = R.color.background_lr_button))) {
+                            Text(text = stringResource(id = R.string.try_again),
+                                fontFamily = nunitoFamily, fontWeight = FontWeight.W600,
+                                color = colorResource(id = R.color.white))
+                        }
+                    }
+
+                }
+            }
+
         }    
     }
     else { //show create-new-post-activity-from-user

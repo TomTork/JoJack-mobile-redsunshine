@@ -14,7 +14,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -92,21 +95,25 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.util.lerp
 import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
+import ru.anotherworld.jojack.currentImageModel
 import ru.anotherworld.jojack.database.Comments
 import ru.anotherworld.jojack.interFamily
 import ru.anotherworld.jojack.mDatabase
 import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.showBars
+import ru.anotherworld.jojack.showFullScreenImage
 import java.io.File
 import kotlin.math.absoluteValue
 
@@ -200,10 +207,16 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                             fraction = 1f - pageOffset.coerceIn(0f, 1f)
                         )
                     }
+                    .clickable {
+                        showFullScreenImage.value = true
+                        currentImageModel.value = model
+                    }
                 ) {
+
                     Box(modifier = Modifier
                         .fillMaxWidth(1f)
                         .align(Alignment.CenterHorizontally)) {
+
                         AsyncImage(
                             model = model,
                             contentDescription = null,
@@ -225,7 +238,7 @@ fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
                         Box(modifier = Modifier
                             .padding(top = 5.dp, end = 5.dp)
                             .align(Alignment.TopEnd)
-                            .graphicsLayer{
+                            .graphicsLayer {
                                 val pageOffset = (
                                         (pagerState.currentPage - index) + pagerState
                                             .currentPageOffsetFraction
