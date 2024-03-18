@@ -128,7 +128,6 @@ var job = mutableIntStateOf(-1)
 
 class MainApp : ComponentActivity() {
     @SuppressLint("PermissionLaunchedDuringComposition", "CoroutineCreationDuringComposition")
-    @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
