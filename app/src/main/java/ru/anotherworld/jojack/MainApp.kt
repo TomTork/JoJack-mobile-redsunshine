@@ -899,15 +899,18 @@ private fun Messenger(){
             itemsIndexed(array){ index, item ->
                 coroutine.launch {
                     try{
-                        val chatTwo = ChatTwo(item.chat)
-                        val count = chatTwo.getCountMessages()!!
-                        val value = chatTwo.getRangeMessages(count, count)
-                        if("[|START|]" in value[0].message){
-                            val dd = Json.decodeFromString<CopyPost>(value[0].message
-                                .substringAfter("[|START|]").substringBefore("[|END|]"))
-                            previewMessage = dd.nameGroup + " " + dd.text.substring(0, 16) + "..."
-                        } else previewMessage = value[0].message
-                        previewName = value[0].author
+                        if("echat" !in item.chat){
+                            val chatTwo = ChatTwo(item.chat)
+                            val count = chatTwo.getCountMessages()!!
+                            val value = chatTwo.getRangeMessages(count, count)
+                            if("[|START|]" in value[0].message){
+                                val dd = Json.decodeFromString<CopyPost>(value[0].message
+                                    .substringAfter("[|START|]").substringBefore("[|END|]"))
+                                previewMessage = dd.nameGroup + " " + dd.text.substring(0, 16) + "..."
+                            } else previewMessage = value[0].message
+                            previewName = value[0].author
+                        }
+
                     } catch (e: Exception){
                         Log.e("ERROR ::MainApp", e.message.toString())
                     }
@@ -920,6 +923,7 @@ private fun Messenger(){
                         if("echat" !in idChat2) context.startActivity(Intent(context, Chat2::class.java))
                         else{
                             encChat = true
+                            Log.d("INFO", "$idChat2 $nameChat2")
                             context.startActivity(Intent(context, Chat2::class.java))
                         }
                     },

@@ -31,11 +31,6 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
-            android:name=".elements.Chat3"
-            android:exported="false"
-            android:label="@string/title_activity_chat3"
-            android:theme="@style/Theme.JoJack" />
-        <activity
             android:name=".elements.PostToMessenger"
             android:exported="false"
             android:label="@string/title_activity_post_to_messenger"
@@ -45,6 +40,7 @@
             android:name=".elements.Chat2"
             android:exported="false"
             android:label="@string/title_activity_chat2"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.JoJack"
             android:windowSoftInputMode="adjustResize" />
         <activity

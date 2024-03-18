@@ -1,13 +1,7 @@
 package ru.anotherworld.jojack
 
-import android.app.Application
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
 import android.util.Log
-import androidx.compose.ui.text.input.KeyboardType.Companion.Uri
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -26,42 +20,30 @@ import io.ktor.client.request.setBody
 import io.ktor.client.request.url
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
-import io.ktor.client.statement.readBytes
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.InternalAPI
 import io.ktor.util.cio.writeChannel
-import io.ktor.util.toByteArray
 import io.ktor.utils.io.copyAndClose
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
-import io.ktor.websocket.readText
-import io.ktor.websocket.serialization.receiveDeserializedBase
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToJsonElement
 import ru.anotherworld.jojack.chatcontroller.Message
 import ru.anotherworld.jojack.chatcontroller.MessageDto
 import ru.anotherworld.jojack.chatcontroller.Resource
 import ru.anotherworld.jojack.database.MainDatabase
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.FileInputStream
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -327,12 +309,15 @@ class ChatTwo(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getRangeMessages(startIndex: Int, endIndex: Int): List<TMessage2>{
         return try{
-            val response = client.post("$BASE_URL/getchat2?namedb=$nameDb"){
-                contentType(ContentType.Application.Json)
-                setBody(Indexes(startIndex, endIndex))
+            if("echat" !in nameDb){
+                val response = client.post("$BASE_URL/getchat2?namedb=$nameDb"){
+                    contentType(ContentType.Application.Json)
+                    setBody(Indexes(startIndex, endIndex))
+                }
+                val result = response.content.readUTF8Line().toString()
+                Json.decodeFromString<List<TMessage2>>(result)
             }
-            val result = response.content.readUTF8Line().toString()
-            Json.decodeFromString<List<TMessage2>>(result)
+            else listOf()
         } catch (e: Exception){
             listOf()
         }
@@ -340,11 +325,14 @@ class ChatTwo(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getCountMessages(): Int?{
         return try {
-            val response = client.get("$BASE_URL/chatmessages?namedb=$nameDb"){
-                contentType(ContentType.Application.Json)
+            if("echat" !in nameDb){
+                val response = client.get("$BASE_URL/chatmessages?namedb=$nameDb"){
+                    contentType(ContentType.Application.Json)
+                }
+                Json.decodeFromString<GetLengthMessages>(
+                    response.content.readUTF8Line().toString()).length
             }
-            Json.decodeFromString<GetLengthMessages>(
-                response.content.readUTF8Line().toString()).length
+            else null
         } catch (e: Exception){
             null
         }
@@ -514,13 +502,13 @@ class EncChatController(private val nameDb: String){
                 level = LogLevel.HEADERS
             }
             install(HttpTimeout){
-                requestTimeoutMillis = 5.seconds.inWholeMilliseconds
+                requestTimeoutMillis = 3.seconds.inWholeMilliseconds
             }
             install(ContentNegotiation){
                 json()
             }
             install(WebSockets){
-                pingInterval = 5.seconds.inWholeMilliseconds
+                pingInterval = 3.seconds.inWholeMilliseconds
             }
         }
         private var socket: WebSocketSession? = null
@@ -528,7 +516,7 @@ class EncChatController(private val nameDb: String){
     suspend fun initSession(token: String): Resource<Unit> {
         return try {
             socket = client.webSocketSession {
-                url("$BASE_WS/echat?namedb=$nameDb&token=${token}")
+                url("$BASE_WS/echat2?namedbY=$nameDb&tokenY=${token}")
             }
             if (socket?.isActive == true){
                 Resource.Success(Unit)
@@ -547,23 +535,32 @@ class EncChatController(private val nameDb: String){
             e.printStackTrace()
         }
     }
-    suspend fun waitNewData(myLogin: String, privateKey: String): DataMessengerEncrypted?{
-        val elements = socket?.incoming
-        if(elements != null){
-            for(element in elements){
-                element as? Frame.Text ?: continue
-                val json = element.readBytes().decodeToString()
+    suspend fun waitNewData(privateKey: String, login: String): DataMessengerEncrypted?{
+        for(element in socket?.incoming!!) {
+            element as? Frame.Text ?: continue
+            val json = element.readBytes().decodeToString()
+            try{
                 val data = Json.decodeFromString<DataMessengerEncrypted>(json)
-                if(data.author == myLogin) {
-                    val decrypt = RSAKotlin.decryptMessage(data.encText, privateKey)
-                    return DataMessengerEncrypted(data.id, data.author, decrypt, data.time)
+                if(data.sendTo == login) {
+                    return DataMessengerEncrypted(
+                        id = data.id,
+                        author = data.author,
+                        encText = RSAKotlin.decryptMessage(data.encText, privateKey),
+                        time = data.time,
+                        sendTo = data.sendTo
+                    )
                 }
-                else if(data.author == "NULL" && data.encText == """{"privacy": false}""")
-                    return DataMessengerEncrypted(0, "NULL", """{"privacy": false}""", 0)
-
+                return DataMessengerEncrypted(data.id, data.author, data.encText, data.time, data.sendTo)
+            } catch (e: Exception){
+                println(e)
+                return null
             }
-        }
 
+//                else if(data.author == "NULL" && data.encText == """{"privacy": false}""")
+//                    return DataMessengerEncrypted(0, "NULL", """{"privacy": false}""", 0)
+
+        }
+        Log.e("CLOSE", "CLOSE-SESSION")
         return null
     }
     suspend fun closeSession() {
@@ -599,7 +596,7 @@ class EncChatController(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getAllUsers(): List<DataKeys>?{
         return try{
-            val response = client.get("$BASE_URL/getencusers?namedb=$nameDb&token=${sDatabase.getToken()!!}"){
+            val response = client.get("$BASE_URL/getencusers?namedb6=$nameDb&token6=${sDatabase.getToken()!!}"){
                 contentType(ContentType.Application.Json)
             }
             Json.decodeFromString<List<DataKeys>>(
@@ -611,10 +608,11 @@ class EncChatController(private val nameDb: String){
     }
     @OptIn(InternalAPI::class)
     suspend fun initUser(){
-        val response = client.post("$BASE_URL/initnewuser2?namedb=$nameDb"){
+        val response = client.post("$BASE_URL/initnewuser2?namedbZ=$nameDb"){
             contentType(ContentType.Application.Json)
             setBody(InitEncUser(mDatabase.getLogin()!!, mDatabase.getToken()!!, mDatabase.getOpenedKey()!!))
         }
+        Log.d("INFO-INIT-USER", response.status.toString())
     }
 }
 
@@ -633,7 +631,8 @@ data class DataMessengerEncrypted(
     val id: Long,
     val author: String,
     val encText: String,
-    val time: Long
+    val time: Long,
+    val sendTo: String
 )
 
 @Serializable

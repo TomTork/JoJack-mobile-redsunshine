@@ -127,12 +127,16 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
     val context = LocalContext.current
     var state by remember { mutableStateOf("Онлайн") } //Состояние в чате: кто-то печатает и т.д.
     var message by remember { mutableStateOf("") }
+    var privateKey by remember { mutableStateOf("") }
     val coroutine = rememberCoroutineScope()
+    var smartResult = remember { mutableStateOf<DataMessengerEncrypted?>(null) }
     val chatController = ChatTwo(idChat)
     val encChatController = EncChatController(idChat)
     val database = MainDatabase()
+    var encMessage by remember { mutableStateOf("") }
     coroutine.launch {
         login1 = sDatabase.getLogin()!!
+        privateKey = sDatabase.getClosedKey()!!
     }
     var expanded by remember { mutableStateOf(false) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
@@ -233,13 +237,16 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                 val count = encChatController.getCountMessages() ?: 1
                                 val time = System.currentTimeMillis()
                                 for(user in users){
+                                    Log.d("SEND-MESSAGE", "${user.login} ${login1}")
                                     encChatController.sendMessage(DataMessengerEncrypted(
                                         id = count,
-                                        author = login.value,
+                                        author = login1,
                                         encText = RSAKotlin.encryptMessage(message, user.publicKey),
-                                        time = time
+                                        time = time,
+                                        sendTo = user.login
                                     ))
                                 }
+
                             }
 
                             message = ""
@@ -295,44 +302,62 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         Log.d("STAGE", users.toList().toString())
 
                         if(repost != ""){
-                            val count = encChatController.getCountMessages()
-                            if(count != null){
-                                val time = System.currentTimeMillis()
-                                for(user in users){
-                                    encChatController.sendMessage(DataMessengerEncrypted(
-                                        id = (count + 1),
-                                        author = login.value,
-                                        encText = RSAKotlin
-                                            .encryptMessage("[|START|]${repost}[|END|]",
-                                                user.publicKey),
-                                        time = time
-                                        ))
-                                }
+                            val count = encChatController.getCountMessages() ?: 1
+                            val time = System.currentTimeMillis()
+                            for(user in users){
+                                encChatController.sendMessage(DataMessengerEncrypted(
+                                    id = count,
+                                    author = login.value,
+                                    encText = RSAKotlin
+                                        .encryptMessage("[|START|]${repost}[|END|]",
+                                            user.publicKey),
+                                    time = time,
+                                    sendTo = user.login
+                                    ))
                             }
+
                             repost = ""
                         }
-                        else{
-                            destroy2 = encChatController
-                            val countMessages = encChatController.getCountMessages()
-                            if(countMessages != null){
-                                messagesList2.addAll(encChatController.getRangeMessages(1, countMessages))
-                            }
-                            ready = true
 
-                            val result = encChatController.waitNewData(login.value, sDatabase.getClosedKey()!!)
-                            if(result != null){
-                                messagesList2.add(0, result)
+                        destroy2 = encChatController
+                        val countMessages = encChatController.getCountMessages()
+                        if(countMessages != null){
+                            messagesList2.addAll(encChatController.getRangeMessages(0, countMessages-1))
+                            for(index in messagesList2.indices){
+                                try{
+                                    if(messagesList2[index].sendTo == login1){
+                                        messagesList2[index] = DataMessengerEncrypted(
+                                            id = messagesList2[index].id,
+                                            author = messagesList2[index].author,
+                                            encText = RSAKotlin.decryptMessage(messagesList2[index].encText,
+                                                privateKey),
+                                            time = messagesList2[index].time,
+                                            sendTo = messagesList2[index].sendTo
+                                        )
+                                    }
+
+                                } catch (e: Exception){
+                                    println("DECODE: $e")
+                                }
+
                             }
                         }
                     }
+                    ready = true
+
+                    smartResult.value = encChatController.waitNewData(privateKey, login1)
+                    if(smartResult.value != null){
+                        Log.e("WATCH-THIS-2", smartResult.value.toString())
+                        messagesList2.add(0, smartResult.value!!)
+                    }
+                    else Log.d("STATUS", "NULL")
                 }
-
-
             }
             if (ready){
                 HorizontalDivider(thickness = 2.dp, color = Color.Black)
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false },
-                    modifier = Modifier.padding(bottom = 30.dp, start = 5.dp, end = 5.dp)
+                    modifier = Modifier
+                        .padding(bottom = 30.dp, start = 5.dp, end = 5.dp)
                         .align(Alignment.CenterHorizontally)) {
                     Column(modifier = Modifier
                         .fillMaxWidth(1f)
@@ -356,16 +381,37 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         }
                     }
                 }
-                LazyColumn(state = lazyState,
-                    reverseLayout = true){
-                    itemsIndexed(messagesList.sortedBy { it.timestamp }.reversed()){ _, message ->
-                        MessageIn(
-                            login = message.author,
-                            text = message.message,
-                            time = getCurrentTimeStamp(message.timestamp)!!)
-                        Spacer(modifier = Modifier.padding(top = 5.dp))
+                if(!encChat){
+                    LazyColumn(state = lazyState,
+                        reverseLayout = true){
+                        itemsIndexed(messagesList.sortedBy { it.timestamp }.reversed()){ _, message ->
+                            MessageIn(
+                                login = message.author,
+                                text = message.message,
+                                time = getCurrentTimeStamp(message.timestamp)!!)
+                            Spacer(modifier = Modifier.padding(top = 5.dp))
+                        }
                     }
                 }
+                else{
+                    Log.d("LIST", messagesList2.toList().toString())
+                    LazyColumn(state = lazyState,
+                        reverseLayout = true) {
+                        itemsIndexed(messagesList2.sortedBy { it.time }.reversed()){ _, message ->
+                            if("/" !in message.encText && "=" !in message.encText && "+" !in message.encText){
+                                MessageIn(
+                                    login = message.author,
+                                    text = message.encText,
+                                    time = getCurrentTimeStamp(message.time)!!
+                                )
+                                Spacer(modifier = Modifier.padding(top = 5.dp))
+                            }
+
+
+                        }
+                    }
+                }
+
             }
         }
     }
