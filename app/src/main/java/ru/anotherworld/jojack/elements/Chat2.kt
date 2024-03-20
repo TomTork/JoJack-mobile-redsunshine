@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -29,7 +30,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -39,6 +39,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
@@ -54,8 +55,10 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -129,7 +132,8 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
     var message by remember { mutableStateOf("") }
     var privateKey by remember { mutableStateOf("") }
     val coroutine = rememberCoroutineScope()
-    var smartResult = remember { mutableStateOf<DataMessengerEncrypted?>(null) }
+    val smartResult = remember { mutableStateOf<DataMessengerEncrypted?>(null) }
+    var access by remember { mutableStateOf(false) }
     val chatController = ChatTwo(idChat)
     val encChatController = EncChatController(idChat)
     val database = MainDatabase()
@@ -190,6 +194,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         color = colorResource(id = R.color.icon_color)
                     )
                 }
+
             }
         },
         bottomBar = {
@@ -235,18 +240,24 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                             }
                             else{
                                 val count = encChatController.getCountMessages() ?: 1
+                                val blacklist = encChatController.eChatGetBlacklist()
                                 val time = System.currentTimeMillis()
-                                for(user in users){
-                                    Log.d("SEND-MESSAGE", "${user.login} ${login1}")
-                                    encChatController.sendMessage(DataMessengerEncrypted(
-                                        id = count,
-                                        author = login1,
-                                        encText = RSAKotlin.encryptMessage(message, user.publicKey),
-                                        time = time,
-                                        sendTo = user.login
-                                    ))
+                                if(login1 !in blacklist){
+                                    for(user in users){
+                                        if(blacklist.isEmpty() || user.login !in blacklist){
+                                            Log.d("SEND-MESSAGE", "${user.login} ${login1}")
+                                            encChatController.sendMessage(DataMessengerEncrypted(
+                                                id = count,
+                                                author = login1,
+                                                encText = RSAKotlin.encryptMessage(message, user.publicKey),
+                                                time = time,
+                                                sendTo = user.login
+                                            ))
+                                        }
+                                    }
                                 }
-
+                                else Toast.makeText(context, context.getText(R.string.u_in_bl), Toast.LENGTH_SHORT)
+                                    .show()
                             }
 
                             message = ""
@@ -298,23 +309,32 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                     if(!ready){
                         encChatController.initUser()
                         encChatController.initSession(sDatabase.getToken()!!)
+                        access = encChatController.eChatGetAccess()
                         users.addAll(encChatController.getAllUsers()?.toMutableStateList() ?: listOf())
                         Log.d("STAGE", users.toList().toString())
 
                         if(repost != ""){
                             val count = encChatController.getCountMessages() ?: 1
+                            val blacklist = encChatController.eChatGetBlacklist()
                             val time = System.currentTimeMillis()
-                            for(user in users){
-                                encChatController.sendMessage(DataMessengerEncrypted(
-                                    id = count,
-                                    author = login.value,
-                                    encText = RSAKotlin
-                                        .encryptMessage("[|START|]${repost}[|END|]",
-                                            user.publicKey),
-                                    time = time,
-                                    sendTo = user.login
-                                    ))
+                            if(login1 !in blacklist){
+                                for(user in users){
+                                    if(blacklist.isEmpty() || user.login !in blacklist){
+                                        encChatController.sendMessage(DataMessengerEncrypted(
+                                            id = count,
+                                            author = login.value,
+                                            encText = RSAKotlin
+                                                .encryptMessage("[|START|]${repost}[|END|]",
+                                                    user.publicKey),
+                                            time = time,
+                                            sendTo = user.login
+                                        ))
+                                    }
+
+                                }
                             }
+                            else Toast.makeText(context, context.getText(R.string.u_in_bl), Toast.LENGTH_SHORT)
+                                .show()
 
                             repost = ""
                         }
@@ -322,25 +342,29 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         destroy2 = encChatController
                         val countMessages = encChatController.getCountMessages()
                         if(countMessages != null){
-                            messagesList2.addAll(encChatController.getRangeMessages(0, countMessages-1))
-                            for(index in messagesList2.indices){
-                                try{
-                                    if(messagesList2[index].sendTo == login1){
-                                        messagesList2[index] = DataMessengerEncrypted(
-                                            id = messagesList2[index].id,
-                                            author = messagesList2[index].author,
-                                            encText = RSAKotlin.decryptMessage(messagesList2[index].encText,
-                                                privateKey),
-                                            time = messagesList2[index].time,
-                                            sendTo = messagesList2[index].sendTo
-                                        )
+                            val blacklist = encChatController.eChatGetBlacklist()
+                            if (login1 !in blacklist){
+                                messagesList2.addAll(encChatController.getRangeMessages(0, countMessages-1))
+                                for(index in messagesList2.indices){
+                                    try{
+                                        if(messagesList2[index].sendTo == login1){
+                                            messagesList2[index] = DataMessengerEncrypted(
+                                                id = messagesList2[index].id,
+                                                author = messagesList2[index].author,
+                                                encText = RSAKotlin.decryptMessage(messagesList2[index].encText,
+                                                    privateKey),
+                                                time = messagesList2[index].time,
+                                                sendTo = messagesList2[index].sendTo
+                                            )
+                                        }
+
+                                    } catch (e: Exception){
+                                        println("DECODE: $e")
                                     }
 
-                                } catch (e: Exception){
-                                    println("DECODE: $e")
                                 }
-
                             }
+
                         }
                     }
                     ready = true
@@ -363,22 +387,68 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         .fillMaxWidth(1f)
                         .padding(start = 20.dp, end = 20.dp)
                         .background(color = colorResource(id = R.color.background_post))) {
-                        Text(text = stringResource(id = R.string.copy_invite),
-                            fontFamily = interFamily, fontWeight = FontWeight.W500)
-                        Row(modifier = Modifier
-                            .fillMaxWidth(1f)
-                            .padding(start = 5.dp, end = 5.dp)) {
-                            Text(
-                                text = inviteUrl,
-                                modifier = Modifier
-                                    .align(Alignment.CenterVertically)
-                                    .clickable {
-                                        clipboardManager.setText(AnnotatedString(inviteUrl))
-                                    },
-                                fontFamily = interFamily,
-                                fontWeight = FontWeight.W400
-                            )
+                        if("echat" !in idChat){
+                            Row(modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .padding(start = 5.dp, end = 5.dp)
+                                .clickable {
+                                    clipboardManager.setText(AnnotatedString(inviteUrl))
+                                }) {
+                                Text(text = stringResource(id = R.string.copy_invite),
+                                    fontFamily = interFamily, fontWeight = FontWeight.W500)
+                                Text(
+                                    text = inviteUrl,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .clickable {
+                                            clipboardManager.setText(AnnotatedString(inviteUrl))
+                                        },
+                                    fontFamily = interFamily,
+                                    fontWeight = FontWeight.W400
+                                )
+                            }
+                            val state2 = rememberLazyListState()
+                            var localBlacklist = remember { listOf<String>().toMutableStateList() }
+                            coroutine.launch {
+                                localBlacklist = encChatController.eChatGetBlacklist() as SnapshotStateList<String>
+                            }
+                            LazyColumn(state = state2) {
+                                itemsIndexed(users.map { it.login }.toList()){ index, user ->
+                                    Row(modifier = Modifier.fillMaxWidth(0.8f)){
+                                       Text(text = index.toString(),
+                                           fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                                           modifier = Modifier.weight(0.1f))
+                                       Text(text = user,
+                                           modifier = Modifier.weight(0.8f),
+                                           fontFamily = nunitoFamily, fontWeight = FontWeight.W500,
+                                           style = if(user in localBlacklist) TextStyle(textDecoration = TextDecoration.LineThrough) else TextStyle.Default
+                                       )
+                                       if(access){
+                                           IconButton(onClick = {
+                                               if(user in localBlacklist){
+                                                   coroutine.launch {
+                                                       encChatController.eChatRemoveFromBlacklist(user)
+                                                   }
+                                               }
+                                               else{
+                                                   coroutine.launch {
+                                                       encChatController.eChatAddInBlacklist(user)
+                                                   }
+                                               }
+                                           },
+                                               modifier = Modifier.weight(0.1f)) {
+                                               if(user in localBlacklist){
+                                                   Icon(painterResource(id = R.drawable.outline_cancel_24), null)
+                                               }
+                                               else Icon(painterResource(id = R.drawable.outline_check_24), null)
+                                           }
+                                       }
+                                    }
+                                }
+                            }
                         }
+
+
                     }
                 }
                 if(!encChat){

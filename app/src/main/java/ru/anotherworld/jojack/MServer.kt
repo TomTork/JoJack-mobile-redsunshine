@@ -1,5 +1,6 @@
 package ru.anotherworld.jojack
 
+import android.app.Application
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -569,7 +570,8 @@ class EncChatController(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getRangeMessages(startIndex: Long, endIndex: Long): List<DataMessengerEncrypted>{
         return try{
-            val response = client.post("$BASE_URL/getemessages?namedb=$nameDb"){
+            val response = client.post("$BASE_URL/getemessages?namedb=$nameDb" +
+                    "&token=${sDatabase.getToken()!!}"){
                 contentType(ContentType.Application.Json)
                 setBody(Indexes2(startIndex, endIndex))
             }
@@ -583,7 +585,7 @@ class EncChatController(private val nameDb: String){
     @OptIn(InternalAPI::class)
     suspend fun getCountMessages(): Long?{
         return try {
-            val response = client.get("$BASE_URL/ecount?namedb=$nameDb"){
+            val response = client.get("$BASE_URL/ecount?namedb=$nameDb&token=${sDatabase.getToken()!!}"){
                 contentType(ContentType.Application.Json)
             }
             Json.decodeFromString<CountMessages>(
@@ -614,7 +616,58 @@ class EncChatController(private val nameDb: String){
         }
         Log.d("INFO-INIT-USER", response.status.toString())
     }
+    suspend fun eChatDelete(): String{ //Удалить бд
+        val response = client.post("$BASE_URL/echatdelete?namedb=$nameDb&token=${sDatabase.getToken()!!}")
+        return response.status.toString()
+    }
+    suspend fun eChatAccess(login: String, access: Boolean): String{ //Изменить права доступа, во входных параметрах тот, у кого нужно изм. права
+        val response = client.post("$BASE_URL/echataccess?namedb=$nameDb" +
+                "&token=${sDatabase.getToken()!!}&qadmin=$login&newaccess=$access")
+        return response.status.toString()
+    }
+    suspend fun eChatAddInBlacklist(guilty: String): String{
+        val response = client.post("$BASE_URL/echataddinblacklist?namedb=$nameDb" +
+                "&token=${sDatabase.getToken()!!}&guilty=${guilty}")
+        return response.status.toString()
+    }
+    suspend fun eChatRemoveFromBlacklist(guilty: String): String{
+        val response = client.post("$BASE_URL/echatremovefromblacklist?namedb=$nameDb" +
+                "&token=${sDatabase.getToken()!!}&guilty=${guilty}")
+        return response.status.toString()
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun eChatGetBlacklist(): List<String>{
+        val response = client.get("$BASE_URL/echatgetblacklist?namedb=$nameDb&token=${sDatabase.getToken()!!}"){
+            contentType(ContentType.Application.Json)
+        }
+        return try{
+            Json.decodeFromString<RespondBlacklist>(response.content.readUTF8Line().toString()).list
+        } catch (e: Exception){
+            listOf()
+        }
+    }
+    @OptIn(InternalAPI::class)
+    suspend fun eChatGetAccess(): Boolean{
+        val response = client.get("$BASE_URL/echatgetaccess?namedb=$nameDb&token=${sDatabase.getToken()!!}"){
+            contentType(ContentType.Application.Json)
+        }
+        return try{
+            Json.decodeFromString<Access>(response.content.readUTF8Line().toString()).access
+        } catch (e: Exception){
+            false
+        }
+    }
 }
+
+@Serializable
+data class Access(
+    val access: Boolean
+)
+
+@Serializable
+data class RespondBlacklist(
+    val list: List<String>
+)
 
 @Serializable
 data class InitEncUser(

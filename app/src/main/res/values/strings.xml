@@ -86,4 +86,5 @@
     <string name="title_activity_chat3">Chat3</string>
     <string name="copy_invite">Copy the invitation link</string>
     <string name="delete_chat">Delete chat</string>
+    <string name="u_in_bl">You are in blacklist!</string>
 </resources>
