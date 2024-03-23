@@ -122,6 +122,7 @@ import ru.anotherworld.jojack.elements.PostBase2
 import ru.anotherworld.jojack.elements.encChat
 import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
+import ru.anotherworld.jojack.elements.inviteUrl
 import ru.anotherworld.jojack.elements.nameChat2
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.io.File
@@ -276,6 +277,12 @@ private fun Content(){ //Main Activity
     var searchUpdate by remember { mutableStateOf(false) }
     var searchExample: SearchP? = null
     val searchF = SearchIdOrName()
+
+    var checkedSwitch by remember { mutableStateOf(false) }
+    var checkedSwitch2 by remember { mutableStateOf(false) }
+    val arrayPeopleIds = remember { listOf<String>().toMutableStateList() }
+    var myId by remember { mutableIntStateOf(-1) }
+
     Scaffold(
         modifier = Modifier.background(Color.White),
         topBar = {
@@ -382,6 +389,80 @@ private fun Content(){ //Main Activity
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent,
                                 ))
+                            if(checkedSwitch){
+                                IconButton(onClick = {
+                                    Log.d("INFO", arrayPeopleIds.toList().toString())
+                                    if(arrayPeopleIds.toList().size > 2){ //Создаём мульти-чат
+                                        if(checkedSwitch2){ //Чат с шифрованием
+                                            val tokenMultiChat = cipher.createTokenMultiChat()
+                                            idChat2 = "emchat$tokenMultiChat"
+                                            nameChat2 = "Группа$tokenMultiChat"
+                                            iconChat2 = ""
+                                            encChat = true
+                                            inviteUrl = tokenMultiChat
+
+                                            coroutine.launch {
+                                                val insertChat = InsertChat()
+                                                insertChat.addNewChatInfo(idChat2,
+                                                    nameChat2,
+                                                    arrayPeopleIds.toList().joinToString(";"),
+                                                    iconChat2)
+
+                                                for(person in arrayPeopleIds.toList()){
+                                                    insertChat.addChatToAnotherPerson(
+                                                        InfoChat(
+                                                            login = person,
+                                                            url = idChat2,
+                                                            nameChat = nameChat2,
+                                                            users = arrayPeopleIds.toList().joinToString(";"),
+                                                            iconChat = iconChat2
+                                                        )
+                                                    )
+                                                }
+
+                                                context.startActivity(Intent(context, Chat2::class.java))
+                                            }
+
+                                        }
+                                        else { //Чат без шифрования
+                                            val tokenMultiChat = cipher.createTokenMultiChat()
+                                            idChat2 = "mchat$tokenMultiChat"
+                                            nameChat2 = "Группа$tokenMultiChat"
+                                            iconChat2 = ""
+                                            encChat = false
+                                            inviteUrl = tokenMultiChat
+
+                                            coroutine.launch {
+                                                val insertChat = InsertChat()
+                                                insertChat.addNewChatInfo(idChat2,
+                                                    nameChat2,
+                                                    arrayPeopleIds.toList().joinToString(";"),
+                                                    iconChat2)
+
+                                                for(person in arrayPeopleIds.toList()){
+                                                    insertChat.addChatToAnotherPerson(
+                                                        InfoChat(
+                                                            login = person,
+                                                            url = idChat2,
+                                                            nameChat = nameChat2,
+                                                            users = arrayPeopleIds.toList().joinToString(";"),
+                                                            iconChat = iconChat2
+                                                        )
+                                                    )
+                                                }
+
+                                                context.startActivity(Intent(context, Chat2::class.java))
+                                            }
+                                        }
+                                    }
+                                },
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .alpha(if(arrayPeopleIds.toList().size <= 2) 0.5f else 1f)) {
+                                    Icon(painter = painterResource(id = R.drawable.multichat_24),
+                                        contentDescription = null)
+                                }
+                            }
                         }
                     }, modifier = Modifier.background(color = colorResource(id = R.color.background2)),
                         colors = TopAppBarDefaults
@@ -475,11 +556,6 @@ private fun Content(){ //Main Activity
     ) {
         if (showSearchUser){ //Отобразить поиск
 
-            var checkedSwitch by remember { mutableStateOf(false) }
-            var checkedSwitch2 by remember { mutableStateOf(false) }
-            val arrayPeopleIds = remember { listOf<String>().toMutableStateList() }
-            var myId by remember { mutableIntStateOf(-1) }
-
             coroutine.launch {
                 myId = mDatabase.getServerId()!!
             }
@@ -500,7 +576,7 @@ private fun Content(){ //Main Activity
                             .weight(0.9f)
                             .align(Alignment.CenterVertically))
                     Switch(checked = checkedSwitch,
-                        onCheckedChange = { if (!checkedSwitch2) checkedSwitch = !checkedSwitch },
+                        onCheckedChange = { checkedSwitch = !checkedSwitch },
                         modifier = Modifier
                             .weight(0.1f)
                             .align(Alignment.CenterVertically),
@@ -522,7 +598,6 @@ private fun Content(){ //Main Activity
                     Switch(checked = checkedSwitch2,
                         onCheckedChange = {
                             checkedSwitch2 = !checkedSwitch2
-                            if(checkedSwitch) checkedSwitch = false
                         },
                         modifier = Modifier
                             .weight(0.1f)
@@ -564,6 +639,21 @@ private fun Content(){ //Main Activity
                                                             ""
                                                         )
                                                     )
+                                                    val insertChat = InsertChat()
+                                                    insertChat.addNewChatInfo(idChat2,
+                                                        nameChat2,
+                                                        item.first,
+                                                        "")
+
+                                                    insertChat.addChatToAnotherPerson(
+                                                        InfoChat(
+                                                            login = item.first,
+                                                            url = idChat2,
+                                                            nameChat = mDatabase.getLogin()!!,
+                                                            users = listOf(item.first, mDatabase.getLogin()!!).joinToString(";"),
+                                                            iconChat = ""
+                                                        )
+                                                    )
                                                 }
                                                 encChat = true
                                                 context.startActivity(
@@ -589,6 +679,21 @@ private fun Content(){ //Main Activity
                                                             ""
                                                         )
                                                     )
+                                                    val insertChat = InsertChat()
+                                                    insertChat.addNewChatInfo(idChat2,
+                                                        nameChat2,
+                                                        item.first,
+                                                        "")
+
+                                                    insertChat.addChatToAnotherPerson(
+                                                        InfoChat(
+                                                            login = item.first,
+                                                            url = idChat2,
+                                                            nameChat = mDatabase.getLogin()!!,
+                                                            users = listOf(item.first, mDatabase.getLogin()!!).joinToString(";"),
+                                                            iconChat = ""
+                                                        )
+                                                    )
                                                 }
 
                                                 context.startActivity(
@@ -598,7 +703,9 @@ private fun Content(){ //Main Activity
                                                     )
                                                 )
                                             }
-                                        } else chBox = !chBox
+                                        } else {
+                                            Log.d("INFO", "GROUP")
+                                        }
                                     }
                                     .background(
                                         color = colorResource(id = R.color.background_field),
@@ -640,16 +747,17 @@ private fun Content(){ //Main Activity
 
                     }
                 }
-                if(checkedSwitch){
-                    FloatingActionButton(onClick = {
-                        Log.d("ARRAY", arrayPeopleIds.toList().toString())
-                    }, modifier = Modifier
-                        .weight(0.1f)
-                        .offset(x = (-10).dp, y = (-80).dp)
-                        .align(Alignment.End)) {
-                        Icon(Icons.Filled.Add, null)
-                    }
-                }
+                //DEPRECATED
+//                if(checkedSwitch){
+//                    FloatingActionButton(onClick = {
+//                        Log.d("ARRAY", arrayPeopleIds.toList().toString())
+//                    }, modifier = Modifier
+//                        .weight(0.1f)
+//                        .offset(x = (-10).dp, y = (-80).dp)
+//                        .align(Alignment.End)) {
+//                        Icon(Icons.Filled.Add, null)
+//                    }
+//                }
             }
 
         }
@@ -946,7 +1054,22 @@ private fun Messenger(){
     val listenerUpdateChats = remember { mutableStateOf(false) }
     var previewName by remember { mutableStateOf("") }
     var previewMessage by remember { mutableStateOf("") }
+    val initUser = InitUser()
     coroutine.launch {
+
+        val arr = initUser.getInit(mDatabase.getLogin()!!, mDatabase.getToken()!!).chatsList
+        val existsChats = chatsDatabase.getAll().map { it.chat }.toList()
+        for(el in arr){
+            if(el.urlChat !in existsChats) chatsDatabase.insertAll(
+                ChatsData(
+                    chat = el.urlChat,
+                    name = el.nameChat,
+                    users = el.users,
+                    icon = el.iconChat
+                )
+            )
+        }
+
         array.addAll(chatsDatabase.getAll())
     }
     if(listenerUpdateChats.value){
@@ -993,6 +1116,7 @@ private fun Messenger(){
                     }
                 }
                 ChatMessage(name = item.name, previewMessage = previewMessage, username = previewName,
+                    url = item.chat,
                     action = {
                         idChat2 = item.chat
                         nameChat2 = item.name
@@ -1034,6 +1158,18 @@ private fun Account(){
                 mDatabase.setServerId(data.id)
                 mDatabase.setJob(data.job)
                 mDatabase.setTrustLevel(data.trustLevel)
+                val existsChats = chatsDatabase.getAll().map { it.chat }.toList()
+                for(el in data.chatsList){
+                    if(el.urlChat !in existsChats) chatsDatabase.insertAll(
+                        ChatsData(
+                            chat = el.urlChat,
+                            name = el.nameChat,
+                            users = el.users,
+                            icon = el.iconChat
+                        )
+                    )
+                }
+
             }
             privacy = mDatabase.getPrivacy()!!
             val bitF = mDatabase.getIcon()

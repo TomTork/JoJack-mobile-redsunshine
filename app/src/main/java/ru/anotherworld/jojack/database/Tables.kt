@@ -45,9 +45,9 @@ object LikesTable : Table("likes"){
 
 object ChatsTable : Table("chats"){
     val id = integer("id").autoIncrement()
-    val chat = varchar("chat", 32)  //Ссылка на чат
+    val chat = varchar("chat", 128)  //Ссылка на чат
     val name = varchar("name", 128) //Имя чата
-    val users = varchar("users", 2048) //Списиок пользователей
+    val users = varchar("users", 32768) //Списиок пользователей
     val icon = varchar("icon", 128) //Ссылка на изображение
 
     override val primaryKey = PrimaryKey(id)

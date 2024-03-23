@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 
 class ChangePassword : ComponentActivity() {
@@ -61,6 +63,7 @@ class ChangePassword : ComponentActivity() {
 @Composable
 private fun ChangePass(){
     val context = LocalContext.current
+    val coroutine = rememberCoroutineScope()
     var oldPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     Column(modifier = Modifier
@@ -153,7 +156,11 @@ private fun ChangePass(){
                 if(oldPassword == newPassword) Toast.makeText(context,
                     context.getText(R.string.passwords_eq), Toast.LENGTH_SHORT).show()
                 else{
-                    //Сменить пароль
+                    val mChangePassword = MChangePassword()
+                    coroutine.launch {
+                        Toast.makeText(context, mChangePassword.change(cipher.hash(oldPassword),
+                            cipher.hash(newPassword)), Toast.LENGTH_SHORT).show()
+                    }
                 }
             },
                 modifier = Modifier

@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.rememberActiveFocusRequester
 import kotlinx.coroutines.launch
+import ru.anotherworld.jojack.InsertChat
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.chatsDatabase
 import ru.anotherworld.jojack.database.ChatsData
@@ -64,7 +65,8 @@ import ru.anotherworld.jojack.nunitoFamily
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @Composable
 fun ChatMessage(name: String, previewMessage: String, username: String, idChat: Int = 0,
-                image: ImageBitmap? = null, countMessage: Int = 0, action: (id: Int) -> Unit,
+                image: ImageBitmap? = null, countMessage: Int = 0, url: String = "",
+                action: (id: Int) -> Unit,
                 listener: MutableState<Boolean> = mutableStateOf(false)) {
     var expanded by remember { mutableStateOf(false) }
     val coroutine = rememberCoroutineScope()
@@ -97,6 +99,8 @@ fun ChatMessage(name: String, previewMessage: String, username: String, idChat: 
                     .clickable {
                         coroutine.launch {
                             chatsDatabase.deleteByName(name)
+                            val insertChat = InsertChat()
+                            insertChat.deleteChatInfo(url)
                             listener.value = true
                             expanded = false
                         }

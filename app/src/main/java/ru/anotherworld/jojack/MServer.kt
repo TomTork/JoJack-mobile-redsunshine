@@ -1,6 +1,7 @@
 package ru.anotherworld.jojack
 
 import android.app.Application
+import android.icu.text.IDNA
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -659,6 +660,97 @@ class EncChatController(private val nameDb: String){
     }
 }
 
+class MChangePassword{
+    private companion object{
+        private val client = HttpClient(){
+            install(ContentNegotiation){
+                json()
+            }
+        }
+    }
+    suspend fun change(hashCurrentPassword: String, hashNewPassword: String): String{
+        return client.post("$BASE_URL/changepassword"){
+            contentType(ContentType.Application.Json)
+            setBody(ChangePasswordData(
+                mDatabase.getToken()!!,
+                hashCurrentPassword,
+                hashNewPassword
+            ))
+        }.status.toString()
+    }
+}
+
+class InsertChat{
+    private companion object{
+        private val client = HttpClient(){
+            install(ContentNegotiation){
+                json()
+            }
+        }
+    }
+    suspend fun addNewChatInfo(url: String, nameChat: String, users: String = "", iconChat: String = ""){
+        client.post("$BASE_URL/addnewchatinfo"){
+            contentType(ContentType.Application.Json)
+            setBody(InfoChatRespond(
+                token = sDatabase.getToken()!!,
+                login = sDatabase.getLogin()!!,
+                url = url,
+                nameChat = nameChat,
+                users = users,
+                iconChat = iconChat
+            ))
+        }
+    }
+    suspend fun editChatInfo(url: String, nameChat: String, users: String = "", iconChat: String = ""){
+        client.post("$BASE_URL/editchatinfo"){
+            contentType(ContentType.Application.Json)
+            setBody(InfoChatRespond(
+                token = sDatabase.getToken()!!,
+                login = sDatabase.getLogin()!!,
+                url = url,
+                nameChat = nameChat,
+                users = users,
+                iconChat = iconChat
+            ))
+        }
+    }
+    suspend fun deleteChatInfo(url: String){
+        client.post("$BASE_URL/deletechatinfo?url=$url&token=${sDatabase.getToken()!!}")
+    }
+    suspend fun addChatToAnotherPerson(data: InfoChat){
+        client.post("$BASE_URL/addnewchatinfo2"){
+            contentType(ContentType.Application.Json)
+            setBody(data)
+        }
+    }
+}
+
+@Serializable
+data class ChangePasswordData(
+    val token: String,
+    val hashCurrentPassword: String,
+    val hashNewPassword: String
+)
+
+@Serializable
+data class InfoChat(
+    val login: String,
+    val url: String,
+    val nameChat: String,
+    val users: String,
+    val iconChat: String
+)
+
+@Serializable
+data class InfoChatRespond(
+    val token: String,
+    val login: String,
+    val url: String,
+    val nameChat: String,
+    val users: String,
+    val iconChat: String
+)
+
 @Serializable
 data class Access(
     val access: Boolean
@@ -777,13 +869,22 @@ data class VkImageAndVideo(
 )
 
 @Serializable
+data class MyInfoChat(
+    val urlChat: String,
+    val nameChat: String,
+    val users: String,
+    val iconChat: String
+)
+
+@Serializable
 data class InitRemote(
     val id: Int,
     val job: Int,
     val privacy: Boolean,
     val icon: String,
     val trustLevel: Int,
-    val info: String? = ""
+    val info: String? = "",
+    val chatsList: List<MyInfoChat>
 )
 
 @Serializable

@@ -64,6 +64,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.internal.wait
+import ru.anotherworld.jojack.database.ChatsData
 import ru.anotherworld.jojack.database.MainData
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.net.ConnectException
@@ -171,6 +172,17 @@ private fun LoginContent2(){
                                     mDatabase.setServerId(data.id)
                                     mDatabase.setJob(data.job)
                                     mDatabase.setTrustLevel(data.trustLevel)
+                                    val existsChats = chatsDatabase.getAll().map { it.chat }.toList()
+                                    for(el in data.chatsList){
+                                        if(el.urlChat !in existsChats) chatsDatabase.insertAll(
+                                            ChatsData(
+                                                chat = el.urlChat,
+                                                name = el.nameChat,
+                                                users = el.users,
+                                                icon = el.iconChat
+                                            )
+                                        )
+                                    }
                                     context.startActivity(Intent(context, MainApp::class.java))
                                 }
                             }

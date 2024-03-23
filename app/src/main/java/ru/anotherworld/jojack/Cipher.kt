@@ -91,6 +91,9 @@ class Cipher {
         val cipherText = cipher.doFinal(inputText.toByteArray())
         return Base64.getEncoder().encodeToString(cipherText)
     }
+    fun createTokenMultiChat(): String{
+        return UUID.randomUUID().toString()
+    }
 }
 
 class RSAKotlin {
