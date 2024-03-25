@@ -63,6 +63,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.substring
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -297,7 +298,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                             }
                         }
 
-                        if(checkMessageInInvalidMessagesList(message, invalidMessagesList)){
+                        if(!checkMessageInInvalidMessagesList(message, invalidMessagesList)){
                             coroutine.launch {
                                 if(!encChat){
                                     chatController.sendMessage(
@@ -461,7 +462,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         .fillMaxWidth(1f)
                         .padding(start = 20.dp, end = 20.dp)
                         .background(color = colorResource(id = R.color.background_post))) {
-                        if("echat" !in idChat){
+                        if("echat" !in idChat && idChat.substring(0, 4) != "chat") {
                             Row(modifier = Modifier
                                 .fillMaxWidth(1f)
                                 .padding(start = 5.dp, end = 5.dp)
@@ -521,11 +522,10 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                 }
                             }
                         }
-
-
                     }
                 }
                 if(!encChat){
+                    Log.d("LIST", messagesList.toList().toString())
                     LazyColumn(state = lazyState,
                         reverseLayout = true){
                         itemsIndexed(messagesList.sortedBy { it.timestamp }.reversed()){ _, message ->
@@ -543,7 +543,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                     LazyColumn(state = lazyState,
                         reverseLayout = true) {
                         itemsIndexed(messagesList2.sortedBy { it.time }.reversed()){ _, message ->
-                            if("/" !in message.encText && "=" !in message.encText && "+" !in message.encText){
+                            if(("/" !in message.encText && "=" !in message.encText && "+" !in message.encText) || "ls://" in message.encText){
                                 MessageIn(
                                     login = message.author,
                                     text = if("ls://" in message.encText) message.encText.substringAfter(";") else message.encText,
@@ -585,6 +585,11 @@ private fun MessageIn(login: String, text: String, time: String, urlImage: Strin
                 .widthIn(min = 100.dp),
             horizontalAlignment = if (eq) AbsoluteAlignment.Right else AbsoluteAlignment.Left
         ) {
+            if(!eq){
+                Text(text = login, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                    modifier = Modifier.padding(end = 10.dp, start = 10.dp))
+
+            }
             if("[|START|]" in text && "[|END|]" in text){
                 val data = Json.decodeFromString<CopyPost>(
                     text.substringAfter("[|START|]").substringBefore("[|END|]"))

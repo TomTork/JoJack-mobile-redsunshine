@@ -688,40 +688,51 @@ class InsertChat{
             }
         }
     }
-    suspend fun addNewChatInfo(url: String, nameChat: String, users: String = "", iconChat: String = ""){
-        client.post("$BASE_URL/addnewchatinfo"){
+    @OptIn(InternalAPI::class)
+    suspend fun getLoginFromId(id: Int): String{
+        val response = client.get("$BASE_URL/getloginfromid?id=$id")
+        return response.content.readUTF8Line().toString()
+    }
+    suspend fun addNewChatInfo(url: String, nameChat: String, users: String = "", iconChat: String = ""): String{
+        val response = client.post("$BASE_URL/addnewchatinfo"){
             contentType(ContentType.Application.Json)
             setBody(InfoChatRespond(
                 token = sDatabase.getToken()!!,
                 login = sDatabase.getLogin()!!,
-                url = url,
+                urlChat = url,
                 nameChat = nameChat,
                 users = users,
                 iconChat = iconChat
             ))
         }
+        Log.d("A-INFO-1", response.status.toString())
+        return response.status.toString()
     }
-    suspend fun editChatInfo(url: String, nameChat: String, users: String = "", iconChat: String = ""){
-        client.post("$BASE_URL/editchatinfo"){
+    suspend fun editChatInfo(url: String, nameChat: String, users: String = "", iconChat: String = ""): String{
+        val response = client.post("$BASE_URL/editchatinfo"){
             contentType(ContentType.Application.Json)
             setBody(InfoChatRespond(
                 token = sDatabase.getToken()!!,
                 login = sDatabase.getLogin()!!,
-                url = url,
+                urlChat = url,
                 nameChat = nameChat,
                 users = users,
                 iconChat = iconChat
             ))
         }
+        Log.d("A-INFO-2", response.status.toString())
+        return response.status.toString()
     }
-    suspend fun deleteChatInfo(url: String){
-        client.post("$BASE_URL/deletechatinfo?url=$url&token=${sDatabase.getToken()!!}")
+    suspend fun deleteChatInfo(url: String): String{
+        return client.post("$BASE_URL/deletechatinfo?url=$url&token=${sDatabase.getToken()!!}").status.toString()
     }
-    suspend fun addChatToAnotherPerson(data: InfoChat){
-        client.post("$BASE_URL/addnewchatinfo2"){
+    suspend fun addChatToAnotherPerson(data: InfoChat): String{
+        val status = client.post("$BASE_URL/addnewchatinfo2"){
             contentType(ContentType.Application.Json)
             setBody(data)
-        }
+        }.status.toString()
+        Log.d("A-INFO-3", status)
+        return status
     }
 }
 
@@ -735,7 +746,7 @@ data class ChangePasswordData(
 @Serializable
 data class InfoChat(
     val login: String,
-    val url: String,
+    val urlChat: String,
     val nameChat: String,
     val users: String,
     val iconChat: String
@@ -745,7 +756,7 @@ data class InfoChat(
 data class InfoChatRespond(
     val token: String,
     val login: String,
-    val url: String,
+    val urlChat: String,
     val nameChat: String,
     val users: String,
     val iconChat: String

@@ -60,7 +60,7 @@
     <string name="send_appeal">Отправить обращение</string>
     <string name="title_activity_messenger_post">MessengerPostActivity</string>
     <string name="comments">Комментарии</string>
-    <string name="search_user">Поиск пользователя по id или login</string>
+    <string name="search_user">Поиск по id или login</string>
     <string name="group">Группа?</string>
     <string name="enable_encrypt">Чат с шифрованием?</string>
     <string name="not_yet">Осталось совсем чуть-чуть... Для корректной работы приложения необходимы некоторые разрешения.</string>
