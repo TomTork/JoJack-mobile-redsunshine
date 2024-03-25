@@ -451,10 +451,10 @@ class MImage{
         }
     }
 
-    suspend fun uploadImage(text: String, byteArray: ByteArray?): Boolean {
+    suspend fun uploadImage(text: String, byteArray: ByteArray?): String? {
         return try {
+            val name = cipher.generateUniqueName()
             if (byteArray != null) {
-                val name = cipher.generateUniqueName()
                 val response: HttpResponse = client.submitFormWithBinaryData(
                     url = "$BASE_URL/add-image?name=${name}&tokenx2=${database.getToken()!!}",
                     formData = formData {
@@ -470,9 +470,9 @@ class MImage{
                     }
                 }
             }
-            true
-        } catch (ex: Exception) {
-            false
+            return name
+        } catch (_: Exception) {
+            return null
         }
     }
 }

@@ -570,7 +570,6 @@ fun HashtagsMentionsTextView(text: String, modifier: Modifier = Modifier, onClic
 }
 
 @SuppressLint("CoroutineCreationDuringComposition")
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PostBase3(idPost: Int, text: String, nameGroup: String, iconGroup: String,
               typeGroup: String, existsImages: Boolean = true, images: VkImageAndVideo,
@@ -648,19 +647,20 @@ fun PostBase3(idPost: Int, text: String, nameGroup: String, iconGroup: String,
     }
 }
 
-@Composable
-private fun ShowCurrentNumber(currentNumber: Int, maxNumbers: Int){
-    if(currentNumber > 0){
-        Box(modifier = Modifier
-            .background(
-                color = colorResource(id = R.color.background_field),
-                RoundedCornerShape(20.dp)
-            )
-            .padding(top = 10.dp, end = 10.dp),
-            contentAlignment = Alignment.Center) {
-            Text(text = "${currentNumber+1} / $maxNumbers",
-                modifier = Modifier.align(Alignment.Center))
-        }
-    }
-
-}
+//DEPRECATED
+//@Composable
+//private fun ShowCurrentNumber(currentNumber: Int, maxNumbers: Int){
+//    if(currentNumber > 0){
+//        Box(modifier = Modifier
+//            .background(
+//                color = colorResource(id = R.color.background_field),
+//                RoundedCornerShape(20.dp)
+//            )
+//            .padding(top = 10.dp, end = 10.dp),
+//            contentAlignment = Alignment.Center) {
+//            Text(text = "${currentNumber+1} / $maxNumbers",
+//                modifier = Modifier.align(Alignment.Center))
+//        }
+//    }
+//
+//}

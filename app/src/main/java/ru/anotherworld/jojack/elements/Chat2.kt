@@ -2,11 +2,15 @@ package ru.anotherworld.jojack.elements
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -75,6 +79,7 @@ import ru.anotherworld.jojack.Cipher
 import ru.anotherworld.jojack.DataKeys
 import ru.anotherworld.jojack.DataMessengerEncrypted
 import ru.anotherworld.jojack.EncChatController
+import ru.anotherworld.jojack.MImage
 import ru.anotherworld.jojack.MainApp
 import ru.anotherworld.jojack.R
 import ru.anotherworld.jojack.RSAKotlin
@@ -90,6 +95,7 @@ import ru.anotherworld.jojack.mDatabase
 import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import ru.anotherworld.jojack.sDatabase
+import java.io.File
 
 var idChat2: String = ""
 var nameChat2: String = ""
@@ -122,6 +128,15 @@ private var destroy: ChatTwo? = null
 private var destroy2: EncChatController? = null
 private var login1: String = ""
 
+val invalidMessagesList = listOf("ls://", "null", "[|start|]")
+
+fun checkMessageInInvalidMessagesList(message: String, invalidList: List<String>): Boolean{
+    for(invalid in invalidList){
+        if(invalid in message.lowercase()) return true
+    }
+    return false
+}
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,14 +152,28 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
     val chatController = ChatTwo(idChat)
     val encChatController = EncChatController(idChat)
     val database = MainDatabase()
-    var encMessage by remember { mutableStateOf("") }
+    val mImage = MImage()
+    var nameImage by remember{ mutableStateOf("") }
+    val users = mutableListOf<DataKeys>()
+    val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? ->
+        coroutine.launch {
+            if(uri != null){
+                val name = mImage.uploadImage("in_chat", context.contentResolver.openInputStream(uri)?.readBytes())
+                if(name == null){
+                    Toast.makeText(context, R.string.error_in_get_image, Toast.LENGTH_SHORT).show()
+                }
+                else nameImage = name
+            }
+
+        }
+
+    }
     coroutine.launch {
         login1 = sDatabase.getLogin()!!
         privateKey = sDatabase.getClosedKey()!!
     }
     var expanded by remember { mutableStateOf(false) }
     val clipboardManager: ClipboardManager = LocalClipboardManager.current
-    val users = mutableListOf<DataKeys>()
     val lazyState = rememberLazyListState()
     Scaffold(
         modifier = Modifier
@@ -217,7 +246,10 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                     ),
                 modifier = Modifier.fillMaxWidth(1f),
                 leadingIcon = {
-                    IconButton(onClick = { /*Вложения*/ }) {
+                    IconButton(onClick = {
+                        //Открыть вложения
+                        launcher.launch("image/*")
+                    }) {
                         Icon(
                             painterResource(id = R.drawable.attach), null,
                             modifier = Modifier
@@ -227,41 +259,83 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                 },
                 trailingIcon = {
                     IconButton(onClick = {
-                        coroutine.launch {
-                            if(!encChat){
-                                chatController.sendMessage(
-                                    TMessage2(
-                                        id = 0,
-                                        author = database.getLogin()!!,
-                                        message = message,
-                                        timestamp = System.currentTimeMillis()
+                        coroutine.launch { //Отправка сообщения с картинкой
+                            if(nameImage != ""){
+                                nameImage = ""
+                                if(!encChat){
+                                    chatController.sendMessage(
+                                        TMessage2(
+                                            id = 0,
+                                            author = database.getLogin()!!,
+                                            message = "ls://$nameImage;$message",
+                                            timestamp = System.currentTimeMillis()
+                                        )
                                     )
-                                )
-                            }
-                            else{
-                                val count = encChatController.getCountMessages() ?: 1
-                                val blacklist = encChatController.eChatGetBlacklist()
-                                val time = System.currentTimeMillis()
-                                if(login1 !in blacklist){
-                                    for(user in users){
-                                        if(blacklist.isEmpty() || user.login !in blacklist){
-                                            Log.d("SEND-MESSAGE", "${user.login} ${login1}")
-                                            encChatController.sendMessage(DataMessengerEncrypted(
-                                                id = count,
-                                                author = login1,
-                                                encText = RSAKotlin.encryptMessage(message, user.publicKey),
-                                                time = time,
-                                                sendTo = user.login
-                                            ))
+                                }
+                                else{
+                                    val count = encChatController.getCountMessages() ?: 1
+                                    val blacklist = encChatController.eChatGetBlacklist()
+                                    val time = System.currentTimeMillis()
+                                    if(login1 !in blacklist){
+                                        for(user in users){
+                                            if(blacklist.isEmpty() || user.login !in blacklist){
+                                                Log.d("SEND-MESSAGE", "${user.login} ${login1}")
+                                                encChatController.sendMessage(DataMessengerEncrypted(
+                                                    id = count,
+                                                    author = login1,
+                                                    encText = RSAKotlin.encryptMessage("ls://$nameImage;$message", user.publicKey),
+                                                    time = time,
+                                                    sendTo = user.login
+                                                ))
+                                            }
                                         }
                                     }
+                                    else Toast.makeText(context, context.getText(R.string.u_in_bl), Toast.LENGTH_SHORT)
+                                        .show()
                                 }
-                                else Toast.makeText(context, context.getText(R.string.u_in_bl), Toast.LENGTH_SHORT)
-                                    .show()
+                                message = ""
                             }
-
-                            message = ""
                         }
+
+                        if(checkMessageInInvalidMessagesList(message, invalidMessagesList)){
+                            coroutine.launch {
+                                if(!encChat){
+                                    chatController.sendMessage(
+                                        TMessage2(
+                                            id = 0,
+                                            author = database.getLogin()!!,
+                                            message = message,
+                                            timestamp = System.currentTimeMillis()
+                                        )
+                                    )
+                                }
+                                else{
+                                    val count = encChatController.getCountMessages() ?: 1
+                                    val blacklist = encChatController.eChatGetBlacklist()
+                                    val time = System.currentTimeMillis()
+                                    if(login1 !in blacklist){
+                                        for(user in users){
+                                            if(blacklist.isEmpty() || user.login !in blacklist){
+                                                Log.d("SEND-MESSAGE", "${user.login} ${login1}")
+                                                encChatController.sendMessage(DataMessengerEncrypted(
+                                                    id = count,
+                                                    author = login1,
+                                                    encText = RSAKotlin.encryptMessage(message, user.publicKey),
+                                                    time = time,
+                                                    sendTo = user.login
+                                                ))
+                                            }
+                                        }
+                                    }
+                                    else Toast.makeText(context, context.getText(R.string.u_in_bl), Toast.LENGTH_SHORT)
+                                        .show()
+                                }
+
+                                message = ""
+                            }
+                        }
+                        else Toast.makeText(context, context.getText(R.string.invalid_input), Toast.LENGTH_SHORT).show()
+
                     }) {
                         Icon(
                             painterResource(id = R.drawable.send2), null,
@@ -457,8 +531,9 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         itemsIndexed(messagesList.sortedBy { it.timestamp }.reversed()){ _, message ->
                             MessageIn(
                                 login = message.author,
-                                text = message.message,
-                                time = getCurrentTimeStamp(message.timestamp)!!)
+                                text = if("ls://" in message.message) message.message.substringAfter(";") else message.message,
+                                time = getCurrentTimeStamp(message.timestamp)!!,
+                                urlImage = if("ls://" in message.message) message.message.substringBefore(";") else null)
                             Spacer(modifier = Modifier.padding(top = 5.dp))
                         }
                     }
@@ -471,13 +546,11 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                             if("/" !in message.encText && "=" !in message.encText && "+" !in message.encText){
                                 MessageIn(
                                     login = message.author,
-                                    text = message.encText,
-                                    time = getCurrentTimeStamp(message.time)!!
-                                )
+                                    text = if("ls://" in message.encText) message.encText.substringAfter(";") else message.encText,
+                                    time = getCurrentTimeStamp(message.time)!!,
+                                    urlImage = if("ls://" in message.encText) message.encText.substringBefore(";") else null)
                                 Spacer(modifier = Modifier.padding(top = 5.dp))
                             }
-
-
                         }
                     }
                 }
@@ -489,10 +562,12 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-private fun MessageIn(login: String, text: String, time: String){
+private fun MessageIn(login: String, text: String, time: String, urlImage: String? = null){
     val coroutine = rememberCoroutineScope()
+    val mImage = MImage()
     val login1 by remember { mutableStateOf(login1) }
     var eq by remember { mutableStateOf(false) }
+    val imageFile = remember { mutableStateOf<File?>(null) }
     eq = (login1 == login) //true if user you
     Row(
         modifier = Modifier
@@ -525,6 +600,17 @@ private fun MessageIn(login: String, text: String, time: String){
                     exclusive = data.exclusive,
                     myMessage = eq
                 )
+            }
+            else if(urlImage != null){
+                coroutine.launch {
+                    imageFile.value = mImage.getImage(urlImage)
+                }
+                if(imageFile.value != null){
+                    AsyncImage(model = BitmapFactory.decodeFile(imageFile.value?.absolutePath),
+                        contentDescription = null, modifier = Modifier
+                            .size(400.dp)
+                            .align(Alignment.CenterHorizontally))
+                }
             }
             else {
                 Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,

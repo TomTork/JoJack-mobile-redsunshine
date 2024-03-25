@@ -88,4 +88,6 @@
     <string name="copy_invite">Скопировать пригласительную ссылку</string>
     <string name="delete_chat">Удалить чат</string>
     <string name="u_in_bl">Вы в чёрном списке!</string>
+    <string name="error_in_get_image">Ошибка при получении изображения</string>
+
 </resources>

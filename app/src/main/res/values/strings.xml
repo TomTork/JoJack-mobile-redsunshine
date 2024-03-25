@@ -87,4 +87,5 @@
     <string name="copy_invite">Copy the invitation link</string>
     <string name="delete_chat">Delete chat</string>
     <string name="u_in_bl">You are in blacklist!</string>
+    <string name="error_in_get_image">Error while acquiring an image</string>
 </resources>
