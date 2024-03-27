@@ -97,6 +97,7 @@ import ru.anotherworld.jojack.nunitoFamily
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import ru.anotherworld.jojack.sDatabase
 import java.io.File
+import kotlin.concurrent.thread
 
 var idChat2: String = ""
 var nameChat2: String = ""
@@ -144,6 +145,8 @@ fun checkMessageInInvalidMessagesList(message: String, invalidList: List<String>
 fun Chat2(idChat: String, iconChat: String?, nameChat: String,
           encChat: Boolean = false, inviteUrl: String = ""){
     val context = LocalContext.current
+    val messagesList = remember { listOf<TMessage2>().toMutableStateList() }
+    val messagesList2 = remember { listOf<DataMessengerEncrypted>().toMutableStateList() }
     var state by remember { mutableStateOf("Онлайн") } //Состояние в чате: кто-то печатает и т.д.
     var message by remember { mutableStateOf("") }
     var privateKey by remember { mutableStateOf("") }
@@ -264,10 +267,16 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                             if(nameImage != ""){
                                 nameImage = ""
                                 if(!encChat){
+                                    messagesList.add(TMessage2(
+                                        id = 0,
+                                        author = login1,
+                                        message = "ls://$nameImage;$message",
+                                        timestamp = System.currentTimeMillis()
+                                    ))
                                     chatController.sendMessage(
                                         TMessage2(
                                             id = 0,
-                                            author = database.getLogin()!!,
+                                            author = login1,
                                             message = "ls://$nameImage;$message",
                                             timestamp = System.currentTimeMillis()
                                         )
@@ -277,7 +286,8 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                     val count = encChatController.getCountMessages() ?: 1
                                     val blacklist = encChatController.eChatGetBlacklist()
                                     val time = System.currentTimeMillis()
-                                    if(login1 !in blacklist){
+                                    if(blacklist.isEmpty() || login1 !in blacklist){
+                                        messagesList2.add(DataMessengerEncrypted(count, login1, "ls://$nameImage;$message", time, login1))
                                         for(user in users){
                                             if(blacklist.isEmpty() || user.login !in blacklist){
                                                 Log.d("SEND-MESSAGE", "${user.login} ${login1}")
@@ -301,10 +311,16 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                         if(!checkMessageInInvalidMessagesList(message, invalidMessagesList)){
                             coroutine.launch {
                                 if(!encChat){
+                                    messagesList.add(TMessage2(
+                                        id = 0,
+                                        author = login1,
+                                        message = message,
+                                        timestamp = System.currentTimeMillis()
+                                    ))
                                     chatController.sendMessage(
                                         TMessage2(
                                             id = 0,
-                                            author = database.getLogin()!!,
+                                            author = login1,
                                             message = message,
                                             timestamp = System.currentTimeMillis()
                                         )
@@ -314,7 +330,8 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                     val count = encChatController.getCountMessages() ?: 1
                                     val blacklist = encChatController.eChatGetBlacklist()
                                     val time = System.currentTimeMillis()
-                                    if(login1 !in blacklist){
+                                    if(blacklist.isEmpty() || login1 !in blacklist){
+                                        messagesList2.add(DataMessengerEncrypted(count, login1, message, time, login1))
                                         for(user in users){
                                             if(blacklist.isEmpty() || user.login !in blacklist){
                                                 Log.d("SEND-MESSAGE", "${user.login} ${login1}")
@@ -351,107 +368,114 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
         Column(
             modifier = Modifier.padding(top = 60.dp, bottom = 60.dp)
         ) {
-            val messagesList = remember { listOf<TMessage2>().toMutableStateList() }
-            val messagesList2 = remember { listOf<DataMessengerEncrypted>().toMutableStateList() }
             var ready by remember { mutableStateOf(false) }
-            coroutine.launch {
-                if(!encChat){
-                    if(!ready){
-                        chatController.initSession(sDatabase.getToken()!!)
-
-                        if(repost != ""){
-                            chatController.sendMessage(TMessage2(
-                                id = 0,
-                                author = sDatabase.getLogin()!!,
-                                message = "[|START|]${repost}[|END|]",
-                                timestamp = System.currentTimeMillis()
-                            ))
-                            repost = ""
-                        }
-
-                        destroy = chatController
-                        val countMessages = chatController.getCountMessages()
-                        messagesList.addAll(chatController.getRangeMessages(1, countMessages!!).toMutableStateList())
-                    }
-                    ready = true
-
-                    val result = chatController.waitNewData()
-                    if(result != null){
-                        messagesList.add(0, result)
-                    }
-                }
-                else{
-                    if(!ready){
-                        encChatController.initUser()
-                        encChatController.initSession(sDatabase.getToken()!!)
-                        access = encChatController.eChatGetAccess()
-                        users.addAll(encChatController.getAllUsers()?.toMutableStateList() ?: listOf())
-                        Log.d("STAGE", users.toList().toString())
-
-                        if(repost != ""){
-                            val count = encChatController.getCountMessages() ?: 1
-                            val blacklist = encChatController.eChatGetBlacklist()
-                            val time = System.currentTimeMillis()
-                            if(login1 !in blacklist){
-                                for(user in users){
-                                    if(blacklist.isEmpty() || user.login !in blacklist){
-                                        encChatController.sendMessage(DataMessengerEncrypted(
-                                            id = count,
-                                            author = login.value,
-                                            encText = RSAKotlin
-                                                .encryptMessage("[|START|]${repost}[|END|]",
-                                                    user.publicKey),
-                                            time = time,
-                                            sendTo = user.login
-                                        ))
-                                    }
-
-                                }
+            Thread(Runnable {
+                coroutine.launch {
+                    if(!encChat){
+                        if(!ready){
+                            chatController.initSession(sDatabase.getToken()!!)
+                            if(repost != ""){
+                                messagesList.add(TMessage2(
+                                    id = 0,
+                                    author = login1,
+                                    message = "[|START|]${repost}[|END|]",
+                                    timestamp = System.currentTimeMillis()
+                                ))
+                                chatController.sendMessage(TMessage2(
+                                    id = 0,
+                                    author = login1,
+                                    message = "[|START|]${repost}[|END|]",
+                                    timestamp = System.currentTimeMillis()
+                                ))
+                                repost = ""
                             }
-                            else Toast.makeText(context, context.getText(R.string.u_in_bl), Toast.LENGTH_SHORT)
-                                .show()
 
-                            repost = ""
+                            destroy = chatController
+                            val countMessages = chatController.getCountMessages()
+                            messagesList.addAll(chatController.getRangeMessages(1, countMessages!!).toMutableStateList())
                         }
+                        ready = true
 
-                        destroy2 = encChatController
-                        val countMessages = encChatController.getCountMessages()
-                        if(countMessages != null){
-                            val blacklist = encChatController.eChatGetBlacklist()
-                            if (login1 !in blacklist){
-                                messagesList2.addAll(encChatController.getRangeMessages(0, countMessages-1))
-                                for(index in messagesList2.indices){
-                                    try{
-                                        if(messagesList2[index].sendTo == login1){
-                                            messagesList2[index] = DataMessengerEncrypted(
-                                                id = messagesList2[index].id,
-                                                author = messagesList2[index].author,
-                                                encText = RSAKotlin.decryptMessage(messagesList2[index].encText,
-                                                    privateKey),
-                                                time = messagesList2[index].time,
-                                                sendTo = messagesList2[index].sendTo
-                                            )
+                        val result = chatController.waitNewData()
+                        if(result != null){
+                            messagesList.add(0, result)
+                        }
+                    }
+                    else{
+                        if(!ready){
+                            encChatController.initUser()
+                            encChatController.initSession(sDatabase.getToken()!!)
+                            access = encChatController.eChatGetAccess()
+                            users.addAll(encChatController.getAllUsers()?.toMutableStateList() ?: listOf())
+                            Log.d("STAGE", users.toList().toString())
+
+                            if(repost != ""){
+                                val count = encChatController.getCountMessages() ?: 1
+                                val blacklist = encChatController.eChatGetBlacklist()
+                                val time = System.currentTimeMillis()
+                                if(blacklist.isEmpty() || login1 !in blacklist){
+                                    messagesList2.add(DataMessengerEncrypted(count, login1, "[|START|]${repost}[|END|]", time, login1))
+                                    for(user in users){
+                                        if(blacklist.isEmpty() || user.login !in blacklist){
+                                            encChatController.sendMessage(DataMessengerEncrypted(
+                                                id = count,
+                                                author = login.value,
+                                                encText = RSAKotlin
+                                                    .encryptMessage("[|START|]${repost}[|END|]",
+                                                        user.publicKey),
+                                                time = time,
+                                                sendTo = user.login
+                                            ))
                                         }
 
-                                    } catch (e: Exception){
-                                        println("DECODE: $e")
                                     }
-
                                 }
+                                else Toast.makeText(context, context.getText(R.string.u_in_bl), Toast.LENGTH_SHORT)
+                                    .show()
+
+                                repost = ""
                             }
 
-                        }
-                    }
-                    ready = true
+                            destroy2 = encChatController
+                            val countMessages = encChatController.getCountMessages()
+                            if(countMessages != null){
+                                val blacklist = encChatController.eChatGetBlacklist()
+                                if (login1 !in blacklist){
+                                    messagesList2.addAll(encChatController.getRangeMessages(0, countMessages-1))
+                                    for(index in messagesList2.indices){
+                                        try{
+                                            if(messagesList2[index].sendTo == login1){
+                                                messagesList2[index] = DataMessengerEncrypted(
+                                                    id = messagesList2[index].id,
+                                                    author = messagesList2[index].author,
+                                                    encText = RSAKotlin.decryptMessage(messagesList2[index].encText,
+                                                        privateKey),
+                                                    time = messagesList2[index].time,
+                                                    sendTo = messagesList2[index].sendTo
+                                                )
+                                            }
 
-                    smartResult.value = encChatController.waitNewData(privateKey, login1)
-                    if(smartResult.value != null){
-                        Log.e("WATCH-THIS-2", smartResult.value.toString())
-                        messagesList2.add(0, smartResult.value!!)
+                                        } catch (e: Exception){
+                                            println("DECODE: $e")
+                                        }
+
+                                    }
+                                }
+
+                            }
+                        }
+                        ready = true
+
+                        smartResult.value = encChatController.waitNewData(privateKey, login1)
+                        if(smartResult.value != null){
+                            Log.e("WATCH-THIS-2", smartResult.value.toString())
+                            messagesList2.add(0, smartResult.value!!)
+                        }
+                        else Log.d("STATUS", "NULL")
                     }
-                    else Log.d("STATUS", "NULL")
                 }
-            }
+            }).start()
+
             if (ready){
                 HorizontalDivider(thickness = 2.dp, color = Color.Black)
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false },
@@ -525,10 +549,9 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                     }
                 }
                 if(!encChat){
-                    Log.d("LIST", messagesList.toList().toString())
-                    LazyColumn(state = lazyState,
-                        reverseLayout = true){
-                        itemsIndexed(messagesList.sortedBy { it.timestamp }.reversed()){ _, message ->
+//                    Log.d("LIST", messagesList.toList().toString())
+                    LazyColumn(state = lazyState, reverseLayout = true){
+                        itemsIndexed(messagesList.reversed()){ _, message ->
                             MessageIn(
                                 login = message.author,
                                 text = if("ls://" in message.message) message.message.substringAfter(";") else message.message,
@@ -540,9 +563,8 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                 }
                 else{
                     Log.d("LIST", messagesList2.toList().toString())
-                    LazyColumn(state = lazyState,
-                        reverseLayout = true) {
-                        itemsIndexed(messagesList2.sortedBy { it.time }.reversed()){ _, message ->
+                    LazyColumn(state = lazyState, reverseLayout = true) {
+                        itemsIndexed(messagesList2.reversed()){ _, message ->
                             if(("/" !in message.encText && "=" !in message.encText && "+" !in message.encText) || "ls://" in message.encText){
                                 MessageIn(
                                     login = message.author,

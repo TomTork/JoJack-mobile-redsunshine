@@ -3,6 +3,7 @@ package ru.anotherworld.jojack
 import android.app.Application
 import android.icu.text.IDNA
 import android.util.Log
+import androidx.compose.runtime.Stable
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -128,7 +129,7 @@ class GetPostVk{
         }
         val response = client.post("$BASE_URL/vk") {
             contentType(ContentType.Application.Json)
-            setBody(VkResponseRemote(start, end, "-"))
+            setBody(VkResponseRemote(start, end, sDatabase.getToken()!!))
         }
         val result = response.content.readUTF8Line().toString()
         Log.d("INFO", result)
@@ -301,7 +302,9 @@ class ChatTwo(private val nameDb: String){
         for(element in socket?.incoming!!){
             element as? Frame.Text ?: continue
             val json = element.readBytes().decodeToString()
-            return Json.decodeFromString<TMessage2>(json)
+            val result = Json.decodeFromString<TMessage2>(json)
+            if(result.author != login.value) return result
+            return null
         }
         return null
     }
@@ -543,7 +546,7 @@ class EncChatController(private val nameDb: String){
             val json = element.readBytes().decodeToString()
             try{
                 val data = Json.decodeFromString<DataMessengerEncrypted>(json)
-                if(data.sendTo == login) {
+                if(data.sendTo == login && data.author != login) {
                     return DataMessengerEncrypted(
                         id = data.id,
                         author = data.author,
@@ -780,7 +783,7 @@ data class InitEncUser(
 )
 
 @Serializable
-data class DataKeys(val login: String, val publicKey: String)
+data class DataKeys(val login: String, val publicKey: String, val accessRights: Boolean)
 
 @Serializable
 data class DataMessengerEncrypted(
@@ -913,6 +916,7 @@ data class TMessage(
     val time: Long
 )
 
+@Stable
 @Serializable
 data class TMessage2(
     val id: Int,

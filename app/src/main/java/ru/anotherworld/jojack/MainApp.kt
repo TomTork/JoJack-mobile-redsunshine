@@ -65,10 +65,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -1075,40 +1077,47 @@ private fun NewsPaper(){
     
 }
 
+//@SuppressLint("MutableCollectionMutableState")
+val localChatList = arrayListOf<ChatsData>().toMutableStateList()
+//val localChatList = mutableStateOf<ArrayList<ChatsData>>(arrayListOf())
+
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 private fun Messenger(){
+
+    var idChat2: String = ""
+    var nameChat2: String = ""
+    var iconChat2: String = ""
+    var repost: String = ""
+    var encChat: Boolean = false
+    var inviteUrl: String = "test-test-test-test"
+
     val context = LocalContext.current
-    val array = remember { listOf<ChatsData>().toMutableStateList() }
     val coroutine = rememberCoroutineScope()
-    val listenerUpdateChats = remember { mutableStateOf(false) }
-    var previewName by remember { mutableStateOf("") }
-    var previewMessage by remember { mutableStateOf("") }
     val initUser = InitUser()
     coroutine.launch {
+        val fromDatabase = chatsDatabase.getAll()
+        if(localChatList.size == 0 || fromDatabase.size != localChatList.size){
+            for(el in fromDatabase){
+                if(el !in localChatList) localChatList.add(el)
+            }
+        }
+        Log.d("INFO", localChatList.toList().toString())
 
         val arr = initUser.getInit(mDatabase.getLogin()!!, mDatabase.getToken()!!).chatsList
         Log.d("INFO-1", arr.toList().toString())
-        val existsChats = chatsDatabase.getAll().map { it.chat }.toList()
-        for(el in arr){
-            if(el.urlChat !in existsChats) chatsDatabase.insertAll(
-                ChatsData(
-                    chat = el.urlChat,
-                    name = el.nameChat,
-                    users = el.users,
-                    icon = el.iconChat
+        if(arr.size > localChatList.size){
+            val time = localChatList.map { it.chat }.toList()
+            for(el in arr){
+                if(el.urlChat !in time) chatsDatabase.insertAll(
+                    ChatsData(
+                        chat = el.urlChat,
+                        name = el.nameChat,
+                        users = el.users,
+                        icon = el.iconChat
+                    )
                 )
-            )
-        }
-
-        array.addAll(chatsDatabase.getAll())
-        Log.d("INFO", array.toList().toString())
-    }
-    if(listenerUpdateChats.value){
-        coroutine.launch {
-            array.clear()
-            array.addAll(chatsDatabase.getAll())
-            listenerUpdateChats.value = false
+            }
         }
     }
     Column (modifier = Modifier
@@ -1125,42 +1134,57 @@ private fun Messenger(){
         LazyColumn{
             item {
                 ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
-                    action = { context.startActivity(Intent(context, ChatActivity::class.java)) },
-                    listener = listenerUpdateChats)
+                    action = { context.startActivity(Intent(context, ChatActivity::class.java)) })
             }
-            itemsIndexed(array){ index, item ->
+            itemsIndexed(localChatList){ index, item ->
+                var previewName by remember { mutableStateOf("") }
+                var previewMessage by remember { mutableStateOf("") }
                 coroutine.launch {
                     try{
-                        if("echat" !in item.chat && "emchat" !in item.chat){
+                        if(item.chat.length >= 5 && ("chat" == item.chat.substring(0, 4) || "mchat" == item.chat.substring(0, 5))){
                             val chatTwo = ChatTwo(item.chat)
-                            val count = chatTwo.getCountMessages()!!
-                            val value = chatTwo.getRangeMessages(count, count)
-                            if("[|START|]" in value[0].message){
-                                val dd = Json.decodeFromString<CopyPost>(value[0].message
-                                    .substringAfter("[|START|]").substringBefore("[|END|]"))
-                                previewMessage = dd.nameGroup + " " + dd.text.substring(0, 16) + "..."
-                            } else previewMessage = value[0].message
-                            previewName = value[0].author
+                            val count = chatTwo.getCountMessages()
+                            if(count != null && count > 0){
+                                val value = chatTwo.getRangeMessages(count, count)
+                                if(value.isNotEmpty()){
+                                    if("[|START|]" in value[0].message){
+                                        val dd = Json.decodeFromString<CopyPost>(value[0].message
+                                            .substringAfter("[|START|]").substringBefore("[|END|]"))
+                                        previewMessage = dd.nameGroup + " " + dd.text.substring(0, 16) + "..."
+                                    } else previewMessage = value[0].message
+                                    previewName = value[0].author
+                                }
+                                else{
+                                    previewMessage = context.getText(R.string.no_data).toString()
+                                    previewName = ""
+                                }
+                            }
+                            else{
+                                previewMessage = context.getText(R.string.no_data).toString()
+                                previewName = ""
+                            }
                         }
-
+                        else{
+                            previewMessage = context.getText(R.string.no_data).toString()
+                            previewName = ""
+                        }
                     } catch (e: Exception){
                         Log.e("ERROR ::MainApp", e.message.toString())
                     }
                 }
                 ChatMessage(name = item.name, previewMessage = previewMessage, username = previewName,
-                    url = item.chat,
+                    idChat = index, url = item.chat,
                     action = {
                         idChat2 = item.chat
                         nameChat2 = item.name
                         iconChat2 = item.icon
-                        if("echat" !in idChat2) context.startActivity(Intent(context, Chat2::class.java))
+                        if("echat" !in idChat2 && "emchat" !in item.chat) context.startActivity(Intent(context, Chat2::class.java))
                         else{
                             encChat = true
                             Log.d("INFO", "$idChat2 $nameChat2")
                             context.startActivity(Intent(context, Chat2::class.java))
                         }
-                    },
-                    listener = listenerUpdateChats) //show chats
+                    })
             }
         }
     }

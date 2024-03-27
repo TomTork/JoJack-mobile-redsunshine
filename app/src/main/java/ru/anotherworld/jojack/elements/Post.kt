@@ -93,6 +93,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.mutableFloatStateOf
@@ -106,6 +107,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.util.lerp
+import coil.compose.SubcomposeAsyncImage
 import ru.anotherworld.jojack.chatcontroller.getCurrentTimeStamp
 import ru.anotherworld.jojack.currentImageModel
 import ru.anotherworld.jojack.database.Comments

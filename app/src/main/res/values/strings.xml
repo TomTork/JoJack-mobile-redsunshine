@@ -11,7 +11,7 @@
     <string name="news">News</string>
     <string name="message">Messenger</string>
     <string name="account">Account</string>
-    <string name="job">Job Title: </string>
+    <string name="job">Job: </string>
     <string name="CK">Central Committee</string>
     <string name="jojack">JoJack</string>
     <string name="ID">ID: </string>
@@ -88,4 +88,5 @@
     <string name="delete_chat">Delete chat</string>
     <string name="u_in_bl">You are in blacklist!</string>
     <string name="error_in_get_image">Error while acquiring an image</string>
+    <string name="no_data">Data is confidential or there was an error in receiving it</string>
 </resources>

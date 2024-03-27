@@ -89,5 +89,5 @@
     <string name="delete_chat">Удалить чат</string>
     <string name="u_in_bl">Вы в чёрном списке!</string>
     <string name="error_in_get_image">Ошибка при получении изображения</string>
-
+    <string name="no_data">Данные засекречены или при получении произошла ошибка</string>
 </resources>

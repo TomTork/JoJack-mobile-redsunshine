@@ -2,6 +2,7 @@ package ru.anotherworld.jojack.elements
 
 import android.annotation.SuppressLint
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,6 +41,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -52,6 +54,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.rememberActiveFocusRequester
+import io.ktor.client.network.sockets.ConnectTimeoutException
 import kotlinx.coroutines.launch
 import ru.anotherworld.jojack.InsertChat
 import ru.anotherworld.jojack.R
@@ -59,6 +62,7 @@ import ru.anotherworld.jojack.chatsDatabase
 import ru.anotherworld.jojack.database.ChatsData
 import ru.anotherworld.jojack.database.ChatsDatabase
 import ru.anotherworld.jojack.interFamily
+import ru.anotherworld.jojack.localChatList
 import ru.anotherworld.jojack.mDatabase
 import ru.anotherworld.jojack.nunitoFamily
 
@@ -66,8 +70,9 @@ import ru.anotherworld.jojack.nunitoFamily
 @Composable
 fun ChatMessage(name: String, previewMessage: String, username: String, idChat: Int = 0,
                 image: ImageBitmap? = null, countMessage: Int = 0, url: String = "",
-                action: (id: Int) -> Unit,
-                listener: MutableState<Boolean> = mutableStateOf(false)) {
+                action: (id: Int) -> Unit) {
+    val context = LocalContext.current
+    val insertChat = InsertChat()
     var expanded by remember { mutableStateOf(false) }
     val coroutine = rememberCoroutineScope()
     Column(modifier = Modifier
@@ -99,9 +104,14 @@ fun ChatMessage(name: String, previewMessage: String, username: String, idChat: 
                     .clickable {
                         coroutine.launch {
                             chatsDatabase.deleteByName(name)
-                            val insertChat = InsertChat()
-                            insertChat.deleteChatInfo(url)
-                            listener.value = true
+                            try{
+                                insertChat.deleteChatInfo(url)
+                            } catch (e: ConnectTimeoutException){
+                                Toast.makeText(context,
+                                    context.getText(R.string.no_internet),
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                            localChatList.removeAt(idChat)
                             expanded = false
                         }
                     }){
