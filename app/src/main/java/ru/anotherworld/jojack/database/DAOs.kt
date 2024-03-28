@@ -402,4 +402,7 @@ class DAONotifications{
             it[NotificationsTable.read] = read
         }
     }
+    suspend fun deleteAll() = dbQuery {
+        NotificationsTable.deleteAll()
+    }
 }

@@ -159,7 +159,7 @@ private fun RegistrationContent2(){
                 modifier = Modifier.padding(start=19.dp, end=19.dp, top=30.dp)
                     .fillMaxWidth(1f))
             ElevatedButton(onClick = {
-                if (login != "" && password != ""){
+                if (login != "" && password != "" && login.length < 64){
                     val reg = Register()
                     coroutine.launch {
                         mDatabase.init(MainData("", "", 0, 0, -1,

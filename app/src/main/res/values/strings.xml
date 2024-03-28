@@ -89,4 +89,5 @@
     <string name="u_in_bl">You are in blacklist!</string>
     <string name="error_in_get_image">Error while acquiring an image</string>
     <string name="no_data">Data is confidential or there was an error in receiving it</string>
+    <string name="invite_url">Url-token: </string>
 </resources>

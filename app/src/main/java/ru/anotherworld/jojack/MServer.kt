@@ -443,7 +443,7 @@ class MImage{
     private val client2 = HttpClient()
     suspend fun getImage(name: String): File?{
         return try{
-            val response = client2.get("$BASE_URL/image?name=$name"){
+            val response = client2.get("$BASE_URL/image?name=${name.substringAfter("ls://")}"){
             }
             val file = File("data/data/ru.anotherworld.jojack/$name.png")
             response.bodyAsChannel().copyAndClose(file.writeChannel())
@@ -464,7 +464,7 @@ class MImage{
                         append("text", text)
                         append("image", byteArray, Headers.build {
                             append(HttpHeaders.ContentType, "image/*")
-                            append(HttpHeaders.ContentDisposition, "filename=${name}.png")
+                            append(HttpHeaders.ContentDisposition, "filename=${name.substringAfter("ls://")}.png")
                         })
                     }
                 ) {

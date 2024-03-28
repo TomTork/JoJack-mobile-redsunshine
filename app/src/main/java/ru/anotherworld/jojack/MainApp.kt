@@ -115,7 +115,9 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.database.ChatsData
 import ru.anotherworld.jojack.database.ChatsDatabase
+import ru.anotherworld.jojack.database.LikesDatabase
 import ru.anotherworld.jojack.database.MainDatabase
+import ru.anotherworld.jojack.database.NotificationsDatabase
 import ru.anotherworld.jojack.elements.Chat2
 import ru.anotherworld.jojack.elements.ChatActivity
 import ru.anotherworld.jojack.elements.ChatMessage
@@ -158,6 +160,7 @@ class MainApp : ComponentActivity() {
                             login.value = localLogin
                             id.intValue = mDatabase.getServerId()!!
                             job.intValue = mDatabase.getJob()!!
+                            Log.d("INFO-T", mDatabase.getToken()!!)
                         }
                     }
                 } catch (io: Exception){
@@ -1391,6 +1394,13 @@ private fun Account(){
                     coroutine.launch {
                         mDatabase.setLogin("")
                         mDatabase.collapseDatabase()
+                        LikesDatabase().delete()
+                        ChatsDatabase().deleteAll()
+                        NotificationsDatabase().deleteAll()
+
+                        login.value = ""
+                        id.intValue = -1
+                        past.delete()
                     }
 
                     context.startActivity(Intent(context, LoginActivity::class.java)) },

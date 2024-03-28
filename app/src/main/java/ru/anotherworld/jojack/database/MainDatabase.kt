@@ -120,6 +120,9 @@ class NotificationsDatabase{
     suspend fun getAll(): List<NData>{
         return daoNotifications.getAllNotifications()
     }
+    suspend fun deleteAll(){
+        daoNotifications.deleteAll()
+    }
 }
 
 data class NData(
