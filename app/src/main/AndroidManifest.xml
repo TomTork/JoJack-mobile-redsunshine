@@ -44,11 +44,6 @@
             android:theme="@style/Theme.JoJack"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".elements.MessengerPostActivity"
-            android:exported="false"
-            android:label="@string/title_activity_messenger_post"
-            android:theme="@style/Theme.JoJack" />
-        <activity
             android:name=".NotificationActivity"
             android:exported="false"
             android:label="@string/app_name"
@@ -95,13 +90,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".elements.ChatActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.JoJack"
-            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

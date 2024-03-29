@@ -37,6 +37,7 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -170,73 +171,6 @@ class InitUser{
     }
 }
 
-class ChatController{
-    private companion object {
-        val client = HttpClient(CIO){
-            install(Logging){
-                logger = Logger.DEFAULT
-                level = LogLevel.HEADERS
-            }
-            install(HttpTimeout){
-                requestTimeoutMillis = 5.seconds.inWholeMilliseconds
-            }
-            install(ContentNegotiation){
-                json()
-            }
-            install(WebSockets){
-                pingInterval = 5.seconds.inWholeMilliseconds
-            }
-        }
-        private var socket: WebSocketSession? = null
-    }
-    @OptIn(InternalAPI::class)
-    suspend fun getAllMessages(): List<Message> {
-        return try {
-            val get = client.get("$BASE_URL/messages"){
-                contentType(ContentType.Application.Json)
-            }
-            return Json.decodeFromString<List<MessageDto>>(get.content.readUTF8Line().toString()).map { it.toMessage() }
-        } catch (e: Exception){
-            e.printStackTrace()
-            emptyList()
-        }
-    }
-    suspend fun initSession(username: String, token: String): Resource<Unit> {
-        return try {
-            socket = client.webSocketSession {
-                url("$BASE_WS/chat-socket?username=$username&token=${token}")
-            }
-            if (socket?.isActive == true){
-                Resource.Success(Unit)
-
-            } else {
-                Log.e("STATUS-SOCKET", socket?.isActive.toString())
-                Resource.Error("Couldn't establish a connection. ::ChatSocketServiceImpl")
-            }
-        } catch (e: Exception){
-            e.printStackTrace()
-            Resource.Error(e.localizedMessage ?: "Unknown error ::ChatSocketServiceImpl")
-        }
-    }
-    suspend fun sendMessage(message: String) {
-        try {
-            socket?.send(Frame.Text(message))
-        } catch (e: Exception){
-            e.printStackTrace()
-        }
-    }
-    suspend fun waitNewData(): Message?{
-        for(element in socket?.incoming!!){
-            element as? Frame.Text ?: continue
-            val json = element.readBytes().decodeToString()
-            return Json.decodeFromString<MessageDto>(json).toMessage()
-        }
-        return null
-    }
-    suspend fun closeSession() {
-        socket?.close()
-    }
-}
 class LikeController{
     private companion object{
         val client = HttpClient(CIO){

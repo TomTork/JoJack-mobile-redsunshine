@@ -119,7 +119,6 @@ import ru.anotherworld.jojack.database.LikesDatabase
 import ru.anotherworld.jojack.database.MainDatabase
 import ru.anotherworld.jojack.database.NotificationsDatabase
 import ru.anotherworld.jojack.elements.Chat2
-import ru.anotherworld.jojack.elements.ChatActivity
 import ru.anotherworld.jojack.elements.ChatMessage
 import ru.anotherworld.jojack.elements.CopyPost
 import ru.anotherworld.jojack.elements.PostBase2
@@ -128,6 +127,7 @@ import ru.anotherworld.jojack.elements.iconChat2
 import ru.anotherworld.jojack.elements.idChat2
 import ru.anotherworld.jojack.elements.inviteUrl
 import ru.anotherworld.jojack.elements.nameChat2
+import ru.anotherworld.jojack.elements.repost
 import ru.anotherworld.jojack.ui.theme.JoJackTheme
 import java.io.File
 import java.io.FileOutputStream
@@ -160,7 +160,6 @@ class MainApp : ComponentActivity() {
                             login.value = localLogin
                             id.intValue = mDatabase.getServerId()!!
                             job.intValue = mDatabase.getJob()!!
-                            Log.d("INFO-T", mDatabase.getToken()!!)
                         }
                     }
                 } catch (io: Exception){
@@ -1086,14 +1085,14 @@ val localChatList = arrayListOf<ChatsData>().toMutableStateList()
 
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-private fun Messenger(){
+fun Messenger(repostFromAction: String = ""){
 
-    var idChat2: String = ""
-    var nameChat2: String = ""
-    var iconChat2: String = ""
-    var repost: String = ""
-    var encChat: Boolean = false
-    var inviteUrl: String = "test-test-test-test"
+    idChat2 = ""
+    nameChat2 = ""
+    iconChat2 = ""
+    repost = ""
+    encChat = false
+    inviteUrl = "test-test-test-test"
 
     val context = LocalContext.current
     val coroutine = rememberCoroutineScope()
@@ -1135,10 +1134,6 @@ private fun Messenger(){
         )
         .background(colorResource(id = R.color.background2)), verticalArrangement = Arrangement.Center) {
         LazyColumn{
-            item {
-                ChatMessage(name = "Флудилка", previewMessage = "1", username = "1", idChat = 0,
-                    action = { context.startActivity(Intent(context, ChatActivity::class.java)) })
-            }
             itemsIndexed(localChatList){ index, item ->
                 var previewName by remember { mutableStateOf("") }
                 var previewMessage by remember { mutableStateOf("") }
@@ -1181,6 +1176,7 @@ private fun Messenger(){
                         idChat2 = item.chat
                         nameChat2 = item.name
                         iconChat2 = item.icon
+                        repost = repostFromAction
                         if("echat" !in idChat2 && "emchat" !in item.chat) context.startActivity(Intent(context, Chat2::class.java))
                         else{
                             encChat = true

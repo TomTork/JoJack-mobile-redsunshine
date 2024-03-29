@@ -71,11 +71,12 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import ru.anotherworld.jojack.ChatController
 import ru.anotherworld.jojack.ChatTwo
 import ru.anotherworld.jojack.Cipher
 import ru.anotherworld.jojack.DataKeys
@@ -108,12 +109,16 @@ var encChat: Boolean = false
 var inviteUrl: String = ""
 
 class Chat2 : ComponentActivity() {
-    override fun onDestroy() {
-        super.onDestroy()
-        GlobalScope.launch {
+    private val job = Job()
+    private val ioScope = CoroutineScope(Dispatchers.IO + job)
+    override fun onStop() {
+        job.start()
+        ioScope.launch {
             if(destroy != null) destroy!!.closeSession()
             else if(destroy2 != null) destroy2!!.closeSession()
         }
+        job.cancel()
+        super.onStop()
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

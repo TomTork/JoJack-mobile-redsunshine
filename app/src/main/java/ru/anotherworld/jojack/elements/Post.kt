@@ -119,11 +119,9 @@ import ru.anotherworld.jojack.showFullScreenImage
 import java.io.File
 import kotlin.math.absoluteValue
 
-val constructorMessenger = ConstructorMessenger(null, null, null, null,
-    null, null, null, null, null, null, null)
 
 @SuppressLint("CoroutineCreationDuringComposition")
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostBase2(idPost: Int, text: String, nameGroup: String, iconGroup: String,
               typeGroup: String, existsImages: Boolean = false, images: VkImageAndVideo,
