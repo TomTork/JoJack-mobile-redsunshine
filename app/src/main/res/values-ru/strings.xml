@@ -91,4 +91,5 @@
     <string name="error_in_get_image">Ошибка при получении изображения</string>
     <string name="no_data">Данные засекречены или при получении произошла ошибка</string>
     <string name="invite_url">Ссылка-токен: </string>
+    <string name="unknown_action">Программа не смогла распознать действие</string>
 </resources>

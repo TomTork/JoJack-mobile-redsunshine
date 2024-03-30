@@ -1,8 +1,7 @@
 package ru.anotherworld.jojack
 
-import android.app.Application
-import android.icu.text.IDNA
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.Stable
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -27,24 +26,30 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.aSocket
+import io.ktor.network.sockets.openReadChannel
+import io.ktor.network.sockets.openWriteChannel
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.InternalAPI
 import io.ktor.util.cio.writeChannel
 import io.ktor.utils.io.copyAndClose
 import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.writeStringUtf8
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import ru.anotherworld.jojack.chatcontroller.Message
-import ru.anotherworld.jojack.chatcontroller.MessageDto
 import ru.anotherworld.jojack.chatcontroller.Resource
 import ru.anotherworld.jojack.database.MainDatabase
 import java.io.File
@@ -672,6 +677,71 @@ class InsertChat{
         return status
     }
 }
+
+class NotifyListener{
+    val client = HttpClient(){
+        install(ContentNegotiation){
+            json()
+        }
+    }
+    suspend fun getNotify(): List<NData>{
+        val selectorManager = SelectorManager(Dispatchers.IO)
+        val socket = aSocket(selectorManager).tcp().connect(IP1, SOCKET_PORT)
+        val sendChannel = socket.openWriteChannel(autoFlush = true)
+        sendChannel.writeStringUtf8(Json.encodeToString<SearchIncomingNotify>(
+            SearchIncomingNotify(
+                sDatabase.getToken()!!)
+        ))
+        val receiveChannel = socket.openReadChannel()
+        var get = listOf<NData>()
+        while (true){
+            delay(1000)
+            get = Json.decodeFromString<List<NData>>(receiveChannel.readUTF8Line().toString())
+            withContext(Dispatchers.IO) {
+                socket.close()
+                selectorManager.close()
+            }
+            break
+        }
+        return get
+    }
+    suspend fun sendNewNotify(sendTo: String, nData: NData){
+        val response = client.post("$BASE_URL/new-notify"){
+            contentType(ContentType.Application.Json)
+            setBody(NewNotify(
+                token = sDatabase.getToken()!!,
+                sendTo = sendTo,
+                label = nData.label,
+                text = nData.text,
+                read = nData.read,
+                time = nData.time
+            ))
+        }
+    }
+}
+
+@Serializable
+data class NData(
+    val label: String,
+    val text: String,
+    val read: Boolean,
+    val time: Long
+)
+
+@Serializable
+data class NewNotify(
+    val token: String,
+    val sendTo: String,
+    val label: String,
+    val text: String,
+    val read: Boolean,
+    val time: Long
+)
+
+@Serializable
+data class SearchIncomingNotify(
+    val token: String
+)
 
 @Serializable
 data class ChangePasswordData(

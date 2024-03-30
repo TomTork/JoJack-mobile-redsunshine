@@ -85,6 +85,7 @@ class LikesDatabase{
 val daoChatsDatabase = DAOChatsDatabase()
 
 class ChatsDatabase{
+    suspend fun getInfoByUrl(url: String): ChatsData? = daoChatsDatabase.getInfoByUrl(url)
     suspend fun insertAll(data: ChatsData){
         for (i in getAll()){
             if (i.chat == data.chat) return;

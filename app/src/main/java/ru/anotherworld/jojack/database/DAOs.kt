@@ -362,6 +362,13 @@ class DAOChatsDatabase{
             .selectAll()
             .map(::resultToChatsDatabase)
     }
+    suspend fun getInfoByUrl(url: String): ChatsData? = dbQuery {
+        return@dbQuery ChatsTable
+            .selectAll()
+            .where { ChatsTable.chat eq url }
+            .map(::resultToChatsDatabase)
+            .singleOrNull()
+    }
 }
 
 class DAONotifications{
