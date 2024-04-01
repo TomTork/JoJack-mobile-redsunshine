@@ -406,7 +406,9 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
 
                                 destroy = chatController
                                 val countMessages = chatController.getCountMessages()
-                                messagesList.addAll(chatController.getRangeMessages(1, countMessages!!).toMutableStateList())
+                                if(countMessages != null){
+                                    messagesList.addAll(chatController.getRangeMessages(1, countMessages).toMutableStateList())
+                                }
                             }
                             ready = true
 
@@ -571,7 +573,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                     login = message.author,
                                     text = if("ls://" in message.message) message.message.substringAfter(";") else message.message,
                                     time = getCurrentTimeStamp(message.timestamp)!!,
-                                    urlImage = if("ls://" in message.message) message.message.substringBefore(";") else null)
+                                    urlImage = if("ls://" in message.message) message.message.substringAfter("ls://").substringBefore(";") else null)
                                 Spacer(modifier = Modifier.padding(top = 5.dp))
                             }
                         }
@@ -585,7 +587,7 @@ fun Chat2(idChat: String, iconChat: String?, nameChat: String,
                                         login = message.author,
                                         text = if("ls://" in message.encText) message.encText.substringAfter(";") else message.encText,
                                         time = getCurrentTimeStamp(message.time)!!,
-                                        urlImage = if("ls://" in message.encText) message.encText.substringBefore(";") else null)
+                                        urlImage = if("ls://" in message.encText) message.encText.substringAfter("ls://").substringBefore(";") else null)
                                     Spacer(modifier = Modifier.padding(top = 5.dp))
                                 }
                             }
@@ -732,17 +734,26 @@ private fun MessageIn(login: String, text: String, time: String, urlImage: Strin
                     imageFile.value = mImage.getImage(urlImage)
                 }
                 if(imageFile.value != null){
-                    AsyncImage(model = BitmapFactory.decodeFile(imageFile.value?.absolutePath),
-                        contentDescription = null, modifier = Modifier
-                            .size(400.dp)
-                            .align(Alignment.CenterHorizontally))
+                    Column {
+                        AsyncImage(model = BitmapFactory.decodeFile(imageFile.value?.absolutePath),
+                            contentDescription = null, modifier = Modifier
+                                .align(if (eq) Alignment.End else Alignment.Start)
+                                .size(350.dp))
+                        Text(text = time, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                            modifier = Modifier
+                                .padding(end = 12.dp, start = 12.dp)
+                                .alpha(0.5f)
+                                .align(Alignment.End),
+                            fontSize = 10.sp)
+                    }
+
                 }
             }
             else {
-                Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+                if(imageFile.value == null && text != "") Text(text = text, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
                     modifier = Modifier.padding(end = 10.dp, start = 10.dp))
             }
-            Text(text = time, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
+            if(imageFile.value == null && text != "") Text(text = time, fontFamily = nunitoFamily, fontWeight = FontWeight.W400,
                 modifier = Modifier
                     .padding(end = 12.dp, start = 12.dp)
                     .alpha(0.5f),

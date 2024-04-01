@@ -263,7 +263,7 @@ val interFamily = FontFamily(
 private fun Content(){ //Main Activity
     val coroutine = rememberCoroutineScope()
     val context = LocalContext.current
-    NotifyManager().listen(context) //Запуск службы, ищущей новые уведомления
+//    NotifyManager().listen(context) //Запуск службы, ищущей новые уведомления
     var showSearchUser by remember { mutableStateOf(false) }
     var search by remember { mutableStateOf("") }
     var searchUpdate by remember { mutableStateOf(false) }
